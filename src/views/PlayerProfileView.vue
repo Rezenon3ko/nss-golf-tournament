@@ -54,7 +54,7 @@ function stageLabel(match) {
         <div class="flex flex-wrap items-center justify-between gap-4">
           <div>
             <PlayerBadge :player="player" size="lg" />
-            <div class="mt-2 flex flex-wrap gap-2 text-sm text-[#5d5b54] dark:text-slate-400">
+            <div class="mt-2 flex flex-wrap gap-2 text-sm text-[#5d5b54] dark:text-[#a0a0a0]">
               <span>{{ player.tier }}档</span>
               <span v-if="player.groupId">{{ player.groupId }}组</span>
               <span v-if="player.bestScore">历史最佳：{{ player.bestScore }} 杆</span>
@@ -90,7 +90,7 @@ function stageLabel(match) {
           :class="
             tab === t.value
               ? 'notion-pill-active font-semibold'
-              : 'bg-[#f6f5f4] text-[#5d5b54] dark:bg-[#423b69] dark:text-slate-300'
+              : 'bg-[#f6f5f4] text-[#5d5b54] dark:bg-[#1e1e1e] dark:text-[#c7c7c7]'
           "
           @click="tab = t.value"
         >
@@ -101,7 +101,7 @@ function stageLabel(match) {
       <div class="overflow-x-auto notion-card">
         <table class="notion-table w-full text-sm">
           <thead>
-            <tr class="border-b border-[#e5e3df] text-left text-xs text-[#5d5b54] dark:border-[#58507f] dark:text-slate-400">
+            <tr class="border-b border-[#e5e3df] text-left text-xs text-[#5d5b54] dark:border-[#3d3d3d] dark:text-[#a0a0a0]">
               <th class="px-4 py-3">阶段</th>
               <th class="px-4 py-3">对阵</th>
               <th class="px-4 py-3">比分</th>
@@ -113,9 +113,9 @@ function stageLabel(match) {
             <tr
               v-for="match in matches"
               :key="match.id"
-              class="border-b border-[#ede9e4] last:border-0 dark:border-[#4a426e]"
+              class="border-b border-[#ede9e4] last:border-0 dark:border-[#2e2e2e]"
             >
-              <td class="px-4 py-3 text-[#5d5b54] dark:text-slate-400">{{ stageLabel(match) }}</td>
+              <td class="px-4 py-3 text-[#5d5b54] dark:text-[#a0a0a0]">{{ stageLabel(match) }}</td>
               <td class="px-4 py-3">
                 {{ store.playerName(match.playerAId) }} vs {{ store.playerName(match.playerBId) }}
               </td>

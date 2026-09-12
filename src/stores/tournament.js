@@ -367,8 +367,9 @@ function knockoutSeedMatches(state) {
   for (const g of GROUPS) {
     standings[g] = getStandingsFor(state, g)
   }
-  // 待抽签未解决的位置不产生晋级者，避免按未确定顺序错误晋级
+  // 该组全部赛完、且无待抽签时，才能确定晋级选手；否则保持"预计对位"
   const idAt = (g, idx) => {
+    if (!groupStageCompleteFor(state, g)) return null
     const row = standings[g][idx]
     if (!row || row.needsDraw) return null
     return row.playerId
@@ -1071,7 +1072,6 @@ export const useTournamentStore = defineStore('tournament', () => {
   })
 
   const knockoutMatches = computed(() => {
-    const ready = allGroupsComplete.value
     const seeds = knockoutSeedMatches(stateView())
     return seeds.map((seed) => {
       const match = matches.value.find(
@@ -1081,8 +1081,8 @@ export const useTournamentStore = defineStore('tournament', () => {
         return {
           ...seed,
           matchId: match.id,
-          playerAId: ready ? match.playerAId : null,
-          playerBId: ready ? match.playerBId : null,
+          playerAId: match.playerAId || seed.a || null,
+          playerBId: match.playerBId || seed.b || null,
           sets: match.sets,
           status: match.status,
           winnerId: match.winnerId,
@@ -1091,10 +1091,10 @@ export const useTournamentStore = defineStore('tournament', () => {
       return {
         ...seed,
         matchId: null,
-        playerAId: ready ? seed.a : null,
-        playerBId: ready ? seed.b : null,
+        playerAId: seed.a,
+        playerBId: seed.b,
         sets: emptySets(5),
-        status: ready && seed.a && seed.b ? 'pending' : 'locked',
+        status: seed.a && seed.b ? 'pending' : 'locked',
         winnerId: null,
       }
     })

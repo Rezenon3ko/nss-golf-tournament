@@ -49,10 +49,10 @@ function setLabel(set) {
   <BaseModal :title="`${store.playerName(match.playerAId)} vs ${store.playerName(match.playerBId)}`" @close="emit('close')">
     <div class="mb-4 flex flex-wrap items-center gap-3">
       <MatchStatusPill :status="match.status" />
-      <span class="text-sm text-[#5d5b54] dark:text-slate-400">{{ stageLabel }}</span>
+      <span class="text-sm text-[#5d5b54] dark:text-[#a0a0a0]">{{ stageLabel }}</span>
       <span
         v-if="match.status === 'forfeit'"
-        class="text-sm text-[#dd5b00] dark:text-amber-400"
+        class="text-sm text-[#dd5b00] dark:text-[#d9bf7e]"
       >
         {{
           match.forfeitBy === 'A'
@@ -76,13 +76,13 @@ function setLabel(set) {
       </div>
     </div>
 
-    <h4 class="mb-2 text-sm font-bold text-[#5d5b54] dark:text-slate-400">
+    <h4 class="mb-2 text-sm font-bold text-[#5d5b54] dark:text-[#a0a0a0]">
       各局成绩（相对标准杆）
     </h4>
     <div class="mb-4 overflow-x-auto">
       <table class="notion-table w-full text-sm">
         <thead>
-          <tr class="border-b border-[#e5e3df] text-left text-xs text-[#5d5b54] dark:border-[#58507f] dark:text-slate-400">
+          <tr class="border-b border-[#e5e3df] text-left text-xs text-[#5d5b54] dark:border-[#3d3d3d] dark:text-[#a0a0a0]">
             <th class="py-2 pr-2">局</th>
             <th class="py-2 pr-2">{{ playerA?.name || '甲' }} 相对标准杆</th>
             <th class="py-2 pr-2">{{ playerB?.name || '乙' }} 相对标准杆</th>
@@ -93,7 +93,7 @@ function setLabel(set) {
           <tr
             v-for="(set, index) in match.sets"
             :key="index"
-            class="border-b border-[#ede9e4] dark:border-[#4a426e]"
+            class="border-b border-[#ede9e4] dark:border-[#2e2e2e]"
           >
             <td data-label="局" class="py-2 pr-2 font-semibold">{{ index + 1 }}</td>
             <td :data-label="`${playerA?.name || '甲'} 相对标准杆`" class="py-2 pr-2">{{ set.a ?? '-' }}</td>
@@ -104,8 +104,8 @@ function setLabel(set) {
       </table>
     </div>
 
-    <div v-if="match.disconnect" class="notion-tint-yellow mb-4 rounded-xl p-4 text-sm dark:bg-amber-900/20">
-      <p class="mb-1 font-bold text-[#793400] dark:text-amber-400">掉线登记</p>
+    <div v-if="match.disconnect" class="notion-tint-yellow mb-4 rounded-xl p-4 text-sm dark:bg-[#2b2415]">
+      <p class="mb-1 font-bold text-[#793400] dark:text-[#d9bf7e]">掉线登记</p>
       <p>掉线发生局：第 {{ match.disconnect.setIndex + 1 }} 局 · 已完成洞数：{{ match.disconnect.holesCompleted }}</p>
       <p v-if="match.disconnect.note">{{ match.disconnect.note }}</p>
       <p v-if="match.disconnect.links?.length" class="mt-1">
@@ -123,7 +123,7 @@ function setLabel(set) {
       </p>
     </div>
 
-    <h4 class="mb-2 text-sm font-bold text-[#5d5b54] dark:text-slate-400">结果截图</h4>
+    <h4 class="mb-2 text-sm font-bold text-[#5d5b54] dark:text-[#a0a0a0]">结果截图</h4>
     <div v-if="match.resultLinks?.length" class="mb-4 flex flex-col gap-1">
       <a
         v-for="(link, i) in match.resultLinks"
@@ -139,7 +139,7 @@ function setLabel(set) {
     <p v-else class="mb-4 text-sm text-[#a4a097]">暂无截图</p>
 
     <template v-if="relatedEvidence.length">
-      <h4 class="mb-2 text-sm font-bold text-[#5d5b54] dark:text-slate-400">赛事证据库</h4>
+      <h4 class="mb-2 text-sm font-bold text-[#5d5b54] dark:text-[#a0a0a0]">赛事证据库</h4>
       <div class="mb-4 flex flex-col gap-1">
         <a
           v-for="ev in relatedEvidence"
@@ -155,8 +155,8 @@ function setLabel(set) {
     </template>
 
     <template v-if="match.log?.length">
-      <h4 class="mb-2 text-sm font-bold text-[#5d5b54] dark:text-slate-400">操作记录</h4>
-      <ul class="mb-2 flex flex-col gap-1 text-xs text-[#5d5b54] dark:text-slate-400">
+      <h4 class="mb-2 text-sm font-bold text-[#5d5b54] dark:text-[#a0a0a0]">操作记录</h4>
+      <ul class="mb-2 flex flex-col gap-1 text-xs text-[#5d5b54] dark:text-[#a0a0a0]">
         <li v-for="(entry, i) in [...match.log].reverse()" :key="i">
           {{ formatDateTime(entry.time) }} · {{ entry.by }}：{{ entry.message }}
         </li>

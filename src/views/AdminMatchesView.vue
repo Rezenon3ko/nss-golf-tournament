@@ -87,7 +87,7 @@ function forfeit(row, decision) {
   <div class="p-6 xl:mx-auto xl:max-w-7xl">
     <div class="mb-5">
       <h1 class="text-2xl font-bold">赛果录入</h1>
-      <p class="text-sm text-[#5d5b54] dark:text-slate-400">
+      <p class="text-sm text-[#5d5b54] dark:text-[#a0a0a0]">
         小组赛 BO3（先 2 局）· 淘汰赛 BO5（先 3 局）· 平局需选择 SD 胜者
       </p>
     </div>
@@ -95,7 +95,7 @@ function forfeit(row, decision) {
     <div class="mb-4 flex flex-wrap gap-2">
       <select
         v-model="stageFilter"
-        class="rounded-sm border border-[#c8c4be] px-3 py-2 pr-8 text-sm dark:border-[#675d8e] dark:bg-[#4d4778]"
+        class="rounded-sm border border-[#c8c4be] px-3 py-2 pr-8 text-sm dark:border-[#454545] dark:bg-[#333333]"
       >
         <option v-for="opt in stageOptions" :key="opt.value" :value="opt.value">
           {{ opt.label }}
@@ -104,14 +104,14 @@ function forfeit(row, decision) {
       <select
         v-if="stageFilter === 'group' || stageFilter === 'all'"
         v-model="groupFilter"
-        class="rounded-sm border border-[#c8c4be] px-3 py-2 pr-8 text-sm dark:border-[#675d8e] dark:bg-[#4d4778]"
+        class="rounded-sm border border-[#c8c4be] px-3 py-2 pr-8 text-sm dark:border-[#454545] dark:bg-[#333333]"
       >
         <option value="all">全部小组</option>
         <option v-for="g in ['A', 'B', 'C', 'D']" :key="g" :value="g">{{ g }}组</option>
       </select>
       <select
         v-model="statusFilter"
-        class="rounded-sm border border-[#c8c4be] px-3 py-2 pr-8 text-sm dark:border-[#675d8e] dark:bg-[#4d4778]"
+        class="rounded-sm border border-[#c8c4be] px-3 py-2 pr-8 text-sm dark:border-[#454545] dark:bg-[#333333]"
       >
         <option v-for="opt in statusOptions" :key="opt.value" :value="opt.value">
           {{ opt.label }}
@@ -123,7 +123,7 @@ function forfeit(row, decision) {
       <div class="hidden overflow-x-auto lg:block">
       <table class="hover-gold notion-table w-full text-sm">
         <thead>
-          <tr class="border-b border-[#e5e3df] text-left text-xs text-[#5d5b54] dark:border-[#58507f] dark:text-slate-400">
+          <tr class="border-b border-[#e5e3df] text-left text-xs text-[#5d5b54] dark:border-[#3d3d3d] dark:text-[#a0a0a0]">
             <th class="w-20 px-4 py-3">阶段</th>
             <th class="px-4 py-3">对阵</th>
             <th class="px-4 py-3">比分</th>
@@ -136,10 +136,10 @@ function forfeit(row, decision) {
           <tr
             v-for="{ match, ddl, overdue } in rows"
             :key="match.id"
-            class="border-b border-[#ede9e4] last:border-0 dark:border-[#4a426e]"
-            :class="overdue ? 'rounded-lg bg-[#fdecec] dark:bg-red-900/10' : ''"
+            class="border-b border-[#ede9e4] last:border-0 dark:border-[#2e2e2e]"
+            :class="overdue ? 'rounded-lg bg-[#fdecec] dark:bg-[#2a1a1a]' : ''"
           >
-            <td class="whitespace-nowrap px-4 py-3 text-[#5d5b54] dark:text-slate-400">{{ stageLabel(match) }}</td>
+            <td class="whitespace-nowrap px-4 py-3 text-[#5d5b54] dark:text-[#a0a0a0]">{{ stageLabel(match) }}</td>
             <td class="px-4 py-3">
               <div class="grid w-full min-w-[240px] grid-cols-[1fr_auto_1fr] items-center gap-2">
                 <PlayerBadge :player="store.playerById(match.playerAId)" size="sm" />
@@ -161,7 +161,7 @@ function forfeit(row, decision) {
                     : '-'
               }}
             </td>
-            <td class="whitespace-nowrap px-4 py-3 text-xs text-[#5d5b54] dark:text-slate-400">
+            <td class="whitespace-nowrap px-4 py-3 text-xs text-[#5d5b54] dark:text-[#a0a0a0]">
               {{ formatDateTime(ddl) }}
             </td>
             <td class="px-4 py-3">
@@ -201,15 +201,15 @@ function forfeit(row, decision) {
         </tbody>
       </table>
       </div>
-      <div class="divide-y divide-[#ede9e4] lg:hidden dark:divide-[#4a426e]">
+      <div class="divide-y divide-[#ede9e4] lg:hidden dark:divide-[#2e2e2e]">
         <div
           v-for="{ match, ddl, overdue } in rows"
           :key="match.id"
           class="p-4"
-          :class="overdue ? 'rounded-lg bg-[#fdecec] dark:bg-red-900/10' : ''"
+          :class="overdue ? 'rounded-lg bg-[#fdecec] dark:bg-[#2a1a1a]' : ''"
         >
           <div class="mb-2 flex items-center justify-between gap-2">
-            <span class="text-xs font-semibold text-[#5d5b54] dark:text-slate-400">
+            <span class="text-xs font-semibold text-[#5d5b54] dark:text-[#a0a0a0]">
               {{ stageLabel(match) }}
             </span>
             <MatchStatusPill :status="displayStatus({ match, overdue })" />
@@ -225,11 +225,11 @@ function forfeit(row, decision) {
             />
           </div>
           <div
-            class="mt-2 flex items-center justify-between gap-2 text-xs text-[#5d5b54] dark:text-slate-400"
+            class="mt-2 flex items-center justify-between gap-2 text-xs text-[#5d5b54] dark:text-[#a0a0a0]"
           >
             <span>
               比分
-              <b class="text-[#1a1a1a] dark:text-slate-100">{{
+              <b class="text-[#1a1a1a] dark:text-[#e6e6e6]">{{
                 match.status === 'complete'
                   ? `${store.matchScore(match).a} : ${store.matchScore(match).b}`
                   : match.status === 'forfeit'

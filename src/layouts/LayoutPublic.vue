@@ -49,7 +49,7 @@ function logout() {
       <div class="mx-auto flex h-14 max-w-6xl items-center justify-between px-4">
         <RouterLink to="/" class="flex items-center gap-2 font-bold">
           <GolfLogo :size="32" />
-          <span class="text-[#37352f] dark:text-slate-100">{{ siteName }}</span>
+          <span class="text-[#37352f] dark:text-[#e6e6e6]">{{ siteName }}</span>
         </RouterLink>
 
         <nav class="hidden items-center gap-1 md:flex">
@@ -60,16 +60,16 @@ function logout() {
             class="rounded-md px-3 py-2 text-sm transition-colors"
             :class="
               isActive(item)
-                ? 'bg-[#c9a24b]/25 font-semibold text-[#8c6d1f] dark:bg-[#4d4778] dark:text-[#b69ce4]'
-                : 'text-[#5d5b54] hover:bg-[#f0eeec] hover:text-black dark:text-slate-300 dark:hover:bg-[#524b7a] dark:hover:text-slate-100'
+                ? 'bg-[#c9a24b]/25 font-semibold text-[#8c6d1f] dark:bg-[#c9a24b]/25 dark:text-[#e4d3a4]'
+                : 'text-[#5d5b54] hover:bg-[#f0eeec] hover:text-black dark:text-[#c7c7c7] dark:hover:bg-[#3d3d3d] dark:hover:text-slate-100'
             "
           >
             {{ item.label }}
           </RouterLink>
-          <div class="ms-2 flex items-center gap-1">
+          <div class="flex items-center gap-1">
             <button
               type="button"
-              class="inline-flex h-9 w-9 items-center justify-center rounded-md text-[#787671] hover:bg-[#f0eeec] dark:text-slate-300 dark:hover:bg-[#524b7a]"
+              class="inline-flex h-9 w-9 items-center justify-center rounded-md bg-[#c9a24b]/25 text-[#8c6d1f] hover:bg-[#c9a24b]/40 dark:bg-[#c9a24b]/25 dark:text-[#e4d3a4] dark:hover:bg-[#c9a24b]/40"
               :title="darkModeStore.isEnabled ? '切换到浅色模式' : '切换到深色模式'"
               @click="darkModeStore.set(null, true)"
             >
@@ -83,7 +83,7 @@ function logout() {
                 :to="'/admin'"
                 :icon="mdiViewDashboard"
                 label="主办方后台"
-                color="gold"
+                color="goldSoft"
                 small
               />
               <BaseButton :icon="mdiLogout" label="退出" color="whiteDark" small @click="logout" />
@@ -93,7 +93,7 @@ function logout() {
               :to="{ name: 'login', query: { next: route.fullPath } }"
               :icon="mdiLock"
               label="主办方登录"
-              color="gold"
+              color="goldSoft"
               small
             />
           </div>
@@ -102,7 +102,7 @@ function logout() {
         <div class="flex items-center gap-1 md:hidden">
           <button
             type="button"
-            class="inline-flex h-9 w-9 items-center justify-center rounded-md text-[#787671] hover:bg-[#f0eeec] dark:text-slate-300 dark:hover:bg-[#524b7a]"
+            class="inline-flex h-9 w-9 items-center justify-center rounded-md bg-[#c9a24b]/25 text-[#8c6d1f] hover:bg-[#c9a24b]/40 dark:bg-[#c9a24b]/25 dark:text-[#e4d3a4] dark:hover:bg-[#c9a24b]/40"
             :title="darkModeStore.isEnabled ? '切换到浅色模式' : '切换到深色模式'"
             @click="darkModeStore.set(null, true)"
           >
@@ -113,7 +113,7 @@ function logout() {
           </button>
           <button
             type="button"
-            class="inline-flex h-9 w-9 items-center justify-center rounded-md text-[#787671] hover:bg-[#f0eeec] dark:text-slate-300 dark:hover:bg-[#524b7a]"
+            class="inline-flex h-9 w-9 items-center justify-center rounded-md text-[#787671] hover:bg-[#f0eeec] dark:text-[#c7c7c7] dark:hover:bg-[#3d3d3d]"
             @click="mobileOpen = !mobileOpen"
           >
             <BaseIcon :path="mobileOpen ? mdiClose : mdiMenu" size="24" />
@@ -123,7 +123,7 @@ function logout() {
 
       <nav
         v-if="mobileOpen"
-        class="border-t border-[#e5e3df] bg-white px-4 pb-4 md:hidden dark:border-[#58507f] dark:bg-[#423b69]"
+        class="border-t border-[#e5e3df] bg-white px-4 pb-4 md:hidden dark:border-[#3d3d3d] dark:bg-[#1e1e1e]"
       >
         <div class="flex flex-col gap-1 py-2">
           <RouterLink
@@ -133,17 +133,17 @@ function logout() {
             class="rounded-md px-3 py-2 text-sm"
             :class="
               isActive(item)
-                ? 'bg-[#c9a24b]/25 font-semibold text-[#8c6d1f] dark:bg-[#4d4778] dark:text-[#b69ce4]'
-                : 'text-[#5d5b54] dark:text-slate-300'
+                ? 'bg-[#c9a24b]/25 font-semibold text-[#8c6d1f] dark:bg-[#c9a24b]/25 dark:text-[#e4d3a4]'
+                : 'text-[#5d5b54] dark:text-[#c7c7c7]'
             "
             @click="mobileOpen = false"
           >
             {{ item.label }}
           </RouterLink>
         </div>
-        <div class="flex gap-2 border-t border-[#e5e3df] pt-3 dark:border-[#58507f]">
+        <div class="flex gap-2 border-t border-[#e5e3df] pt-3 dark:border-[#3d3d3d]">
           <template v-if="auth.isAdmin">
-            <BaseButton :to="'/admin'" :icon="mdiViewDashboard" label="主办方后台" color="gold" small />
+            <BaseButton :to="'/admin'" :icon="mdiViewDashboard" label="主办方后台" color="goldSoft" small />
             <BaseButton :icon="mdiLogout" label="退出" color="whiteDark" small @click="logout" />
           </template>
           <BaseButton
@@ -151,7 +151,7 @@ function logout() {
             :to="{ name: 'login', query: { next: route.fullPath } }"
             :icon="mdiLock"
             label="主办方登录"
-            color="gold"
+            color="goldSoft"
             small
           />
         </div>
@@ -163,7 +163,7 @@ function logout() {
     </main>
 
     <footer
-      class="border-t border-[#e5e3df] py-6 text-center text-xs text-[#a4a097] dark:border-[#58507f] dark:text-slate-500"
+      class="border-t border-[#e5e3df] py-6 text-center text-xs text-[#a4a097] dark:border-[#3d3d3d] dark:text-[#757575]"
     >
       <div class="mx-auto max-w-6xl px-4">
         <p>© 2026 {{ siteName }} · 数据仅供赛事记录，截图与录屏由主办方留存</p>

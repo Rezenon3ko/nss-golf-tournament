@@ -96,7 +96,7 @@ async function copyBracket() {
   <div class="p-6 xl:mx-auto xl:max-w-6xl">
     <div class="mb-5">
       <h1 class="text-2xl font-bold">数据导出</h1>
-      <p class="text-sm text-[#5d5b54] dark:text-slate-400">导出当前赛事数据，用于留档或分享</p>
+      <p class="text-sm text-[#5d5b54] dark:text-[#a0a0a0]">导出当前赛事数据，用于留档或分享</p>
     </div>
 
     <div class="grid gap-4 sm:grid-cols-2">
@@ -146,7 +146,7 @@ async function copyBracket() {
 
     <details class="notion-card mt-4 p-5 text-sm">
       <summary class="cursor-pointer font-bold">预览对阵文本</summary>
-      <pre class="mt-3 whitespace-pre-wrap rounded-xl notion-card-soft p-4 text-xs dark:bg-[#4d4778]">{{ bracketText() }}</pre>
+      <pre class="mt-3 whitespace-pre-wrap rounded-xl notion-card-soft p-4 text-xs dark:bg-[#333333]">{{ bracketText() }}</pre>
     </details>
   </div>
 </template>

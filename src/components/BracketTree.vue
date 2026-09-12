@@ -61,7 +61,7 @@ function playerOf(node, side) {
             </div>
             <div
               class="mb-1.5 flex items-center justify-between rounded-lg px-2.5 py-2"
-              :class="winnerSide(node) === 'a' ? 'rounded-lg bg-[#e5f6ea] dark:bg-emerald-900/30' : ''"
+              :class="winnerSide(node) === 'a' ? 'rounded-lg bg-[#e5f6ea] dark:bg-[#183023]' : ''"
             >
               <PlayerBadge v-if="playerOf(node, 'a')" :player="playerOf(node, 'a')" />
               <span v-else class="text-base text-[#a4a097]">{{ node.expectedA }}</span>
@@ -69,7 +69,7 @@ function playerOf(node, side) {
             </div>
             <div
               class="flex items-center justify-between rounded-lg px-2.5 py-2"
-              :class="winnerSide(node) === 'b' ? 'rounded-lg bg-[#e5f6ea] dark:bg-emerald-900/30' : ''"
+              :class="winnerSide(node) === 'b' ? 'rounded-lg bg-[#e5f6ea] dark:bg-[#183023]' : ''"
             >
               <PlayerBadge v-if="playerOf(node, 'b')" :player="playerOf(node, 'b')" />
               <span v-else-if="node.status === 'walkover'" class="text-base font-bold text-[#8c6d1f]">
@@ -98,7 +98,7 @@ function playerOf(node, side) {
               </div>
               <div
                 class="mb-1.5 flex items-center justify-between rounded-lg px-2.5 py-2"
-                :class="winnerSide(node) === 'a' ? 'rounded-lg bg-[#e5f6ea] dark:bg-emerald-900/30' : ''"
+                :class="winnerSide(node) === 'a' ? 'rounded-lg bg-[#e5f6ea] dark:bg-[#183023]' : ''"
               >
                 <PlayerBadge v-if="playerOf(node, 'a')" :player="playerOf(node, 'a')" />
                 <span v-else class="text-base text-[#a4a097]">{{ node.expectedA }}</span>
@@ -106,7 +106,7 @@ function playerOf(node, side) {
               </div>
               <div
                 class="flex items-center justify-between rounded-lg px-2.5 py-2"
-                :class="winnerSide(node) === 'b' ? 'rounded-lg bg-[#e5f6ea] dark:bg-emerald-900/30' : ''"
+                :class="winnerSide(node) === 'b' ? 'rounded-lg bg-[#e5f6ea] dark:bg-[#183023]' : ''"
               >
                 <PlayerBadge v-if="playerOf(node, 'b')" :player="playerOf(node, 'b')" />
                 <span v-else class="text-base text-[#a4a097]">{{ node.expectedB }}</span>
@@ -136,8 +136,8 @@ function playerOf(node, side) {
               :class="
                 final.status === 'complete'
                   ? winnerSide(final) === 'a'
-                    ? 'bg-[#f7e7b0]/70 dark:bg-[#8c6d1f]/30'
-                    : 'bg-[#eef2f7] dark:bg-[#516078]/25'
+                    ? 'bg-[#f7e7b0]/70 dark:bg-[#6b5a2a]/30'
+                    : 'bg-[#eef2f7] dark:bg-[#2a2a2a]/25'
                   : ''
               "
             >
@@ -147,8 +147,8 @@ function playerOf(node, side) {
                 :name-class="
                   final.status === 'complete'
                     ? winnerSide(final) === 'a'
-                      ? 'text-[#8c6d1f] dark:text-[#f0d78c]'
-                      : 'text-[#64748b] dark:text-[#cbd5e1]'
+                      ? 'text-[#8c6d1f] dark:text-[#e4d3a4]'
+                      : 'text-[#64748b] dark:text-[#d0d0d0]'
                     : ''
                 "
               />
@@ -160,8 +160,8 @@ function playerOf(node, side) {
               :class="
                 final.status === 'complete'
                   ? winnerSide(final) === 'b'
-                    ? 'bg-[#f7e7b0]/70 dark:bg-[#8c6d1f]/30'
-                    : 'bg-[#eef2f7] dark:bg-[#516078]/25'
+                    ? 'bg-[#f7e7b0]/70 dark:bg-[#6b5a2a]/30'
+                    : 'bg-[#eef2f7] dark:bg-[#2a2a2a]/25'
                   : ''
               "
             >
@@ -171,8 +171,8 @@ function playerOf(node, side) {
                 :name-class="
                   final.status === 'complete'
                     ? winnerSide(final) === 'b'
-                      ? 'text-[#8c6d1f] dark:text-[#f0d78c]'
-                      : 'text-[#64748b] dark:text-[#cbd5e1]'
+                      ? 'text-[#8c6d1f] dark:text-[#e4d3a4]'
+                      : 'text-[#64748b] dark:text-[#d0d0d0]'
                     : ''
                 "
               />
@@ -184,7 +184,7 @@ function playerOf(node, side) {
             </div>
             <div
               v-if="store.championId"
-              class="mt-3 flex items-center justify-center gap-1 rounded-lg bg-[#fdf3d8] py-2 text-base font-bold text-[#8c6d1f] dark:bg-[#8c6d1f]/30 dark:text-[#f0d78c]"
+              class="mt-3 flex items-center justify-center gap-1 rounded-lg bg-[#fdf3d8] py-2 text-base font-bold text-[#8c6d1f] dark:bg-[#6b5a2a]/30 dark:text-[#e4d3a4]"
             >
               <BaseIcon :path="mdiTrophy" size="18" />
               {{ store.playerName(store.championId) }} 夺冠

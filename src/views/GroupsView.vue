@@ -73,7 +73,7 @@ function onEntrySaved() {
     <div class="mb-4 flex flex-wrap items-center justify-between gap-3">
       <div>
         <h1 class="text-2xl font-bold">小组赛</h1>
-        <p class="text-sm text-[#5d5b54] dark:text-slate-400">
+        <p class="text-sm text-[#5d5b54] dark:text-[#a0a0a0]">
           每组 6 场 · 三局两胜（BO3）· 胜 2 分 / 负 1 分
         </p>
       </div>
@@ -86,7 +86,7 @@ function onEntrySaved() {
           :class="
             statusFilter === f.value
               ? 'notion-pill-active font-semibold'
-              : 'bg-[#f6f5f4] text-[#5d5b54] hover:bg-[#e8e6e2] dark:bg-[#423b69] dark:text-slate-300'
+              : 'bg-[#f6f5f4] text-[#5d5b54] hover:bg-[#e8e6e2] dark:bg-[#1e1e1e] dark:text-[#c7c7c7]'
           "
           @click="statusFilter = f.value"
         >
@@ -99,7 +99,7 @@ function onEntrySaved() {
       <GroupTabs v-model="activeGroup" />
     </div>
 
-    <div class="mb-4 flex flex-wrap gap-x-4 gap-y-1 text-sm text-[#5d5b54] dark:text-slate-400">
+    <div class="mb-4 flex flex-wrap gap-x-4 gap-y-1 text-sm text-[#5d5b54] dark:text-[#a0a0a0]">
       <span
         v-for="round in [1, 2, 3]"
         :key="round"
@@ -116,7 +116,7 @@ function onEntrySaved() {
       <div class="hidden overflow-x-auto lg:block">
       <table class="notion-table w-full table-fixed text-base">
         <thead>
-          <tr class="border-b border-[#e5e3df] text-left text-sm text-[#5d5b54] dark:border-[#58507f] dark:text-slate-400">
+          <tr class="border-b border-[#e5e3df] text-left text-sm text-[#5d5b54] dark:border-[#3d3d3d] dark:text-[#a0a0a0]">
             <th class="w-20 px-4 py-3">轮次</th>
             <th class="w-[320px] px-4 py-3">对阵</th>
             <th class="w-20 px-4 py-3">比分</th>
@@ -130,13 +130,13 @@ function onEntrySaved() {
           <tr
             v-for="(row, index) in filteredMatches"
             :key="row.match.id"
-            class="border-b border-[#ede9e4] last:border-0 dark:border-[#4a426e]"
+            class="border-b border-[#ede9e4] last:border-0 dark:border-[#2e2e2e]"
             :class="[
-              row.overdue ? 'rounded-lg bg-[#fdecec] dark:bg-red-900/10' : '',
+              row.overdue ? 'rounded-lg bg-[#fdecec] dark:bg-[#2a1a1a]' : '',
               activeTintHover,
             ]"
           >
-            <td class="px-4 py-3 font-semibold text-[#5d5b54] dark:text-slate-400">
+            <td class="px-4 py-3 font-semibold text-[#5d5b54] dark:text-[#a0a0a0]">
               第 {{ row.match.round }} 轮
             </td>
             <td class="px-4 py-3">
@@ -168,7 +168,7 @@ function onEntrySaved() {
                   : '-'
               }}
             </td>
-            <td class="px-4 py-3 text-sm text-[#5d5b54] dark:text-slate-400">
+            <td class="px-4 py-3 text-sm text-[#5d5b54] dark:text-[#a0a0a0]">
               {{ formatDateTime(row.ddl) }}
             </td>
             <td class="px-4 py-3">
@@ -193,18 +193,18 @@ function onEntrySaved() {
         </tbody>
       </table>
       </div>
-      <div class="divide-y divide-[#ede9e4] lg:hidden dark:divide-[#4a426e]">
+      <div class="divide-y divide-[#ede9e4] lg:hidden dark:divide-[#2e2e2e]">
         <div
           v-for="(row, index) in filteredMatches"
           :key="row.match.id"
           class="p-4"
           :class="[
-              row.overdue ? 'rounded-lg bg-[#fdecec] dark:bg-red-900/10' : '',
+              row.overdue ? 'rounded-lg bg-[#fdecec] dark:bg-[#2a1a1a]' : '',
               activeTintHover,
             ]"
         >
           <div class="mb-2 flex items-center justify-between gap-2">
-            <span class="text-sm font-semibold text-[#5d5b54] dark:text-slate-400">
+            <span class="text-sm font-semibold text-[#5d5b54] dark:text-[#a0a0a0]">
               第 {{ row.match.round }} 轮
             </span>
             <MatchStatusPill :status="displayStatus({ match: row.match, overdue: row.overdue })" />
@@ -220,7 +220,7 @@ function onEntrySaved() {
             />
           </div>
           <div class="mt-3 text-center">
-            <span class="text-3xl font-black text-[#1a1a1a] dark:text-slate-100">{{
+            <span class="text-3xl font-black text-[#1a1a1a] dark:text-[#e6e6e6]">{{
               row.match.status === 'complete'
                 ? `${store.matchScore(row.match).a} : ${store.matchScore(row.match).b}`
                 : row.match.status === 'forfeit'
@@ -230,7 +230,7 @@ function onEntrySaved() {
 
           </div>
           <div
-            class="mt-2 flex items-center justify-between gap-2 text-sm text-[#5d5b54] dark:text-slate-400"
+            class="mt-2 flex items-center justify-between gap-2 text-sm text-[#5d5b54] dark:text-[#a0a0a0]"
           >
             <span>{{ formatDateTime(row.ddl) }}</span>
             <div class="flex gap-1">

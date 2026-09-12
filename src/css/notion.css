@@ -50,8 +50,8 @@
 }
 
 .dark .notion-body {
-  background-image: linear-gradient(135deg, #8d7bb8 0%, #342e50 100%);
-  color: #f1f5f9;
+  background-color: #121212;
+  color: #e6e6e6;
 }
 
 /* ---------- 卡片：白底 + 发丝线 + 12px 圆角 + 轻微阴影 ---------- */
@@ -64,9 +64,9 @@
 }
 
 .dark .notion-card {
-  background: #463e6c;
-  border-color: #58507f;
-  box-shadow: rgba(0, 0, 0, 0.25) 0 1px 2px 0;
+  background: #1e1e1e;
+  border-color: #333333;
+  box-shadow: rgba(0, 0, 0, 0.35) 0 1px 2px 0;
 }
 
 /* 内嵌浅灰块 */
@@ -77,8 +77,8 @@
 }
 
 .dark .notion-card-soft {
-  background: #4d4778;
-  border-color: #675d8e;
+  background: #2a2a2a;
+  border-color: #3d3d3d;
 }
 
 /* 粉彩功能卡（回响 Notion 数据库属性色） */
@@ -92,32 +92,36 @@
 .notion-tint-gray     { background: var(--notion-tint-gray);     color: var(--notion-charcoal); }
 
 .dark .notion-tint-lavender {
-  background: #7469a6;
-  color: #e5e1f2;
-  border: 1px solid #8478b4;
+  background: #2a2a2a;
+  color: #e6e6e6;
+  border: 1px solid #3d3d3d;
+  border-left: 3px solid #7469a6;
 }
 .dark .notion-tint-mint {
-  background: #6b7f72;
-  color: #e0ebe4;
-  border: 1px solid #7a8e81;
+  background: #2a2a2a;
+  color: #e6e6e6;
+  border: 1px solid #3d3d3d;
+  border-left: 3px solid #6b7f72;
 }
 .dark .notion-tint-sky {
-  background: #6b7890;
-  color: #e1e8f4;
-  border: 1px solid #79879f;
+  background: #2a2a2a;
+  color: #e6e6e6;
+  border: 1px solid #3d3d3d;
+  border-left: 3px solid #6b7890;
 }
 .dark .notion-tint-peach {
-  background: #8c7363;
-  color: #f2e6dc;
-  border: 1px solid #9d8575;
+  background: #2a2a2a;
+  color: #e6e6e6;
+  border: 1px solid #3d3d3d;
+  border-left: 3px solid #8c7363;
 }
 .dark .notion-tint-rose,
 .dark .notion-tint-yellow,
 .dark .notion-tint-cream,
 .dark .notion-tint-gray {
-  background: #4d4778;
-  color: #cbd5e1;
-  border: 1px solid #675d8e;
+  background: #333333;
+  color: #d0d0d0;
+  border: 1px solid #454545;
 }
 
 /* 高强调黄色横幅 */
@@ -129,9 +133,9 @@
 }
 
 .dark .notion-banner-yellow {
-  background: rgba(120, 83, 15, 0.45);
-  color: #fde68a;
-  border-color: #675d8e;
+  background: #3a2f1a;
+  color: #e6d7a8;
+  border-color: #454545;
 }
 
 /* 顶部导航：白色吸顶条（浅色）/ 原版暗色条（深色） */
@@ -143,8 +147,8 @@
 }
 
 .dark .notion-nav {
-  background: rgba(68, 60, 106, 0.92);
-  border-bottom-color: #58507f;
+  background: rgba(30, 30, 30, 0.95);
+  border-bottom-color: #3d3d3d;
 }
 
 /* 激活药丸：黑底白字（Notion pill-tab-active） */
@@ -155,9 +159,9 @@
 }
 
 .dark .notion-pill-active {
-  background: #9a90c2;
-  color: #0f172a;
-  border-color: #9a90c2;
+  background: #3a3a3a;
+  color: #e6e6e6;
+  border-color: #3a3a3a;
 }
 
 /* 表格表头：Notion 微标签 */
@@ -181,7 +185,7 @@
 
 .dark .hover-gold tbody tr:hover,
 .dark .card-hover-gold:hover {
-  background-color: rgba(227, 197, 101, 0.13);
+  background-color: rgba(200, 180, 130, 0.12);
 }
 
 /* 首页英雄卡片：背景图顶部对齐、按原比例填宽，不裁切 */
@@ -190,7 +194,7 @@
 }
 
 .dark .hero-card {
-  background-color: #342e50;
+  background-color: #121212;
 }
 
 .hero-card--img {
@@ -206,5 +210,5 @@
 }
 
 .dark .notion-divider {
-  border-top-color: #675d8e;
+  border-top-color: #454545;
 }

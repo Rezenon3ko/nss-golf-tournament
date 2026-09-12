@@ -49,13 +49,13 @@ async function submit() {
 
 <template>
   <div
-    class="notion-body flex min-h-screen items-center justify-center px-4 py-10 dark:text-slate-100"
+    class="notion-body flex min-h-screen items-center justify-center px-4 py-10 dark:text-[#e6e6e6]"
   >
     <div class="w-full max-w-sm">
       <div class="mb-6 text-center">
         <GolfLogo :size="56" class="mx-auto mb-3" />
         <h1 class="text-xl font-bold">{{ siteName }}</h1>
-        <p class="mt-1 text-sm text-[#5d5b54] dark:text-slate-400">主办方登录 · 主办方专用</p>
+        <p class="mt-1 text-sm text-[#5d5b54] dark:text-[#a0a0a0]">主办方登录 · 主办方专用</p>
       </div>
 
       <form
@@ -71,7 +71,7 @@ async function submit() {
             v-model="password"
             :type="showPassword ? 'text' : 'password'"
             placeholder="请输入口令"
-            class="w-full rounded-lg border border-[#c8c4be] py-2.5 pl-10 pr-10 dark:border-[#675d8e] dark:bg-[#4d4778]"
+            class="w-full rounded-lg border border-[#c8c4be] py-2.5 pl-10 pr-10 dark:border-[#454545] dark:bg-[#333333]"
             autocomplete="current-password"
           />
           <button
@@ -83,7 +83,7 @@ async function submit() {
           </button>
         </div>
 
-        <p v-if="error" class="mb-3 rounded-lg bg-[#fdecec] px-3 py-2 text-sm text-[#e03131] dark:bg-red-900/30">
+        <p v-if="error" class="mb-3 rounded-lg bg-[#fdecec] px-3 py-2 text-sm text-[#e03131] dark:bg-[#3d2020]">
           {{ error }}
         </p>
 

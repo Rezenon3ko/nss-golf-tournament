@@ -97,7 +97,7 @@ const sections = [
   <div class="mx-auto max-w-3xl px-4 py-6">
     <div class="mb-5">
       <h1 class="text-2xl font-bold">比赛规则</h1>
-      <p class="text-sm text-[#5d5b54] dark:text-slate-400">
+      <p class="text-sm text-[#5d5b54] dark:text-[#a0a0a0]">
         依据《NSS_鬼吃鱼高尔夫锦标赛比赛规则》整理，正式条款以 PDF 原文为准。
       </p>
     </div>
@@ -118,7 +118,7 @@ const sections = [
         </button>
         <ul
           v-if="openIndex === index"
-          class="flex flex-col gap-2 border-t border-[#ede9e4] px-5 py-4 text-sm leading-relaxed text-[#37352f] dark:border-[#4a426e] dark:text-slate-300"
+          class="flex flex-col gap-2 border-t border-[#ede9e4] px-5 py-4 text-sm leading-relaxed text-[#37352f] dark:border-[#2e2e2e] dark:text-[#c7c7c7]"
         >
           <li v-for="(item, i) in section.items" :key="i" class="flex gap-2">
             <span class="text-[#1aae39]">•</span>

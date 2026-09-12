@@ -38,20 +38,20 @@ function statsOf(player) {
 
 function groupChipClass(groupId) {
   const map = {
-    A: 'rounded-full bg-[#e6e0f5] px-2 py-0.5 text-sm font-semibold text-[#37352f] dark:bg-[#7469a6] dark:text-[#e5e1f2]',
-    B: 'rounded-full bg-[#d9f3e1] px-2 py-0.5 text-sm font-semibold text-[#37352f] dark:bg-[#6b7f72] dark:text-[#e0ebe4]',
-    C: 'rounded-full bg-[#dcecfa] px-2 py-0.5 text-sm font-semibold text-[#37352f] dark:bg-[#6b7890] dark:text-[#e1e8f4]',
-    D: 'rounded-full bg-[#ffe8d4] px-2 py-0.5 text-sm font-semibold text-[#37352f] dark:bg-[#8c7363] dark:text-[#f2e6dc]',
+    A: 'rounded-full bg-[#e6e0f5] px-2 py-0.5 text-sm font-semibold text-[#37352f] dark:bg-[#7469a6] dark:text-[#cfc8e0]',
+    B: 'rounded-full bg-[#d9f3e1] px-2 py-0.5 text-sm font-semibold text-[#37352f] dark:bg-[#6b7f72] dark:text-[#c8dccf]',
+    C: 'rounded-full bg-[#dcecfa] px-2 py-0.5 text-sm font-semibold text-[#37352f] dark:bg-[#6b7890] dark:text-[#c8d6e6]',
+    D: 'rounded-full bg-[#ffe8d4] px-2 py-0.5 text-sm font-semibold text-[#37352f] dark:bg-[#8c7363] dark:text-[#e6d8ca]',
   }
   return map[groupId] || ''
 }
 
 function tierClass(tier) {
   const map = {
-    1: 'rounded-full bg-[#e6e0f5] px-2 py-0.5 text-sm font-semibold text-[#391c57] dark:bg-[#52497b] dark:text-[#dec4f8]',
-    2: 'rounded-full bg-[#dcecfa] px-2 py-0.5 text-sm font-semibold text-[#005bab] dark:bg-[#4a4d7c] dark:text-[#b4d6f8]',
-    3: 'rounded-full bg-[#d9f3e1] px-2 py-0.5 text-sm font-semibold text-[#12902d] dark:bg-emerald-900/40 dark:text-emerald-400',
-    4: 'rounded-full bg-[#f0eeec] px-2 py-0.5 text-sm font-semibold text-[#5d5b54] dark:bg-[#524b7a] dark:text-slate-300',
+    1: 'rounded-full bg-[#e6e0f5] px-2 py-0.5 text-sm font-semibold text-[#391c57] dark:bg-[#7469a6] dark:text-[#d8cce6]',
+    2: 'rounded-full bg-[#dcecfa] px-2 py-0.5 text-sm font-semibold text-[#005bab] dark:bg-[#6b7890] dark:text-[#c2d2e2]',
+    3: 'rounded-full bg-[#d9f3e1] px-2 py-0.5 text-sm font-semibold text-[#12902d] dark:bg-[#1d3a2a] dark:text-[#7ec8a0]',
+    4: 'rounded-full bg-[#f0eeec] px-2 py-0.5 text-sm font-semibold text-[#5d5b54] dark:bg-[#3d3d3d] dark:text-[#c7c7c7]',
   }
   return map[tier] || ''
 }
@@ -62,7 +62,7 @@ function tierClass(tier) {
     <div class="mb-4 flex flex-wrap items-center justify-between gap-3">
       <div>
         <h1 class="text-2xl font-bold">选手</h1>
-        <p class="text-sm text-[#5d5b54] dark:text-slate-400">共 {{ store.players.length }} 名选手 · 按档位分组</p>
+        <p class="text-sm text-[#5d5b54] dark:text-[#a0a0a0]">共 {{ store.players.length }} 名选手 · 按档位分组</p>
       </div>
       <div class="flex flex-wrap items-center gap-2">
         <div class="relative">
@@ -73,7 +73,7 @@ function tierClass(tier) {
             v-model="search"
             type="search"
             placeholder="搜索选手 ID"
-            class="w-56 rounded-full border border-[#c8c4be] py-2 pl-9 pr-3 text-sm dark:border-[#675d8e] dark:bg-[#423b69]"
+            class="w-56 rounded-full border border-[#c8c4be] py-2 pl-9 pr-3 text-sm dark:border-[#454545] dark:bg-[#1e1e1e]"
           />
         </div>
         <div class="flex flex-wrap gap-1">
@@ -85,7 +85,7 @@ function tierClass(tier) {
             :class="
               tierFilter === t.value
                 ? 'notion-pill-active font-semibold'
-                : 'bg-[#f6f5f4] text-[#5d5b54] hover:bg-[#e8e6e2] dark:bg-[#423b69] dark:text-slate-300'
+                : 'bg-[#f6f5f4] text-[#5d5b54] hover:bg-[#e8e6e2] dark:bg-[#1e1e1e] dark:text-[#c7c7c7]'
             "
             @click="tierFilter = t.value"
           >
@@ -107,7 +107,7 @@ function tierClass(tier) {
           <PlayerBadge :player="player" size="lg" truncate class="min-w-0" />
           <span
             v-if="statsOf(player)"
-            class="shrink-0 rounded-full bg-[#d9f3e1] px-2 py-0.5 text-sm font-semibold text-[#1aae39] dark:bg-emerald-900/40 dark:text-emerald-400"
+            class="shrink-0 rounded-full bg-[#d9f3e1] px-2 py-0.5 text-sm font-semibold text-[#1aae39] dark:bg-[#1d3a2a] dark:text-[#7ec8a0]"
           >
             {{ statsOf(player).points }} 分
           </span>
@@ -126,18 +126,18 @@ function tierClass(tier) {
         </div>
         <div
           v-if="statsOf(player)"
-          class="mt-auto grid grid-cols-3 gap-1 border-t border-[#ede9e4] pt-2 text-center text-sm text-[#5d5b54] dark:border-[#4a426e] dark:text-slate-400"
+          class="mt-auto grid grid-cols-3 gap-1 border-t border-[#ede9e4] pt-2 text-center text-sm text-[#5d5b54] dark:border-[#2e2e2e] dark:text-[#a0a0a0]"
         >
           <div>
-            <p class="text-base font-bold text-[#1a1a1a] dark:text-slate-100">{{ statsOf(player).played }}</p>
+            <p class="text-base font-bold text-[#1a1a1a] dark:text-[#e6e6e6]">{{ statsOf(player).played }}</p>
             <p>场次</p>
           </div>
           <div>
-            <p class="text-base font-bold text-[#1a1a1a] dark:text-slate-100">{{ statsOf(player).points }}</p>
+            <p class="text-base font-bold text-[#1a1a1a] dark:text-[#e6e6e6]">{{ statsOf(player).points }}</p>
             <p>积分</p>
           </div>
           <div>
-            <p class="text-base font-bold text-[#1a1a1a] dark:text-slate-100">{{ statsOf(player).setDiff }}</p>
+            <p class="text-base font-bold text-[#1a1a1a] dark:text-[#e6e6e6]">{{ statsOf(player).setDiff }}</p>
             <p>净胜局</p>
           </div>
         </div>

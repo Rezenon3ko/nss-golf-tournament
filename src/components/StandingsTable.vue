@@ -59,7 +59,7 @@ function rankClass(rank) {
   if (rank === 2) {
     return 'bg-[#e8eaee] text-[#4a5168]'
   }
-  return 'bg-[#f6f5f4] text-[#5d5b54] dark:bg-[#4d4778] dark:text-slate-400'
+  return 'bg-[#f6f5f4] text-[#5d5b54] dark:bg-[#333333] dark:text-[#a0a0a0]'
 }
 </script>
 
@@ -69,7 +69,7 @@ function rankClass(rank) {
       <div class="hidden overflow-x-auto lg:block">
       <table class="notion-table w-full table-fixed text-base">
         <thead>
-          <tr class="border-b border-[#e5e3df] text-left text-sm text-[#5d5b54] dark:border-[#58507f] dark:text-slate-400">
+          <tr class="border-b border-[#e5e3df] text-left text-sm text-[#5d5b54] dark:border-[#3d3d3d] dark:text-[#a0a0a0]">
             <th class="w-16 px-4 py-3">排名</th>
             <th class="w-48 px-4 py-3">选手</th>
             <th class="w-20 px-4 py-3">场</th>
@@ -85,7 +85,7 @@ function rankClass(rank) {
           <tr
             v-for="row in rows"
             :key="row.playerId"
-            class="border-b border-[#ede9e4] last:border-0 dark:border-[#4a426e]"
+            class="border-b border-[#ede9e4] last:border-0 dark:border-[#2e2e2e]"
             :class="[row.rank <= 2 ? tintBg : '', tintHover]"
           >
             <td class="px-4 py-3">
@@ -108,13 +108,13 @@ function rankClass(rank) {
             <td class="px-4 py-3">
               <span
                 v-if="complete && row.rank <= 2"
-                class="rounded-full bg-[#d9f3e1] px-2 py-0.5 text-sm font-semibold text-[#1aae39] dark:bg-emerald-900/40 dark:text-emerald-400"
+                class="rounded-full bg-[#d9f3e1] px-2 py-0.5 text-sm font-semibold text-[#1aae39] dark:bg-[#1d3a2a] dark:text-[#7ec8a0]"
               >
                 🏆 晋级
               </span>
               <span
                 v-else-if="row.needsDraw"
-                class="rounded-full bg-amber-100 px-2 py-0.5 text-sm font-semibold text-[#793400] dark:bg-amber-900/40 dark:text-amber-400"
+                class="rounded-full bg-amber-100 px-2 py-0.5 text-sm font-semibold text-[#793400] dark:bg-[#3a2f1a] dark:text-[#d9bf7e]"
               >
                 待抽签
               </span>
@@ -128,32 +128,39 @@ function rankClass(rank) {
         <div
           v-for="row in rows"
           :key="row.playerId"
-          class="flex items-center gap-3 border-b border-[#ede9e4] p-4 last:border-0 dark:border-[#4a426e]"
+          class="border-b border-[#ede9e4] p-4 last:border-0 dark:border-[#2e2e2e]"
           :class="[row.rank <= 2 ? tintBg : '', tintHover]"
         >
-          <span
-            class="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-sm font-bold"
-            :class="rankClass(row.rank)"
-          >
-            {{ row.rank }}
-          </span>
-          <PlayerBadge :player="store.playerById(row.playerId)" size="sm" />
-          <div class="ml-auto shrink-0 text-right">
-            <div class="text-base font-bold">{{ row.points }} 分</div>
-            <div class="text-sm text-[#a4a097]">
-              胜{{ row.wins }} 负{{ row.losses }} · 杆{{
-                row.strokeDiff > 0 ? `+${row.strokeDiff}` : row.strokeDiff
-              }}
-            </div>
+          <div class="flex items-center gap-3">
+            <span
+              class="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-sm font-bold"
+              :class="rankClass(row.rank)"
+            >
+              {{ row.rank }}
+            </span>
+            <PlayerBadge
+              :player="store.playerById(row.playerId)"
+              size="sm"
+              truncate
+              class="min-w-0 flex-1"
+            />
+            <span class="shrink-0 text-base font-bold">{{ row.points }} 分</span>
+          </div>
+          <div class="mt-1 flex items-center justify-between gap-2 pl-10 text-sm text-[#a4a097]">
+            <span>
+              胜{{ row.wins }} 负{{ row.losses }} · 净胜局{{
+                row.setDiff > 0 ? `+${row.setDiff}` : row.setDiff
+              }} · 净胜杆{{ row.strokeDiff > 0 ? `+${row.strokeDiff}` : row.strokeDiff }}
+            </span>
             <span
               v-if="complete && row.rank <= 2"
-              class="text-sm font-semibold text-[#1aae39] dark:text-emerald-400"
+              class="shrink-0 font-semibold text-[#1aae39] dark:text-[#7ec8a0]"
             >
               🏆 晋级
             </span>
             <span
               v-else-if="row.needsDraw"
-              class="text-sm font-semibold text-[#dd5b00] dark:text-amber-400"
+              class="shrink-0 font-semibold text-[#dd5b00] dark:text-[#d9bf7e]"
             >
               待抽签
             </span>
@@ -164,7 +171,7 @@ function rankClass(rank) {
     </div>
 
     <div v-if="hasDraw" class="mt-3 flex flex-wrap items-center gap-3">
-      <p class="text-sm text-[#793400] dark:text-amber-400">
+      <p class="text-sm text-[#793400] dark:text-[#d9bf7e]">
         按规则顺序（积分 → 相互战绩 → 净胜局 → 净胜杆）仍无法区分，需由主办方随机抽签。
       </p>
       <BaseButton

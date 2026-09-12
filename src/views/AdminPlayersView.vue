@@ -133,10 +133,10 @@ const published = computed(() => store.players.some((p) => p.groupId))
 
 function tierClass(tier) {
   const map = {
-    1: 'rounded-full bg-[#e6e0f5] px-2 py-0.5 text-sm font-semibold text-[#391c57] dark:bg-[#52497b] dark:text-[#dec4f8]',
-    2: 'rounded-full bg-[#dcecfa] px-2 py-0.5 text-sm font-semibold text-[#005bab] dark:bg-[#4a4d7c] dark:text-[#b4d6f8]',
-    3: 'rounded-full bg-[#d9f3e1] px-2 py-0.5 text-sm font-semibold text-[#12902d] dark:bg-emerald-900/40 dark:text-emerald-400',
-    4: 'rounded-full bg-[#f0eeec] px-2 py-0.5 text-sm font-semibold text-[#5d5b54] dark:bg-[#524b7a] dark:text-slate-300',
+    1: 'rounded-full bg-[#e6e0f5] px-2 py-0.5 text-sm font-semibold text-[#391c57] dark:bg-[#7469a6] dark:text-[#d8cce6]',
+    2: 'rounded-full bg-[#dcecfa] px-2 py-0.5 text-sm font-semibold text-[#005bab] dark:bg-[#6b7890] dark:text-[#c2d2e2]',
+    3: 'rounded-full bg-[#d9f3e1] px-2 py-0.5 text-sm font-semibold text-[#12902d] dark:bg-[#1d3a2a] dark:text-[#7ec8a0]',
+    4: 'rounded-full bg-[#f0eeec] px-2 py-0.5 text-sm font-semibold text-[#5d5b54] dark:bg-[#3d3d3d] dark:text-[#c7c7c7]',
   }
   return map[tier] || ''
 }
@@ -147,7 +147,7 @@ function tierClass(tier) {
     <div class="mb-5 flex flex-wrap items-center justify-between gap-3">
       <div>
         <h1 class="text-2xl font-bold">选手与分组</h1>
-        <p class="text-sm text-[#5d5b54] dark:text-slate-400">
+        <p class="text-sm text-[#5d5b54] dark:text-[#a0a0a0]">
           {{ store.players.length }} 名选手 · 抽签约束：每组 4 人、每档各 1 人
         </p>
       </div>
@@ -193,8 +193,8 @@ function tierClass(tier) {
         <h2 class="mb-3 font-bold">选手名单</h2>
         <div class="hidden overflow-x-auto lg:block">
           <table class="hover-gold notion-table w-full text-base">
-            <thead class="bg-[#f6f5f4] dark:bg-[#423b69]">
-              <tr class="border-b border-[#e5e3df] text-left text-sm text-[#5d5b54] dark:border-[#58507f] dark:text-slate-400">
+            <thead class="bg-[#f6f5f4] dark:bg-[#1e1e1e]">
+              <tr class="border-b border-[#e5e3df] text-left text-sm text-[#5d5b54] dark:border-[#3d3d3d] dark:text-[#a0a0a0]">
                 <th class="py-2 pr-2">选手</th>
                 <th class="py-2 pr-2">最佳成绩</th>
                 <th class="py-2 pr-2">档位</th>
@@ -206,7 +206,7 @@ function tierClass(tier) {
               <tr
                 v-for="player in sortedPlayers"
                 :key="player.id"
-                class="border-b border-[#ede9e4] last:border-0 dark:border-[#4a426e]"
+                class="border-b border-[#ede9e4] last:border-0 dark:border-[#2e2e2e]"
               >
                 <td class="py-2 pr-2"><PlayerBadge :player="player" /></td>
                 <td class="py-2 pr-2">{{ player.bestScore ?? '-' }}</td>
@@ -228,14 +228,14 @@ function tierClass(tier) {
             </tbody>
           </table>
         </div>
-        <div class="divide-y divide-[#ede9e4] lg:hidden dark:divide-[#4a426e]">
+        <div class="divide-y divide-[#ede9e4] lg:hidden dark:divide-[#2e2e2e]">
           <div
             v-for="player in sortedPlayers"
             :key="player.id"
             class="flex items-center gap-2 py-3"
           >
             <PlayerBadge :player="player" size="sm" truncate class="min-w-0 flex-1" />
-            <div class="shrink-0 text-right text-sm text-[#5d5b54] dark:text-slate-400">
+            <div class="shrink-0 text-right text-sm text-[#5d5b54] dark:text-[#a0a0a0]">
               <div>
                 <span class="rounded-full px-2 py-0.5 text-sm font-semibold" :class="tierClass(player.tier)">
                   {{ player.tier }}档
@@ -271,7 +271,7 @@ function tierClass(tier) {
                 <span
                   v-for="p in tierPlayers[t]"
                   :key="p.id"
-                  class="rounded-full bg-[#f6f5f4] px-2.5 py-1 text-sm text-[#37352f] dark:bg-[#4d4778] dark:text-slate-300"
+                  class="rounded-full bg-[#f6f5f4] px-2.5 py-1 text-sm text-[#37352f] dark:bg-[#333333] dark:text-[#c7c7c7]"
                 >
                   {{ p.name }}
                 </span>
@@ -300,12 +300,12 @@ function tierClass(tier) {
               :key="g"
               class="notion-card-soft p-3"
             >
-              <p class="mb-2 text-sm font-bold text-[#5d5b54] dark:text-slate-400">{{ g }}组</p>
+              <p class="mb-2 text-sm font-bold text-[#5d5b54] dark:text-[#a0a0a0]">{{ g }}组</p>
               <div v-for="t in [1, 2, 3, 4]" :key="t" class="mb-2 last:mb-0">
                 <label class="mb-1 block text-sm text-[#a4a097]">{{ t }}档</label>
                 <select
                   :value="slotPlayerId(g, t - 1)"
-                  class="w-full rounded-sm border border-[#c8c4be] px-3 py-2 pr-8 text-sm dark:border-[#675d8e] dark:bg-[#4d4778]"
+                  class="w-full rounded-sm border border-[#c8c4be] px-3 py-2 pr-8 text-sm dark:border-[#454545] dark:bg-[#333333]"
                   @change="onSlotChange(g, t - 1, $event)"
                 >
                   <option value="">未选择</option>
@@ -328,7 +328,7 @@ function tierClass(tier) {
             <h2 class="font-bold">抽签分组</h2>
             <span
               class="rounded-full px-2.5 py-1 text-sm font-semibold"
-              :class="valid ? 'rounded-full bg-[#d9f3e1] px-2.5 py-1 text-sm font-semibold text-[#1aae39] dark:bg-emerald-900/40 dark:text-emerald-400' : 'rounded-full bg-[#ffe8d4] px-2.5 py-1 text-sm font-semibold text-[#793400] dark:bg-amber-900/40 dark:text-amber-400'"
+              :class="valid ? 'rounded-full bg-[#d9f3e1] px-2.5 py-1 text-sm font-semibold text-[#1aae39] dark:bg-[#1d3a2a] dark:text-[#7ec8a0]' : 'rounded-full bg-[#ffe8d4] px-2.5 py-1 text-sm font-semibold text-[#793400] dark:bg-[#3a2f1a] dark:text-[#d9bf7e]'"
             >
               {{ valid ? '✅ 满足全部约束' : '未满足约束' }}
             </span>
@@ -342,12 +342,12 @@ function tierClass(tier) {
               :key="g"
               class="notion-card-soft p-3 text-sm"
             >
-              <p class="mb-1 font-bold text-[#5d5b54] dark:text-slate-400">{{ g }}组</p>
+              <p class="mb-1 font-bold text-[#5d5b54] dark:text-[#a0a0a0]">{{ g }}组</p>
               <div class="flex flex-wrap gap-1">
                 <span
                   v-for="id in (store.draft[g] || []).filter(Boolean)"
                   :key="id"
-                  class="rounded-full bg-[#f6f5f4] px-2 py-0.5 text-sm dark:bg-[#524b7a]"
+                  class="rounded-full bg-[#f6f5f4] px-2 py-0.5 text-sm dark:bg-[#3d3d3d]"
                 >
                   {{ store.playerName(id) }}
                 </span>
@@ -356,12 +356,12 @@ function tierClass(tier) {
           </div>
           <div
             v-if="published"
-            class="flex items-center gap-2 rounded-lg bg-[#e5f6ea] px-3 py-2 text-sm text-[#1aae39] dark:bg-emerald-900/30 dark:text-emerald-400"
+            class="flex items-center gap-2 rounded-lg bg-[#e5f6ea] px-3 py-2 text-sm text-[#1aae39] dark:bg-[#183023] dark:text-[#7ec8a0]"
           >
             <BaseIcon :path="mdiCheckCircle" size="16" />
             分组已发布，赛程已生成。如需重新抽签请先「重置赛事」。
           </div>
-          <p v-else class="flex items-center gap-2 rounded-lg bg-[#fef7d6] px-3 py-2 text-sm text-[#793400] dark:bg-amber-900/30 dark:text-amber-400">
+          <p v-else class="flex items-center gap-2 rounded-lg bg-[#fef7d6] px-3 py-2 text-sm text-[#793400] dark:bg-[#332a18] dark:text-[#d9bf7e]">
             <BaseIcon :path="mdiAlertCircle" size="16" />
             分组为草稿状态，需「确认发布分组」后生成赛程。
           </p>
@@ -386,11 +386,11 @@ function tierClass(tier) {
           <div class="flex flex-col gap-1 text-sm">
             <p v-for="t in [1, 2, 3, 4]" :key="t">
               {{ t }}档顺序：
-              <span class="text-[#37352f] dark:text-slate-300">
+              <span class="text-[#37352f] dark:text-[#c7c7c7]">
                 {{ (rec.tiers[t] || []).map((id) => store.playerName(id)).join(' → ') }}
               </span>
             </p>
-            <p class="mt-1 text-[#5d5b54] dark:text-slate-400">
+            <p class="mt-1 text-[#5d5b54] dark:text-[#a0a0a0]">
               分组：
               <span v-for="g in ['A', 'B', 'C', 'D']" :key="g" class="me-2">
                 {{ g }}组（{{ (rec.groups[g] || []).map((id) => store.playerName(id)).join('、') }}）
@@ -413,7 +413,7 @@ function tierClass(tier) {
           <input
             v-model="form.name"
             type="text"
-            class="w-full rounded-sm border border-[#c8c4be] px-3 py-2 pr-8 dark:border-[#675d8e] dark:bg-[#4d4778]"
+            class="w-full rounded-sm border border-[#c8c4be] px-3 py-2 pr-8 dark:border-[#454545] dark:bg-[#333333]"
             placeholder="选手昵称"
           />
         </div>
@@ -424,7 +424,7 @@ function tierClass(tier) {
               v-model.number="form.bestScore"
               type="number"
               min="1"
-              class="w-full rounded-sm border border-[#c8c4be] px-3 py-2 pr-8 dark:border-[#675d8e] dark:bg-[#4d4778]"
+              class="w-full rounded-sm border border-[#c8c4be] px-3 py-2 pr-8 dark:border-[#454545] dark:bg-[#333333]"
               placeholder="杆数"
             />
           </div>
@@ -432,7 +432,7 @@ function tierClass(tier) {
             <label class="mb-1 block text-sm font-bold">档位</label>
             <select
               v-model.number="form.tier"
-              class="w-full rounded-sm border border-[#c8c4be] px-3 py-2 pr-8 dark:border-[#675d8e] dark:bg-[#4d4778]"
+              class="w-full rounded-sm border border-[#c8c4be] px-3 py-2 pr-8 dark:border-[#454545] dark:bg-[#333333]"
             >
               <option :value="1">1档（最强）</option>
               <option :value="2">2档</option>
