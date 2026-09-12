@@ -146,7 +146,7 @@ function rankClass(rank) {
             />
             <span class="shrink-0 text-base font-bold">{{ row.points }} 分</span>
           </div>
-          <div class="mt-1 flex items-center justify-between gap-2 pl-10 text-sm text-[#a4a097]">
+          <div class="mt-1 flex items-center justify-between gap-2 pl-10 text-sm font-medium text-[#5d5b54] dark:text-[#c7c7c7]">
             <span>
               胜{{ row.wins }} 负{{ row.losses }} · 净胜局{{
                 row.setDiff > 0 ? `+${row.setDiff}` : row.setDiff
