@@ -16,10 +16,10 @@
 
 ## 三、推送到 GitHub
 
-把下面的 `你的用户名` 和 `你的仓库名` 替换成实际的，然后在本项目目录执行：
+先进入你下载/克隆下来的项目目录（下文用 `你的项目目录` 代指，即包含 `package.json` 的那一层），再把 `你的用户名` 和 `你的仓库名` 替换成实际的，然后执行：
 
 ```bash
-cd /Users/Rezenon3ko/NSSGCY/golf
+cd 你的项目目录
 git remote add origin https://github.com/你的用户名/你的仓库名.git
 git branch -M main
 git push -u origin main
@@ -54,8 +54,9 @@ git push -u origin main
 
 ## 五、以后更新网站
 
+进入项目目录后执行：
+
 ```bash
-cd /Users/Rezenon3ko/NSSGCY/golf
 git add .
 git commit -m "更新内容说明"
 git push
