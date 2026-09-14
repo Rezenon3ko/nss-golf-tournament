@@ -76,22 +76,22 @@ function emptySets(count) {
 // ---------- 种子数据 ----------
 
 const SEED_PLAYERS = [
-  { id: 'p1', name: 'summer', bestScore: 36, avatar: '/avatars/summer.jpg'},
-  { id: 'p2', name: 'smallwater', bestScore: 37, avatar: '/avatars/smallwater.jpg'},
-  { id: 'p3', name: 'MidOne', bestScore: 38, avatar: '/avatars/MidOne.jpg'},
-  { id: 'p4', name: 'zee', bestScore: 39, avatar: '/avatars/zee.jpg'},
-  { id: 'p5', name: 'xxigua', bestScore: 41, avatar: '/avatars/xxigua.jpg'},
-  { id: 'p6', name: 'Showhand', bestScore: 42, avatar: '/avatars/Showhand.jpg'},
-  { id: 'p7', name: 'lglrwjx', bestScore: 42, avatar: '/avatars/lglrwjx.jpg'},
-  { id: 'p8', name: 'CG', bestScore: 43, avatar: '/avatars/CG.jpg'},
-  { id: 'p9', name: 'Duncan1314', bestScore: 45, avatar: '/avatars/Duncan1314.png'},
-  { id: 'p10', name: 'n3ko', bestScore: 45, avatar: '/avatars/n3ko.jpg'},
-  { id: 'p11', name: 'gakki', bestScore: 46, avatar: '/avatars/gakki.jpg'},
-  { id: 'p12', name: 'SunnyMudTo', bestScore: 46, avatar: '/avatars/SunnyMudTo.jpg'},
-  { id: 'p13', name: 'shinamikan', bestScore: 49, avatar: '/avatars/shinamikan.jpg'},
-  { id: 'p14', name: 'bx-th', bestScore: 50, avatar: '/avatars/bx-th.jpg'},
-  { id: 'p15', name: 'gcy', bestScore: 51, avatar: '/avatars/gcy.jpg'},
-  { id: 'p16', name: 'lzy', bestScore: 52, avatar: '/avatars/lzy.jpg'},
+  { id: 'p1', name: 'summer', bestScore: 36 },
+  { id: 'p2', name: 'smallwater', bestScore: 37 },
+  { id: 'p3', name: 'MidOne', bestScore: 38 },
+  { id: 'p4', name: 'zee', bestScore: 39 },
+  { id: 'p5', name: 'xxigua', bestScore: 41 },
+  { id: 'p6', name: 'Showhand', bestScore: 42 },
+  { id: 'p7', name: 'lglrwjx', bestScore: 42 },
+  { id: 'p8', name: 'CG', bestScore: 43 },
+  { id: 'p9', name: 'Duncan1314', bestScore: 45 },
+  { id: 'p10', name: 'n3ko', bestScore: 45 },
+  { id: 'p11', name: 'gakki', bestScore: 46 },
+  { id: 'p12', name: 'SunnyMudTo', bestScore: 46 },
+  { id: 'p13', name: 'shinamikan', bestScore: 49 },
+  { id: 'p14', name: 'bx-th', bestScore: 50 },
+  { id: 'p15', name: 'gcy', bestScore: 51 },
+  { id: 'p16', name: 'lzy', bestScore: 52 },
 ]
 
 const SEED_TIERS = {
@@ -738,6 +738,7 @@ export const useTournamentStore = defineStore('tournament', () => {
     if (!player) return
     const oldName = player.name
     if (payload.name !== undefined) player.name = String(payload.name).trim()
+    if (payload.avatar !== undefined) player.avatar = payload.avatar || null
     if (payload.bestScore !== undefined) player.bestScore = toNum(payload.bestScore)
     if (payload.tier !== undefined) player.tier = Number(payload.tier)
     addLog(`编辑选手 ${oldName}`)

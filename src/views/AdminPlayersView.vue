@@ -23,13 +23,55 @@ const showEditor = ref(false)
 const editingId = ref(null)
 const form = reactive({
   name: '',
+  avatar: null,
   bestScore: null,
   tier: 4,
 })
 
+// 头像上传：本地裁剪为正方形并压缩，存成 dataURL（随赛事数据一起保存）
+function onAvatarChange(event) {
+  const input = event.target
+  const file = input.files && input.files[0]
+  input.value = ''
+  if (!file) return
+  if (!file.type.startsWith('image/')) {
+    window.alert('请选择图片文件（JPG / PNG）')
+    return
+  }
+  const reader = new FileReader()
+  reader.onload = () => {
+    const img = new Image()
+    img.onload = () => {
+      const size = 256
+      const canvas = document.createElement('canvas')
+      canvas.width = size
+      canvas.height = size
+      const ctx = canvas.getContext('2d')
+      const side = Math.min(img.width, img.height)
+      ctx.drawImage(
+        img,
+        (img.width - side) / 2,
+        (img.height - side) / 2,
+        side,
+        side,
+        0,
+        0,
+        size,
+        size,
+      )
+      form.avatar = canvas.toDataURL('image/jpeg', 0.85)
+    }
+    img.onerror = () => window.alert('图片读取失败，请换一张试试')
+    img.src = reader.result
+  }
+  reader.onerror = () => window.alert('图片读取失败，请换一张试试')
+  reader.readAsDataURL(file)
+}
+
 function openAdd() {
   editingId.value = null
   form.name = ''
+  form.avatar = null
   form.bestScore = null
   form.tier = 4
   showEditor.value = true
@@ -38,6 +80,7 @@ function openAdd() {
 function openEdit(player) {
   editingId.value = player.id
   form.name = player.name
+  form.avatar = player.avatar || null
   form.bestScore = player.bestScore
   form.tier = player.tier
   showEditor.value = true
@@ -51,12 +94,14 @@ function savePlayer() {
   if (editingId.value) {
     store.updatePlayer(editingId.value, {
       name: form.name,
+      avatar: form.avatar,
       bestScore: form.bestScore,
       tier: Number(form.tier),
     })
   } else {
     store.addPlayer({
       name: form.name,
+      avatar: form.avatar,
       bestScore: form.bestScore,
       tier: Number(form.tier),
     })
@@ -408,6 +453,40 @@ function tierClass(tier) {
       @close="showEditor = false"
     >
       <div class="flex flex-col gap-4">
+        <div>
+          <label class="mb-1 block text-sm font-bold">头像</label>
+          <div class="flex items-center gap-3">
+            <img
+              v-if="form.avatar"
+              :src="form.avatar"
+              alt=""
+              class="h-14 w-14 shrink-0 rounded-full object-cover"
+            />
+            <span
+              v-else
+              class="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-[#c9a24b] text-lg font-bold text-white dark:bg-[#b89335]"
+            >
+              {{ (form.name || '?').slice(0, 1) }}
+            </span>
+            <div class="flex flex-col items-start gap-1">
+              <label
+                class="cursor-pointer rounded-lg border border-[#c8c4be] px-3 py-1.5 text-sm font-bold hover:bg-[#f0eeec] dark:border-[#454545] dark:hover:bg-[#3d3d3d]"
+              >
+                选择图片
+                <input type="file" accept="image/*" class="hidden" @change="onAvatarChange" />
+              </label>
+              <button
+                v-if="form.avatar"
+                type="button"
+                class="text-xs font-semibold text-[#e03131] hover:underline dark:text-[#bd9aa1]"
+                @click="form.avatar = null"
+              >
+                移除头像
+              </button>
+            </div>
+          </div>
+          <p class="mt-1 text-xs text-[#a4a097]">支持 JPG / PNG，自动裁剪为正方形并压缩后保存</p>
+        </div>
         <div>
           <label class="mb-1 block text-sm font-bold">名字</label>
           <input
