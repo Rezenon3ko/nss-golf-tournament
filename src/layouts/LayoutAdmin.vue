@@ -5,6 +5,7 @@ import { menuAsideMain, menuAsideBottom } from '@/menuAside.js'
 import { useDarkModeStore } from '@/stores/darkMode.js'
 import { useAuthStore } from '@/stores/auth.js'
 import { useMainStore } from '@/stores/main.js'
+import { useTournamentStore } from '@/stores/tournament.js'
 import { siteName } from '@/config.js'
 import BaseIcon from '@/components/BaseIcon.vue'
 import GolfLogo from '@/components/GolfLogo.vue'
@@ -21,6 +22,7 @@ const router = useRouter()
 const darkModeStore = useDarkModeStore()
 const authStore = useAuthStore()
 const mainStore = useMainStore()
+const tournamentStore = useTournamentStore()
 
 const sidebarOpen = ref(false)
 
@@ -82,10 +84,17 @@ function logout() {
             class="flex items-center gap-2 rounded-full bg-[#f0eeec] py-1 pl-1 pr-1 dark:bg-[#333333] sm:pr-3"
           >
             <img
-              :src="mainStore.userAvatar"
+              v-if="tournamentStore.adminAvatar"
+              :src="tournamentStore.adminAvatar"
               :alt="mainStore.userName"
               class="h-7 w-7 rounded-full object-cover"
             />
+            <span
+              v-else
+              class="flex h-7 w-7 items-center justify-center rounded-full bg-[#c9a24b] text-xs font-bold text-white dark:bg-[#b89335]"
+            >
+              {{ mainStore.userName.slice(0, 1) }}
+            </span>
             <span class="hidden text-sm font-semibold sm:inline">{{ mainStore.userName }}</span>
           </div>
           <button

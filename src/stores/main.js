@@ -1,11 +1,9 @@
 import { defineStore } from 'pinia'
-import { ref, computed } from 'vue'
+import { ref } from 'vue'
 
 export const useMainStore = defineStore('main', () => {
   const userName = ref('n3ko')
   const userEmail = ref('n3ko@nss.local')
-
-  const userAvatar = computed(() => '/avatars/n3ko.jpg')
 
   const isFieldFocusRegistered = ref(false)
 
@@ -21,7 +19,6 @@ export const useMainStore = defineStore('main', () => {
   return {
     userName,
     userEmail,
-    userAvatar,
     isFieldFocusRegistered,
     setUser,
   }

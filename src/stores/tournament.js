@@ -549,6 +549,7 @@ export const useTournamentStore = defineStore('tournament', () => {
   const logs = ref([])
   const championId = ref(null)
   const drawHistory = ref([])
+  const adminAvatar = ref(null)
   const ready = ref(false)
 
   // 决赛结束后：决赛败者为亚军
@@ -577,6 +578,7 @@ export const useTournamentStore = defineStore('tournament', () => {
         logs: logs.value,
         championId: championId.value,
         drawHistory: drawHistory.value,
+        adminAvatar: adminAvatar.value,
       }),
     )
   }
@@ -593,6 +595,7 @@ export const useTournamentStore = defineStore('tournament', () => {
       logs: logs.value,
       championId: championId.value,
       drawHistory: drawHistory.value,
+      adminAvatar: adminAvatar.value,
     }
     supabase
       .from('tournament_state')
@@ -641,6 +644,7 @@ export const useTournamentStore = defineStore('tournament', () => {
       logs.value = data.logs || []
       championId.value = data.championId || null
       drawHistory.value = data.drawHistory || []
+      adminAvatar.value = data.adminAvatar || null
       return true
     } catch {
       return false
@@ -669,6 +673,7 @@ export const useTournamentStore = defineStore('tournament', () => {
     logs.value = v.logs || []
     championId.value = v.championId || null
     drawHistory.value = v.drawHistory || []
+    adminAvatar.value = v.adminAvatar || null
     supabaseMode.value = true
     return 'ok'
   }
@@ -1153,6 +1158,7 @@ export const useTournamentStore = defineStore('tournament', () => {
     championId,
     runnerUpId,
     drawHistory,
+    adminAvatar,
     ready,
     init,
     persist,
