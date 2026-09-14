@@ -464,7 +464,7 @@ function tierClass(tier) {
             />
             <span
               v-else
-              class="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-[#c9a24b] text-lg font-bold text-white dark:bg-[#b89335]"
+              class="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-[#c9a24b]/25 text-lg font-bold text-[#8c6d1f] dark:bg-[#c9a24b]/25 dark:text-[#e4d3a4]"
             >
               {{ (form.name || '?').slice(0, 1) }}
             </span>

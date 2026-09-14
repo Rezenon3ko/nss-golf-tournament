@@ -91,7 +91,7 @@ function logout() {
             />
             <span
               v-else
-              class="flex h-7 w-7 items-center justify-center rounded-full bg-[#c9a24b] text-xs font-bold text-white dark:bg-[#b89335]"
+              class="flex h-7 w-7 items-center justify-center rounded-full bg-[#c9a24b]/25 text-xs font-bold text-[#8c6d1f] dark:bg-[#c9a24b]/25 dark:text-[#e4d3a4]"
             >
               {{ mainStore.userName.slice(0, 1) }}
             </span>
