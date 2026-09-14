@@ -50,7 +50,7 @@ const avatarClass = computed(() => {
     />
     <span
       v-else
-      class="flex shrink-0 items-center justify-center rounded-full bg-[#5645d4] font-bold text-white dark:bg-[#2f6b4a]"
+      class="flex shrink-0 items-center justify-center rounded-full bg-[#c9a24b] font-bold text-white dark:bg-[#b89335] dark:text-white"
       :class="avatarClass"
     >
       {{ (player?.name || '?').slice(0, 1) }}

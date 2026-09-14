@@ -61,7 +61,6 @@ function playerOf(node, side) {
             </div>
             <div
               class="mb-1.5 flex items-center justify-between rounded-lg px-2.5 py-2"
-              :class="winnerSide(node) === 'a' ? 'rounded-lg bg-[#e5f6ea] dark:bg-[#183023]' : ''"
             >
               <PlayerBadge v-if="playerOf(node, 'a')" :player="playerOf(node, 'a')" />
               <span v-else class="text-base text-[#a4a097]">{{ node.expectedA }}</span>
@@ -69,7 +68,6 @@ function playerOf(node, side) {
             </div>
             <div
               class="flex items-center justify-between rounded-lg px-2.5 py-2"
-              :class="winnerSide(node) === 'b' ? 'rounded-lg bg-[#e5f6ea] dark:bg-[#183023]' : ''"
             >
               <PlayerBadge v-if="playerOf(node, 'b')" :player="playerOf(node, 'b')" />
               <span v-else-if="node.status === 'walkover'" class="text-base font-bold text-[#8c6d1f]">
@@ -98,7 +96,6 @@ function playerOf(node, side) {
               </div>
               <div
                 class="mb-1.5 flex items-center justify-between rounded-lg px-2.5 py-2"
-                :class="winnerSide(node) === 'a' ? 'rounded-lg bg-[#e5f6ea] dark:bg-[#183023]' : ''"
               >
                 <PlayerBadge v-if="playerOf(node, 'a')" :player="playerOf(node, 'a')" />
                 <span v-else class="text-base text-[#a4a097]">{{ node.expectedA }}</span>
@@ -106,7 +103,6 @@ function playerOf(node, side) {
               </div>
               <div
                 class="flex items-center justify-between rounded-lg px-2.5 py-2"
-                :class="winnerSide(node) === 'b' ? 'rounded-lg bg-[#e5f6ea] dark:bg-[#183023]' : ''"
               >
                 <PlayerBadge v-if="playerOf(node, 'b')" :player="playerOf(node, 'b')" />
                 <span v-else class="text-base text-[#a4a097]">{{ node.expectedB }}</span>
