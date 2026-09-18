@@ -443,12 +443,30 @@ function syncKnockout(state, persistFn) {
   const sfWalkover = {}
   for (const [idx, seed] of sfSeeds.entries()) {
     const match = existing('sf', seed.order)
-    if (!match || match.status === 'complete' || match.status === 'forfeit') continue
+    if (!match || match.status === 'complete') continue
     const [q1, q2] = sfPairs[idx]
     const a = q1 && matchWinner(q1)
     const b = q2 && matchWinner(q2)
     const aVoid = isBothForfeit(q1)
     const bVoid = isBothForfeit(q2)
+    if (match.status === 'forfeit') {
+      // 一方退赛判负、对手待定：等对手确定后自动补位并让其晋级
+      let filled = false
+      if (!match.playerAId && a) {
+        match.playerAId = a
+        filled = true
+      }
+      if (!match.playerBId && b) {
+        match.playerBId = b
+        filled = true
+      }
+      if (filled) {
+        match.updatedAt = now()
+        match.log.push({ time: now(), by: '系统', message: '对手已确定，自动判定晋级' })
+        if (match.playerAId && match.playerBId) match.winnerId = matchWinner(match)
+      }
+      continue
+    }
     if (a && b) {
       match.playerAId = a
       match.playerBId = b
@@ -477,16 +495,40 @@ function syncKnockout(state, persistFn) {
   }
 
   const final = existing('final', 1)
+  const sf1Ref = existing('sf', 1)
+  const sf2Ref = existing('sf', 2)
+  const finalF1 = sfWalkover[1] || (sf1Ref && matchWinner(sf1Ref))
+  const finalF2 = sfWalkover[2] || (sf2Ref && matchWinner(sf2Ref))
+  if (final && final.status === 'forfeit' && (!final.playerAId || !final.playerBId)) {
+    // 决赛一方退赛、对手待定：对手确定后补位，由其获得冠军
+    if (!final.playerAId && finalF1) final.playerAId = finalF1
+    if (!final.playerBId && finalF2) final.playerBId = finalF2
+    if (final.playerAId && final.playerBId) {
+      final.winnerId = matchWinner(final)
+      final.updatedAt = now()
+      final.log.push({ time: now(), by: '系统', message: '对手已确定，自动判定晋级' })
+    }
+  }
   if (final && (final.status === 'pending' || final.status === 'walkover')) {
-    const sf1 = existing('sf', 1)
-    const sf2 = existing('sf', 2)
-    const f1 = sfWalkover[1] || (sf1 && matchWinner(sf1))
-    const f2 = sfWalkover[2] || (sf2 && matchWinner(sf2))
-    // 半区"整体作废"：半决赛本身双方负，或半决赛被取消（该半区八强全部双方负）
+    const sf1 = sf1Ref
+    const sf2 = sf2Ref
+    const f1 = finalF1
+    const f2 = finalF2
+    // 半区"整体作废"：半决赛本身双方负、半决赛被取消（该半区八强全部双方负），
+    // 或半决赛一方退赛判负而对手那侧八强双方负（该侧永远无人）
+    const sfMissingVoid = (n, sf) => {
+      if (!sf || sf.status !== 'forfeit' || sf.winnerId) return false
+      const [q1, q2] = sfPairs[n - 1]
+      return (!sf.playerAId && isBothForfeit(q1)) || (!sf.playerBId && isBothForfeit(q2))
+    }
     const sf1Void =
-      isBothForfeit(sf1) || (sf1 && sf1.status === 'walkover' && !sfWalkover[1])
+      isBothForfeit(sf1) ||
+      (sf1 && sf1.status === 'walkover' && !sfWalkover[1]) ||
+      sfMissingVoid(1, sf1)
     const sf2Void =
-      isBothForfeit(sf2) || (sf2 && sf2.status === 'walkover' && !sfWalkover[2])
+      isBothForfeit(sf2) ||
+      (sf2 && sf2.status === 'walkover' && !sfWalkover[2]) ||
+      sfMissingVoid(2, sf2)
     final.playerAId = f1 || null
     final.playerBId = f2 || null
     if (f1 && f2) {
@@ -961,12 +1003,21 @@ export const useTournamentStore = defineStore('tournament', () => {
     return { ok: true, match }
   }
 
+  // 判负/延期准入：延期随时可用；判某一方负需该方选手已确定；双方负需双方都确定
+  function canJudgeForfeit(match, decision) {
+    if (!match) return false
+    if (decision === 'extend') return true
+    if (decision === 'both') return !!(match.playerAId && match.playerBId)
+    if (decision === 'A') return !!match.playerAId
+    if (decision === 'B') return !!match.playerBId
+    return false
+  }
+
   function forfeitMatch(id, decision) {
     const match = matches.value.find((m) => m.id === id)
     if (!match) return
-    // 对阵双方尚未确定时不允许判负/延期
-    if (!match.playerAId || !match.playerBId) {
-      window.alert('对阵双方尚未确定，暂不能进行判负或延期操作')
+    if (!canJudgeForfeit(match, decision)) {
+      window.alert('对手尚未确定：只能对已确定的选手执行判负，待定一方无法判负或双方负')
       return
     }
     const labels = {
@@ -1168,6 +1219,7 @@ export const useTournamentStore = defineStore('tournament', () => {
     runnerUpId,
     drawHistory,
     adminAvatar,
+    canJudgeForfeit,
     ready,
     init,
     persist,

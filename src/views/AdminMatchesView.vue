@@ -181,15 +181,23 @@ function forfeit(row, decision) {
                     :label="`${store.playerName(match.playerAId)}负`"
                     color="danger"
                     small
+                    :disabled="!store.canJudgeForfeit(match, 'A')"
                     @click="forfeit({ match }, 'A')"
                   />
                   <BaseButton
                     :label="`${store.playerName(match.playerBId)}负`"
                     color="danger"
                     small
+                    :disabled="!store.canJudgeForfeit(match, 'B')"
                     @click="forfeit({ match }, 'B')"
                   />
-                  <BaseButton label="双方负" color="warning" small @click="forfeit({ match }, 'both')" />
+                  <BaseButton
+                    label="双方负"
+                    color="warning"
+                    small
+                    :disabled="!store.canJudgeForfeit(match, 'both')"
+                    @click="forfeit({ match }, 'both')"
+                  />
                   <BaseButton label="延期" color="whiteDark" small @click="forfeit({ match }, 'extend')" />
                 </template>
               </div>
@@ -263,12 +271,14 @@ function forfeit(row, decision) {
               color="danger"
               small
               class="justify-self-end"
+              :disabled="!store.canJudgeForfeit(match, 'A')"
               @click="forfeit({ match }, 'A')"
             />
             <BaseButton
               label="双方负"
               color="warning"
               small
+              :disabled="!store.canJudgeForfeit(match, 'both')"
               @click="forfeit({ match }, 'both')"
             />
             <BaseButton
@@ -276,6 +286,7 @@ function forfeit(row, decision) {
               color="danger"
               small
               class="justify-self-start"
+              :disabled="!store.canJudgeForfeit(match, 'B')"
               @click="forfeit({ match }, 'B')"
             />
           </div>
