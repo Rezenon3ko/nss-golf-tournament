@@ -47,6 +47,9 @@ const success = ref('')
 const playerA = computed(() => store.playerById(props.match.playerAId))
 const playerB = computed(() => store.playerById(props.match.playerBId))
 
+// 双方是否都已确定（对手待定时不可录入）
+const playersReady = computed(() => !!props.match.playerAId && !!props.match.playerBId)
+
 const winsPreview = computed(() => {
   const wins = { A: 0, B: 0 }
   for (const set of form.sets) {
@@ -102,6 +105,11 @@ function save() {
   error.value = ''
   success.value = ''
 
+  if (!playersReady.value) {
+    error.value = '对阵双方尚未确定，暂不能录入比分'
+    return
+  }
+
   if (!winnerPreview.value) {
     error.value = `比分尚未决出胜负：${isBO5 ? '五局三胜' : '三局两胜'}，先得 ${need} 局者胜`
     return
@@ -136,6 +144,13 @@ function save() {
     width="max-w-3xl"
     @close="emit('close')"
   >
+    <div
+      v-if="!playersReady"
+      class="notion-tint-yellow mb-4 rounded-xl p-3 text-sm font-semibold"
+    >
+      对手尚未确定，本场暂不能录入比分；等上一轮对阵出结果后即可录入。
+    </div>
+
     <div class="mb-4 flex flex-wrap items-center gap-3 text-sm text-[#5d5b54] dark:text-[#a0a0a0]">
       <span>
         {{
@@ -318,7 +333,7 @@ function save() {
 
     <template #footer>
       <BaseButton label="取消" color="whiteDark" @click="emit('close')" />
-      <BaseButton label="保存并发布" color="purple" @click="save" />
+      <BaseButton label="保存并发布" color="purple" :disabled="!playersReady" @click="save" />
     </template>
   </BaseModal>
 </template>

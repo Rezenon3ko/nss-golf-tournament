@@ -914,6 +914,10 @@ export const useTournamentStore = defineStore('tournament', () => {
   function saveMatch(id, payload) {
     const match = matches.value.find((m) => m.id === id)
     if (!match) return null
+    // 对阵双方尚未确定（如半决赛对手待定）时不允许录入，避免错误晋级
+    if (!match.playerAId || !match.playerBId) {
+      return { ok: false, message: '对阵双方尚未确定，暂不能录入比分' }
+    }
 
     match.sets = payload.sets.map((s) => ({
       a: toNum(s.a),
@@ -960,6 +964,11 @@ export const useTournamentStore = defineStore('tournament', () => {
   function forfeitMatch(id, decision) {
     const match = matches.value.find((m) => m.id === id)
     if (!match) return
+    // 对阵双方尚未确定时不允许判负/延期
+    if (!match.playerAId || !match.playerBId) {
+      window.alert('对阵双方尚未确定，暂不能进行判负或延期操作')
+      return
+    }
     const labels = {
       A: `${playerName(match.playerAId)}负`,
       B: `${playerName(match.playerBId)}负`,
