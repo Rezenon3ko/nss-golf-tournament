@@ -4,6 +4,7 @@ import { useTournamentStore } from '@/stores/tournament'
 import BaseModal from '@/components/BaseModal.vue'
 import BaseButton from '@/components/BaseButton.vue'
 import PlayerBadge from '@/components/PlayerBadge.vue'
+import { formatDateTime } from '@/utils/format'
 
 const props = defineProps({
   match: {
@@ -160,7 +161,7 @@ function save() {
         }}
       </span>
       <span>{{ isBO5 ? '五局三胜（BO5）' : '三局两胜（BO3）' }}</span>
-      <span>DDL：{{ store.ddlForMatch(match) || '未设置' }}</span>
+      <span>DDL：{{ store.ddlForMatch(match) ? formatDateTime(store.ddlForMatch(match)) : '未设置' }}</span>
     </div>
 
     <div

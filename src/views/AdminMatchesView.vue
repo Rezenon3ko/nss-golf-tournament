@@ -52,8 +52,19 @@ const rows = computed(() => {
       const overdue = match.status === 'pending' && ddl && new Date(ddl).getTime() < Date.now()
       return { match, ddl, overdue }
     })
-    .sort((a, b) => a.match.stage.localeCompare(b.match.stage) || (a.match.order || 0) - (b.match.order || 0) || a.match.id.localeCompare(b.match.id))
+    .sort(
+      (a, b) =>
+        stageRank(a.match.stage) - stageRank(b.match.stage) ||
+        (a.match.order || 0) - (b.match.order || 0) ||
+        String(a.match.id).localeCompare(String(b.match.id)),
+    )
 })
+
+// 排序权重：越靠后的阶段排越上面（决赛 → 半决赛 → 八强 → 小组赛）
+const stageOrder = { final: 0, sf: 1, qf: 2, group: 3 }
+function stageRank(stage) {
+  return stageOrder[stage] ?? 9
+}
 
 function stageLabel(match) {
   if (match.stage === 'group') return `${match.groupId}组${match.round}`
