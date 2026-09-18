@@ -995,8 +995,8 @@ export const useTournamentStore = defineStore('tournament', () => {
 
     if (match.stage !== 'group') {
       syncKnockoutInternal()
-    } else if (GROUPS.every((g) => groupStageCompleteFor(stateView(), g))) {
-      // 小组赛全部结束后生成淘汰赛对阵
+    } else if (GROUPS.some((g) => groupStageCompleteFor(stateView(), g))) {
+      // 有小组已完赛即同步：已确定对手的淘汰赛场次可提前录入
       syncKnockoutInternal()
     }
     persist()
@@ -1041,7 +1041,7 @@ export const useTournamentStore = defineStore('tournament', () => {
     }
     if (match.stage !== 'group') {
       syncKnockoutInternal()
-    } else if (GROUPS.every((g) => groupStageCompleteFor(stateView(), g))) {
+    } else if (GROUPS.some((g) => groupStageCompleteFor(stateView(), g))) {
       syncKnockoutInternal()
     }
     persist()
@@ -1130,8 +1130,12 @@ export const useTournamentStore = defineStore('tournament', () => {
 
   const stage = computed(() => {
     if (championId.value) return 'finished'
-    const hasKnockout = matches.value.some((m) => m.stage !== 'group')
-    if (hasKnockout) return 'knockout'
+    const hasKnockout = matches.value.some(
+      (m) => m.stage !== 'group' && (m.playerAId || m.playerBId || m.status !== 'pending'),
+    )
+    const groupsDone = GROUPS.every((g) => groupStageCompleteFor(stateView(), g))
+    // 小组赛全部结束后才算进入淘汰赛阶段（提前录入的对阵不改变阶段）
+    if (hasKnockout && groupsDone) return 'knockout'
     const hasGroup = players.value.some((p) => p.groupId)
     if (hasGroup) return 'group'
     return 'setup'
@@ -1144,13 +1148,16 @@ export const useTournamentStore = defineStore('tournament', () => {
         (m) => m.stage === seed.stage && m.order === seed.order,
       )
       if (match) {
+        const aId = match.playerAId || seed.a || null
+        const bId = match.playerBId || seed.b || null
         return {
           ...seed,
           matchId: match.id,
-          playerAId: match.playerAId || seed.a || null,
-          playerBId: match.playerBId || seed.b || null,
+          playerAId: aId,
+          playerBId: bId,
           sets: match.sets,
-          status: match.status,
+          // 双方尚未确定时显示"预计"，确定后才显示真实状态
+          status: match.status === 'pending' && !(aId && bId) ? 'locked' : match.status,
           winnerId: match.winnerId,
         }
       }
