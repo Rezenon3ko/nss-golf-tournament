@@ -1,0 +1,72 @@
+/**
+ * 云端同步的纯函数工具：不依赖 Vue / Supabase，便于单独测试。
+ * 写入策略：乐观锁（revision）+ 串行队列 + 指数退避重试。
+ */
+
+export const SYNC_ROW_KEY = 'main'
+
+// 防抖：连续操作（如批量改 DDL、连续判负）合并成一次写入
+export const WRITE_DEBOUNCE_MS = 300
+
+export const RETRY_BASE_MS = 1000
+export const RETRY_MAX_MS = 30000
+
+// 第 attempt 次失败后等待多久再试（1 → 1s，2 → 2s，… 上限 30s）
+export function nextRetryDelay(attempt, base = RETRY_BASE_MS, max = RETRY_MAX_MS) {
+  const n = Number.isFinite(attempt) && attempt > 0 ? Math.floor(attempt) : 1
+  return Math.min(base * 2 ** (n - 1), max)
+}
+
+function messageOf(error) {
+  return String(error?.message || '')
+}
+
+function codeOf(error) {
+  return String(error?.code || '')
+}
+
+// 老库未执行新版 schema.sql（缺 revision 列）时，降级为覆盖式写入
+export function isMissingRevisionColumn(error) {
+  if (!error) return false
+  return codeOf(error) === '42703' || /column .*revision.* does not exist/i.test(messageOf(error))
+}
+
+export function isDuplicateKey(error) {
+  if (!error) return false
+  return codeOf(error) === '23505' || /duplicate key value/i.test(messageOf(error))
+}
+
+export function createConflictError(remote) {
+  const error = new Error('云端数据已被其他设备更新')
+  error.isConflict = true
+  error.remote = remote || null
+  return error
+}
+
+/**
+ * 把 Supabase / 网络异常翻译成给主办方看的中文提示。
+ * @returns {{kind: 'auth'|'forbidden'|'network'|'unknown', message: string}}
+ */
+export function classifySyncError(error) {
+  const message = messageOf(error)
+  const code = codeOf(error)
+  const status = Number(error?.status ?? error?.statusCode ?? 0)
+
+  if (status === 401 || /jwt|token|not authenticated|refresh token/i.test(message)) {
+    return { kind: 'auth', message: '主办方登录已过期，请重新登录后再同步' }
+  }
+  if (
+    status === 403 ||
+    code === '42501' ||
+    /row-level security|permission denied|violates row-level/i.test(message)
+  ) {
+    return { kind: 'forbidden', message: '当前账号没有写入权限，请确认已用主办方账号登录' }
+  }
+  if (
+    error instanceof TypeError ||
+    /failed to fetch|networkerror|load failed|network request failed|fetch failed/i.test(message)
+  ) {
+    return { kind: 'network', message: '网络异常，稍后会自动重试' }
+  }
+  return { kind: 'unknown', message: message ? `同步失败：${message}` : '同步失败，稍后会自动重试' }
+}

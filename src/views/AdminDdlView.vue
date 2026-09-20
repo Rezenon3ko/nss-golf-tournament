@@ -4,8 +4,10 @@ import { useTournamentStore } from '@/stores/tournament'
 import PlayerBadge from '@/components/PlayerBadge.vue'
 import BaseButton from '@/components/BaseButton.vue'
 import { mdiClipboardText } from '@mdi/js'
+import { useFeedbackStore } from '@/stores/feedback'
 
 const store = useTournamentStore()
+const feedback = useFeedbackStore()
 
 const localDdl = reactive({})
 
@@ -17,9 +19,10 @@ onMounted(() => {
 
 function saveDdl(key) {
   store.setDdl(key, localDdl[key] ? new Date(localDdl[key]).toISOString() : null)
+  feedback.success('DDL 已更新')
 }
 
-function forfeit(row, decision) {
+async function forfeit(row, decision) {
   const match = row.match
   const labels = {
     A: `${store.playerName(match.playerAId)}负`,
@@ -27,13 +30,16 @@ function forfeit(row, decision) {
     both: '双方负',
     extend: '延期',
   }
-  if (
-    window.confirm(
-      `确认对 ${store.playerName(match.playerAId)} vs ${store.playerName(match.playerBId)} 执行「${labels[decision]}」？`,
-    )
-  ) {
-    store.forfeitMatch(match.id, decision)
-  }
+  const ok = await feedback.confirm({
+    title: '逾期裁决',
+    message: `确认对 ${store.playerName(match.playerAId)} vs ${store.playerName(match.playerBId)} 执行「${labels[decision]}」？`,
+    confirmLabel: labels[decision],
+    danger: decision !== 'extend',
+  })
+  if (!ok) return
+  const result = store.forfeitMatch(match.id, decision)
+  if (result.ok) feedback.success(result.message)
+  else feedback.error(result.message)
 }
 
 const copied = ref('')

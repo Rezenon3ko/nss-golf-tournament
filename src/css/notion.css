@@ -188,22 +188,6 @@
   background-color: rgba(200, 180, 130, 0.12);
 }
 
-/* 首页英雄卡片：背景图顶部对齐、按原比例填宽，不裁切 */
-.hero-card {
-  background-color: #f6f2e7;
-}
-
-.dark .hero-card {
-  background-color: #121212;
-}
-
-.hero-card--img {
-  background-image: url('/card-bg.jpg');
-  background-size: cover;
-  background-position: top center;
-  background-repeat: no-repeat;
-}
-
 /* 分割虚线：Notion 文档式 */
 .notion-divider {
   border-top: 1px dashed var(--notion-hairline-strong);

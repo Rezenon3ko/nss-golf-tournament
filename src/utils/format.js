@@ -1,3 +1,5 @@
+import { nowMs } from '@/lib/clock'
+
 export function formatDateTime(iso) {
   if (!iso) return '未设置'
   const d = new Date(iso)
@@ -14,11 +16,11 @@ export function formatDate(iso) {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
 }
 
-export function formatCountdown(iso) {
+export function formatCountdown(iso, now = nowMs.value) {
   if (!iso) return ''
   const target = new Date(iso).getTime()
   if (Number.isNaN(target)) return ''
-  const diff = target - Date.now()
+  const diff = target - now
   if (diff <= 0) return '已截止'
   const days = Math.floor(diff / 86400000)
   const hours = Math.floor((diff % 86400000) / 3600000)

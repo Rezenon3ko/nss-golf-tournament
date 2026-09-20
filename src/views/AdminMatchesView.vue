@@ -7,8 +7,11 @@ import BaseButton from '@/components/BaseButton.vue'
 import MatchDetailModal from '@/components/MatchDetailModal.vue'
 import ScoreEntryModal from '@/components/ScoreEntryModal.vue'
 import { formatDateTime } from '@/utils/format'
+import { nowMs } from '@/lib/clock'
+import { useFeedbackStore } from '@/stores/feedback'
 
 const store = useTournamentStore()
+const feedback = useFeedbackStore()
 
 const stageFilter = ref('all')
 const statusFilter = ref('all')
@@ -38,7 +41,7 @@ const rows = computed(() => {
     .filter((m) => {
       const matchStage = m.stage
       const ddl = store.ddlForMatch(m)
-      const overdue = m.status === 'pending' && ddl && new Date(ddl).getTime() < Date.now()
+      const overdue = m.status === 'pending' && ddl && new Date(ddl).getTime() < nowMs.value
       const displayStatus = overdue ? 'overdue' : m.status
       const matchStageOk = stageFilter.value === 'all' || matchStage === stageFilter.value
       const matchStatusOk = statusFilter.value === 'all' || displayStatus === statusFilter.value
@@ -49,7 +52,7 @@ const rows = computed(() => {
     })
     .map((match) => {
       const ddl = store.ddlForMatch(match)
-      const overdue = match.status === 'pending' && ddl && new Date(ddl).getTime() < Date.now()
+      const overdue = match.status === 'pending' && ddl && new Date(ddl).getTime() < nowMs.value
       return { match, ddl, overdue }
     })
     .sort(
@@ -76,7 +79,7 @@ function displayStatus(row) {
   return row.overdue ? 'overdue' : row.match.status
 }
 
-function forfeit(row, decision) {
+async function forfeit(row, decision) {
   const match = row.match
   const labels = {
     A: `${store.playerName(match.playerAId)}负`,
@@ -84,13 +87,22 @@ function forfeit(row, decision) {
     both: '双方负',
     extend: '延期',
   }
-  if (
-    window.confirm(
-      `确认对 ${store.playerName(match.playerAId)} vs ${store.playerName(match.playerBId)} 执行「${labels[decision]}」？`,
-    )
-  ) {
-    store.forfeitMatch(match.id, decision)
-  }
+  const ok = await feedback.confirm({
+    title: '赛果裁决',
+    message: `确认对 ${store.playerName(match.playerAId)} vs ${store.playerName(match.playerBId)} 执行「${labels[decision]}」？`,
+    confirmLabel: labels[decision],
+    danger: decision !== 'extend',
+  })
+  if (!ok) return
+  const result = store.forfeitMatch(match.id, decision)
+  if (result.ok) feedback.success(result.message)
+  else feedback.error(result.message)
+}
+
+function onSaved() {
+  entryMatch.value = null
+  // 弹窗里的「已保存并发布」会因为立刻关闭而看不到，改为关闭后用 toast 回执
+  feedback.success('赛果已保存并发布')
 }
 </script>
 
@@ -313,7 +325,7 @@ function forfeit(row, decision) {
       v-if="entryMatch"
       :match="entryMatch"
       @close="entryMatch = null"
-      @saved="entryMatch = null"
+      @saved="onSaved"
     />
   </div>
 </template>

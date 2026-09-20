@@ -64,6 +64,22 @@ git push
 
 推送后 Cloudflare Pages 自动重新构建部署，无需手动操作。
 
+仓库里带了 GitHub Actions CI（`.github/workflows/ci.yml`）：每次 push / PR 会自动跑
+lint、单元测试和构建，红了就说明这次改动有问题，先修再合。
+
+### 升级已有站点到 v4.2（同步可靠性）
+
+v4.2 起写入带版本校验（乐观锁），需要数据库补两列 + 一个触发器：
+
+1. Supabase Dashboard → **SQL Editor** → 重新执行一遍 `supabase/schema.sql`（幂等，不会清数据）。
+2. 重新打开站点，右下角不再出现「数据库未升级」提示即完成。
+
+（若只想补这一部分，单独执行 `supabase/schema.sql` 里 `revision` / `updated_at` 两列
+与 `trg_tournament_state_touch` 触发器的语句即可。）
+
+若暂时不执行，站点仍可正常使用，只是退回覆盖式写入：多设备同时编辑时可能互相覆盖，
+页面右下角会持续提示。
+
 ## 六、自定义域名（可选）
 
 Cloudflare Pages → 项目 → Custom domains → 添加域名，免费自动签发 HTTPS。

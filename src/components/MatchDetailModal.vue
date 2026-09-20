@@ -6,6 +6,7 @@ import PlayerBadge from '@/components/PlayerBadge.vue'
 import MatchStatusPill from '@/components/MatchStatusPill.vue'
 import BaseButton from '@/components/BaseButton.vue'
 import { formatDateTime } from '@/utils/format'
+import { countedSetCount } from '@/lib/scoring'
 
 const props = defineProps({
   match: {
@@ -21,6 +22,12 @@ const store = useTournamentStore()
 const playerA = computed(() => store.playerById(props.match.playerAId))
 const playerB = computed(() => store.playerById(props.match.playerBId))
 const matchScore = computed(() => store.matchScore(props.match))
+// 决胜局之后误填的局：原样展示，但标注不计入
+const ignoredFrom = computed(() => {
+  const sets = props.match.sets || []
+  const counted = countedSetCount(sets, props.match)
+  return counted < sets.length ? counted : -1
+})
 const stageLabel = computed(() => {
   if (props.match.stage === 'group') {
     return `${props.match.groupId}组 · 第${props.match.round}轮`
@@ -94,8 +101,18 @@ function setLabel(set) {
             v-for="(set, index) in match.sets"
             :key="index"
             class="border-b border-[#ede9e4] dark:border-[#2e2e2e]"
+            :class="ignoredFrom >= 0 && index >= ignoredFrom ? 'opacity-55' : ''"
           >
-            <td data-label="局" class="py-2 pr-2 font-semibold">{{ index + 1 }}</td>
+            <td data-label="局" class="py-2 pr-2 font-semibold">
+              {{ index + 1 }}
+              <span
+                v-if="ignoredFrom >= 0 && index >= ignoredFrom"
+                class="ms-1 rounded bg-[#f6f5f4] px-1.5 py-0.5 text-[10px] font-normal text-[#5d5b54] dark:bg-[#333333] dark:text-[#a0a0a0]"
+                title="比赛已在此前分出胜负，本局不计入胜负与净胜杆"
+              >
+                不计入
+              </span>
+            </td>
             <td :data-label="`${playerA?.name || '甲'} 相对标准杆`" class="py-2 pr-2">{{ set.a ?? '-' }}</td>
             <td :data-label="`${playerB?.name || '乙'} 相对标准杆`" class="py-2 pr-2">{{ set.b ?? '-' }}</td>
             <td data-label="结果" class="py-2">{{ setLabel(set) }}</td>

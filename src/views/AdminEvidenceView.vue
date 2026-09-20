@@ -5,8 +5,10 @@ import BaseButton from '@/components/BaseButton.vue'
 import BaseModal from '@/components/BaseModal.vue'
 import { formatDateTime } from '@/utils/format'
 import { mdiPlus } from '@mdi/js'
+import { useFeedbackStore } from '@/stores/feedback'
 
 const store = useTournamentStore()
+const feedback = useFeedbackStore()
 
 const typeFilter = ref('all')
 const showAdd = ref(false)
@@ -36,7 +38,7 @@ function matchLabel(matchId) {
 
 function save() {
   if (!form.url.trim()) {
-    window.alert('请填写证据链接')
+    feedback.warn('请填写证据链接')
     return
   }
   store.addEvidence({
@@ -50,12 +52,19 @@ function save() {
   form.type = 'result'
   form.name = ''
   form.url = ''
+  feedback.success('证据已记录')
 }
 
-function remove(id) {
-  if (window.confirm('确认删除该证据？')) {
-    store.removeEvidence(id)
-  }
+async function remove(id) {
+  const ok = await feedback.confirm({
+    title: '删除证据',
+    message: '确认删除该证据？删除后无法恢复。',
+    confirmLabel: '删除',
+    danger: true,
+  })
+  if (!ok) return
+  store.removeEvidence(id)
+  feedback.success('证据已删除')
 }
 </script>
 

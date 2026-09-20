@@ -1,7 +1,18 @@
 import { defineStore } from 'pinia'
-import { computed, ref } from 'vue'
+import { computed, reactive, ref } from 'vue'
 import { TOURNAMENT_STORAGE_KEY, USE_SUPABASE } from '@/config'
 import { supabase } from '@/lib/supabase'
+import {
+  SYNC_ROW_KEY,
+  WRITE_DEBOUNCE_MS,
+  classifySyncError,
+  createConflictError,
+  isDuplicateKey,
+  isMissingRevisionColumn,
+  nextRetryDelay,
+} from '@/lib/sync'
+import { countSetWins, countedSets, needWins, setWinnerId } from '@/lib/scoring'
+import { nowMs } from '@/lib/clock'
 
 const GROUPS = ['A', 'B', 'C', 'D']
 const TIERS = [1, 2, 3, 4]
@@ -136,21 +147,8 @@ function buildSeed() {
 
 // ---------- 单场比赛结果 ----------
 
-function setWinnerId(set, playerAId, playerBId) {
-  if (set.a == null || set.b == null) return null
-  if (set.a < set.b) return playerAId
-  if (set.b < set.a) return playerBId
-  return set.sdWinner || null
-}
-
-function countSetWins(match) {
-  const wins = { A: 0, B: 0 }
-  for (const set of match.sets) {
-    const w = setWinnerId(set, match.playerAId, match.playerBId)
-    if (w === match.playerAId) wins.A += 1
-    else if (w === match.playerBId) wins.B += 1
-  }
-  return wins
+function winsOf(match) {
+  return countSetWins(match.sets, match)
 }
 
 function loserOf(match) {
@@ -167,15 +165,15 @@ function matchWinner(match) {
     return null
   }
   if (match.status !== 'complete') return null
-  const wins = countSetWins(match)
-  const need = match.stage === 'group' ? 2 : 3
+  const wins = winsOf(match)
+  const need = needWins(match.stage)
   if (wins.A >= need) return match.playerAId
   if (wins.B >= need) return match.playerBId
   return null
 }
 
 function matchScore(match) {
-  const wins = countSetWins(match)
+  const wins = winsOf(match)
   return { a: wins.A, b: wins.B }
 }
 
@@ -209,7 +207,8 @@ function resultForPlayer(match, playerId) {
     return base
   }
 
-  for (const set of match.sets) {
+  // 只统计到决出胜负为止的局：决胜局之后误填的局不计入净胜局/净胜杆
+  for (const set of countedSets(match.sets, match)) {
     const w = setWinnerId(set, match.playerAId, match.playerBId)
     if (w === playerId) base.setsWon += 1
     else if (w === opponentId) base.setsLost += 1
@@ -409,8 +408,14 @@ function createKnockoutMatch(state, seed, exists) {
   return match
 }
 
+/**
+ * 根据小组赛结果推导淘汰赛对阵。
+ * 输入是纯数据（state.championId 为值而非 ref），返回本次同步后应写入的冠军。
+ */
 function syncKnockout(state, persistFn) {
   const seeds = knockoutSeedMatches(state)
+  // 只有真正发生变更的分支才改写冠军，其余分支保持原值
+  let champion = state.championId ?? null
   const qfWinners = {}
   const existing = (stage, order) =>
     state.matches.find((m) => m.stage === stage && m.order === order)
@@ -545,7 +550,7 @@ function syncKnockout(state, persistFn) {
       final.walkover = '对手半区作废，直接夺冠'
       final.runnerUpId = runnerUp
       final.status = 'walkover'
-      state.championId.value = champ
+      champion = champ
     } else if (f2 && sf1Void) {
       // 上半区整体作废：下半区决赛选手直接夺冠；若其半决赛真实完赛，败者递补亚军
       const champ = f2
@@ -556,27 +561,28 @@ function syncKnockout(state, persistFn) {
       final.walkover = '对手半区作废，直接夺冠'
       final.runnerUpId = runnerUp
       final.status = 'walkover'
-      state.championId.value = champ
+      champion = champ
     } else if (sf1Void && sf2Void) {
       final.walkover = '双方半区作废，决赛取消'
       final.runnerUpId = null
       final.status = 'walkover'
-      state.championId.value = null
+      champion = null
     } else {
       // 至少一侧尚未决出：决赛保持待定，不提前确定冠军
       final.walkover = null
       final.runnerUpId = null
       if (final.status === 'walkover') final.status = 'pending'
-      state.championId.value = null
+      champion = null
     }
   }
 
   if (final && (final.status === 'complete' || final.status === 'forfeit')) {
-    state.championId.value = matchWinner(final)
+    champion = matchWinner(final)
     final.runnerUpId = null
   }
 
   persistFn()
+  return champion
 }
 
 // ---------- store ----------
@@ -605,29 +611,36 @@ export const useTournamentStore = defineStore('tournament', () => {
     }
     return final.winnerId === final.playerAId ? final.playerBId : final.playerAId
   })
-  const supabaseMode = ref(false)
+  // ---------- 云端同步状态 ----------
+  // mode：local（未配置云端，或读不到云端时的降级模式）| cloud（云端为唯一真相）
+  // status：idle | saving | error | conflict | local-only
+  const sync = reactive({
+    mode: 'local',
+    status: 'idle',
+    message: '',
+    revision: 0,
+    // 数据库是否已升级出 revision / updated_at 列（未升级则退回覆盖式写入）
+    supportsRevision: true,
+    // 是否存在尚未成功写入云端的改动
+    pendingChanges: false,
+    // 是否处于「读不到云端，只写本机」的降级模式
+    degraded: false,
+    lastSyncedAt: null,
+    // 版本冲突时的云端快照，供主办方选择保留哪一份
+    conflictRemote: null,
+  })
+  // 只有主办方登录后才允许写云端（RLS 需要登录态，游客写入必然是 401）
+  const cloudWriteEnabled = ref(false)
 
-  function persistLocal() {
-    localStorage.setItem(
-      TOURNAMENT_STORAGE_KEY,
-      JSON.stringify({
-        players: players.value,
-        draft: draft.value,
-        matches: matches.value,
-        ddlRounds: ddlRounds.value,
-        tiebreakResolutions: tiebreakResolutions.value,
-        evidence: evidence.value,
-        logs: logs.value,
-        championId: championId.value,
-        drawHistory: drawHistory.value,
-        adminAvatar: adminAvatar.value,
-      }),
-    )
-  }
+  let flushTimer = null
+  let retryTimer = null
+  let retryAttempt = 0
+  let inFlight = false
+  let localQueued = false
+  let cloudQueued = false
 
-  function persistToSupabase() {
-    if (!supabase) return
-    const snapshot = {
+  function snapshot() {
+    return {
       players: players.value,
       draft: draft.value,
       matches: matches.value,
@@ -639,27 +652,314 @@ export const useTournamentStore = defineStore('tournament', () => {
       drawHistory: drawHistory.value,
       adminAvatar: adminAvatar.value,
     }
-    supabase
-      .from('tournament_state')
-      .upsert({ key: 'main', value: snapshot }, { onConflict: 'key' })
-      .then(({ error }) => {
-        if (error) console.error('Supabase 写入失败：', error.message)
-      })
   }
 
+  function applySnapshot(data) {
+    if (!data) return
+    players.value = data.players || []
+    draft.value = data.draft || null
+    matches.value = data.matches || []
+    ddlRounds.value = data.ddlRounds || []
+    tiebreakResolutions.value = data.tiebreakResolutions || {}
+    evidence.value = data.evidence || []
+    logs.value = data.logs || []
+    championId.value = data.championId || null
+    drawHistory.value = data.drawHistory || []
+    adminAvatar.value = data.adminAvatar || null
+  }
+
+  function persistLocal() {
+    try {
+      // __pending 标记「本地有尚未成功写入云端的改动」，
+      // 下次打开时即便云端可读，也不会静默丢弃本机改动
+      localStorage.setItem(
+        TOURNAMENT_STORAGE_KEY,
+        JSON.stringify({ ...snapshot(), __pending: sync.pendingChanges }),
+      )
+    } catch (err) {
+      console.warn('本地缓存写入失败：', err?.message || err)
+    }
+  }
+
+  // 每次修改都会调用：本地缓存立即排队，云端写入防抖合并
   function persist() {
-    if (supabaseMode.value) {
-      persistToSupabase()
+    localQueued = true
+    if (sync.degraded) {
+      // 读不到云端时不写云端，只把改动留在本机，等待主办方决定
+      sync.pendingChanges = true
+    } else if (sync.mode === 'cloud' && sync.status !== 'conflict') {
+      sync.pendingChanges = true
+      if (cloudWriteEnabled.value) {
+        cloudQueued = true
+        if (sync.status !== 'error') sync.status = 'saving'
+      }
+    }
+    scheduleFlush()
+  }
+
+  function scheduleFlush(delay = WRITE_DEBOUNCE_MS) {
+    clearTimeout(flushTimer)
+    flushTimer = setTimeout(flushQueued, delay)
+  }
+
+  function flushQueued() {
+    clearTimeout(flushTimer)
+    if (localQueued) {
+      localQueued = false
+      persistLocal()
+    }
+    if (cloudQueued && !inFlight) void flushCloud()
+  }
+
+  // ---------- 云端读写 ----------
+
+  // 读取云端快照：老库缺 revision 列时自动降级
+  async function fetchRemoteRow() {
+    if (!supabase) throw new Error('Supabase 未初始化')
+    const columns = sync.supportsRevision ? 'value,revision' : 'value'
+    const { data, error } = await supabase
+      .from('tournament_state')
+      .select(columns)
+      .eq('key', SYNC_ROW_KEY)
+      .maybeSingle()
+    if (error) {
+      if (sync.supportsRevision && isMissingRevisionColumn(error)) {
+        console.warn('数据库缺少 revision 列，退回覆盖式写入；建议重新执行 supabase/schema.sql')
+        sync.supportsRevision = false
+        return fetchRemoteRow()
+      }
+      throw error
+    }
+    if (!data) return null
+    return { value: data.value, revision: data.revision == null ? 0 : Number(data.revision) }
+  }
+
+  // 带乐观锁的写入：只有云端版本仍是我们读取的那一版才允许覆盖
+  async function writeSnapshot(payload) {
+    if (!supabase) throw new Error('Supabase 未初始化')
+
+    if (!sync.supportsRevision) {
+      const { error } = await supabase
+        .from('tournament_state')
+        .upsert({ key: SYNC_ROW_KEY, value: payload }, { onConflict: 'key' })
+      if (error) throw error
       return
     }
-    persistLocal()
+
+    const baseRevision = sync.revision
+    const nextRevision = baseRevision + 1
+    const row = {
+      value: payload,
+      revision: nextRevision,
+      updated_at: new Date().toISOString(),
+    }
+
+    const { data, error } = await supabase
+      .from('tournament_state')
+      .update(row)
+      .eq('key', SYNC_ROW_KEY)
+      .eq('revision', baseRevision)
+      .select('revision')
+
+    if (error) {
+      if (isMissingRevisionColumn(error)) {
+        console.warn('数据库缺少 revision 列，退回覆盖式写入；建议重新执行 supabase/schema.sql')
+        sync.supportsRevision = false
+        return writeSnapshot(payload)
+      }
+      throw error
+    }
+
+    // 更新未命中：要么行不存在（首次写入），要么云端版本已被别人推进
+    if (!data || data.length === 0) {
+      const remote = await fetchRemoteRow()
+      if (remote) throw createConflictError(remote)
+
+      const inserted = await supabase
+        .from('tournament_state')
+        .insert({ key: SYNC_ROW_KEY, ...row })
+      if (inserted.error) {
+        if (isDuplicateKey(inserted.error)) throw createConflictError(await fetchRemoteRow())
+        if (isMissingRevisionColumn(inserted.error)) {
+          sync.supportsRevision = false
+          return writeSnapshot(payload)
+        }
+        throw inserted.error
+      }
+      sync.revision = nextRevision
+      return
+    }
+
+    sync.revision = Number(data[0].revision ?? nextRevision)
   }
 
-  // 主办方登录后调用：把本地/种子数据同步到云端（携带登录态，RLS 才放行）
-  function ensureCloudSync() {
-    if (supabaseMode.value) {
-      persistToSupabase()
+  async function flushCloud() {
+    if (inFlight || !cloudQueued) return
+    if (!supabase || !cloudWriteEnabled.value) return
+    if (sync.mode !== 'cloud' || sync.status === 'conflict') return
+
+    cloudQueued = false
+    inFlight = true
+    const retrying = sync.status === 'error'
+    sync.status = 'saving'
+    if (!retrying) sync.message = ''
+
+    try {
+      await writeSnapshot(snapshot())
+      retryAttempt = 0
+      sync.lastSyncedAt = Date.now()
+      sync.degraded = false
+      if (cloudQueued) {
+        // 写入期间又有新改动，继续排队写
+        sync.status = 'saving'
+      } else {
+        sync.pendingChanges = false
+        sync.status = 'idle'
+        sync.message = ''
+        persistLocal()
+      }
+    } catch (err) {
+      if (err?.isConflict) {
+        sync.status = 'conflict'
+        sync.message = '云端数据已被其他设备更新，请选择保留哪一份'
+        sync.conflictRemote = err.remote || null
+        sync.pendingChanges = true
+        cloudQueued = false
+      } else {
+        const info = classifySyncError(err)
+        console.error('Supabase 写入失败：', err?.message || err)
+        sync.status = 'error'
+        sync.message = info.message
+        sync.pendingChanges = true
+        cloudQueued = true
+        scheduleRetry()
+      }
+    } finally {
+      inFlight = false
+      if (cloudQueued && sync.status !== 'conflict' && sync.status !== 'error') {
+        void flushCloud()
+      }
     }
+  }
+
+  function scheduleRetry() {
+    clearTimeout(retryTimer)
+    retryAttempt += 1
+    retryTimer = setTimeout(() => {
+      if (cloudQueued && sync.status === 'error') void flushCloud()
+    }, nextRetryDelay(retryAttempt))
+  }
+
+  // 主办方登录状态变化时调用；首次登录会把待同步的改动推上去
+  function setCloudWriteEnabled(enabled) {
+    cloudWriteEnabled.value = !!enabled
+    if (
+      enabled &&
+      sync.mode === 'cloud' &&
+      sync.pendingChanges &&
+      sync.status !== 'conflict'
+    ) {
+      cloudQueued = true
+      flushQueued()
+    }
+  }
+
+  // 手动重试：写入失败时重发，降级模式下重新尝试连接云端
+  async function retrySync() {
+    clearTimeout(retryTimer)
+    retryAttempt = 0
+    if (sync.degraded) return reconnect()
+    if (sync.status === 'error') {
+      cloudQueued = true
+      await flushCloud()
+      return sync.status === 'idle'
+    }
+    return !sync.pendingChanges
+  }
+
+  // 降级模式（读不到云端）下重新连接
+  async function reconnect() {
+    if (!supabase) return false
+    sync.status = 'saving'
+    sync.message = ''
+    try {
+      const row = await fetchRemoteRow()
+      sync.mode = 'cloud'
+      sync.degraded = false
+      if (!row) {
+        // 云端还没有数据：把本机数据推上去
+        sync.revision = 0
+        sync.pendingChanges = true
+        cloudQueued = true
+        await flushCloud()
+        return true
+      }
+      if (sync.pendingChanges) {
+        // 本机有未同步的改动，云端也有数据：由主办方决定保留哪一份
+        sync.status = 'conflict'
+        sync.message = '本机存在未同步的改动，云端也已有数据，请选择保留哪一份'
+        sync.conflictRemote = row
+        return true
+      }
+      applySnapshot(row.value)
+      persistLocal()
+      sync.revision = row.revision
+      sync.status = 'idle'
+      sync.lastSyncedAt = Date.now()
+      return true
+    } catch (err) {
+      console.warn('Supabase 读取失败：', err?.message || err)
+      sync.mode = 'local'
+      sync.degraded = true
+      sync.status = 'local-only'
+      sync.message = '仍未能连接云端，当前修改只保存在本机'
+      return false
+    }
+  }
+
+  // 冲突处理：采用云端版本（丢弃本机未同步改动）
+  function useRemoteVersion() {
+    const remote = sync.conflictRemote
+    if (!remote) return
+    applySnapshot(remote.value)
+    persistLocal()
+    clearTimeout(retryTimer)
+    retryAttempt = 0
+    cloudQueued = false
+    sync.revision = remote.revision
+    sync.conflictRemote = null
+    sync.pendingChanges = false
+    sync.status = 'idle'
+    sync.message = ''
+  }
+
+  // 冲突处理：用本机版本覆盖云端（以云端最新版本号为基线重写）
+  async function useLocalVersion() {
+    const remote = sync.conflictRemote
+    if (!remote) return false
+    sync.revision = remote.revision
+    sync.conflictRemote = null
+    sync.status = 'saving'
+    sync.message = ''
+    cloudQueued = true
+    await flushCloud()
+    return sync.status === 'idle'
+  }
+
+  if (typeof window !== 'undefined') {
+    window.addEventListener('online', () => {
+      if (sync.status === 'error' || sync.degraded) void retrySync()
+    })
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible' && sync.status === 'error') void retrySync()
+    })
+    // 关页面前把防抖中的本地缓存落盘，避免最后一笔改动丢失
+    window.addEventListener('beforeunload', () => {
+      if (localQueued) {
+        localQueued = false
+        persistLocal()
+      }
+    })
   }
 
   function stateView() {
@@ -667,57 +967,22 @@ export const useTournamentStore = defineStore('tournament', () => {
       players: players.value,
       matches: matches.value,
       tiebreakResolutions: tiebreakResolutions.value,
-      championId: championId,
+      championId: championId.value,
     }
   }
 
+  // 读取本机缓存；found=是否有缓存，pending=缓存里是否带着未同步的改动
   function loadLocal() {
     try {
       const raw = localStorage.getItem(TOURNAMENT_STORAGE_KEY)
-      if (!raw) return false
+      if (!raw) return { found: false, pending: false }
       const data = JSON.parse(raw)
-      if (!data || !Array.isArray(data.players)) return false
-      players.value = data.players
-      draft.value = data.draft || null
-      matches.value = data.matches || []
-      ddlRounds.value = data.ddlRounds || []
-      tiebreakResolutions.value = data.tiebreakResolutions || {}
-      evidence.value = data.evidence || []
-      logs.value = data.logs || []
-      championId.value = data.championId || null
-      drawHistory.value = data.drawHistory || []
-      adminAvatar.value = data.adminAvatar || null
-      return true
+      if (!data || !Array.isArray(data.players)) return { found: false, pending: false }
+      applySnapshot(data)
+      return { found: true, pending: data.__pending === true }
     } catch {
-      return false
+      return { found: false, pending: false }
     }
-  }
-
-  async function loadFromSupabase() {
-    if (!supabase) return 'error'
-    const { data, error } = await supabase
-      .from('tournament_state')
-      .select('value')
-      .eq('key', 'main')
-      .maybeSingle()
-    if (error) {
-      console.warn('Supabase 读取失败：', error.message)
-      return 'error'
-    }
-    if (!data?.value) return 'empty'
-    const v = data.value
-    players.value = v.players || []
-    draft.value = v.draft || null
-    matches.value = v.matches || []
-    ddlRounds.value = v.ddlRounds || []
-    tiebreakResolutions.value = v.tiebreakResolutions || {}
-    evidence.value = v.evidence || []
-    logs.value = v.logs || []
-    championId.value = v.championId || null
-    drawHistory.value = v.drawHistory || []
-    adminAvatar.value = v.adminAvatar || null
-    supabaseMode.value = true
-    return 'ok'
   }
 
   function seedState() {
@@ -735,24 +1000,57 @@ export const useTournamentStore = defineStore('tournament', () => {
 
   async function init() {
     if (USE_SUPABASE && supabase) {
-      const result = await loadFromSupabase()
-      if (result === 'ok') {
-        ready.value = true
-        return
-      }
-      if (result === 'empty') {
-        // 云端建好表但还没有数据：先保留本地/种子数据，
-        // 云端的首次写入等主办方登录后由 ensureCloudSync 完成（游客无写权限）
-        if (!loadLocal()) {
-          seedState()
+      try {
+        const row = await fetchRemoteRow()
+        sync.mode = 'cloud'
+        sync.degraded = false
+        sync.status = 'idle'
+        const local = loadLocal()
+        if (row && local.found && local.pending) {
+          // 上次有改动没同步成功（断网/关页太快）：保留本机状态，
+          // 把云端那份交给主办方选择，绝不静默覆盖
+          sync.revision = row.revision
+          sync.pendingChanges = true
+          sync.conflictRemote = row
+          sync.status = 'conflict'
+          sync.message = '本机缓存中有上次未同步成功的改动，请选择保留哪一份'
+          ready.value = true
+          return
         }
-        supabaseMode.value = true
+        if (row) {
+          applySnapshot(row.value)
+          // 本地留一份缓存，云端暂时不可用时至少能看到最近的数据
+          sync.revision = row.revision
+          sync.pendingChanges = false
+          sync.lastSyncedAt = Date.now()
+          persistLocal()
+        } else {
+          // 云端建好表但还没有数据：先保留本地/种子数据，
+          // 首次写入等主办方登录后由 setCloudWriteEnabled 触发（游客无写权限）
+          sync.revision = 0
+          if (!local.found) seedState()
+          sync.pendingChanges = true
+        }
+        ready.value = true
+        return
+      } catch (err) {
+        // 云端读取失败：降级为「本地模式」，明确告知主办方改动不会上云，
+        // 绝不静默当作已同步
+        console.warn('Supabase 读取失败：', err?.message || err, '→ 进入本地模式')
+        sync.mode = 'local'
+        sync.degraded = true
+        sync.status = 'local-only'
+        sync.message = '未能连接云端，当前修改只保存在本机'
+        const local = loadLocal()
+        if (!local.found) seedState()
+        // 缓存里已有未同步改动时，重连后同样交给主办方选择
+        if (local.pending) sync.pendingChanges = true
         ready.value = true
         return
       }
-      console.warn('Supabase 暂不可用（请先在 SQL Editor 执行 supabase/schema.sql），回退本地数据')
     }
-    if (!loadLocal()) {
+    sync.mode = 'local'
+    if (!loadLocal().found) {
       seedState()
       persistLocal()
     }
@@ -981,8 +1279,8 @@ export const useTournamentStore = defineStore('tournament', () => {
       match.disconnect = null
     }
 
-    const wins = countSetWins(match)
-    const need = match.stage === 'group' ? 2 : 3
+    const wins = winsOf(match)
+    const need = needWins(match.stage)
     if (wins.A >= need || wins.B >= need) {
       match.status = 'complete'
       match.winnerId = wins.A >= need ? match.playerAId : match.playerBId
@@ -1015,10 +1313,13 @@ export const useTournamentStore = defineStore('tournament', () => {
 
   function forfeitMatch(id, decision) {
     const match = matches.value.find((m) => m.id === id)
-    if (!match) return
+    if (!match) return { ok: false, message: '未找到该场比赛' }
     if (!canJudgeForfeit(match, decision)) {
-      window.alert('对手尚未确定：只能对已确定的选手执行判负，待定一方无法判负或双方负')
-      return
+      // 交给页面层提示：store 不弹窗
+      return {
+        ok: false,
+        message: '对手尚未确定：只能对已确定的选手执行判负，待定一方无法判负或双方负',
+      }
     }
     const labels = {
       A: `${playerName(match.playerAId)}负`,
@@ -1045,6 +1346,13 @@ export const useTournamentStore = defineStore('tournament', () => {
       syncKnockoutInternal()
     }
     persist()
+    return {
+      ok: true,
+      message:
+        decision === 'extend'
+          ? `${playerName(match.playerAId)} vs ${playerName(match.playerBId)} 已恢复待赛`
+          : `${playerName(match.playerAId)} vs ${playerName(match.playerBId)} 已判定：${labels[decision]}`,
+    }
   }
 
   function resolveTiebreak(groupId) {
@@ -1182,12 +1490,12 @@ export const useTournamentStore = defineStore('tournament', () => {
   )
 
   const overdueMatches = computed(() => {
-    const nowMs = now()
+    const current = nowMs.value
     return matches.value
       .filter((m) => {
         if (m.status !== 'pending') return false
         const ddl = ddlForMatch(m)
-        return !!ddl && new Date(ddl).getTime() < nowMs
+        return !!ddl && new Date(ddl).getTime() < current
       })
       .map((m) => ({ match: m, ddl: ddlForMatch(m) }))
   })
@@ -1211,7 +1519,7 @@ export const useTournamentStore = defineStore('tournament', () => {
   }
 
   function syncKnockoutInternal() {
-    syncKnockout(stateView(), persist)
+    championId.value = syncKnockout(stateView(), persist) ?? null
   }
 
   return {
@@ -1230,7 +1538,12 @@ export const useTournamentStore = defineStore('tournament', () => {
     ready,
     init,
     persist,
-    ensureCloudSync,
+    sync,
+    setCloudWriteEnabled,
+    retrySync,
+    reconnect,
+    useRemoteVersion,
+    useLocalVersion,
     addLog,
     addPlayer,
     updatePlayer,

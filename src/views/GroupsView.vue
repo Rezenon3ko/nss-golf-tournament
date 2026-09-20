@@ -9,6 +9,7 @@ import BaseButton from '@/components/BaseButton.vue'
 import MatchDetailModal from '@/components/MatchDetailModal.vue'
 import ScoreEntryModal from '@/components/ScoreEntryModal.vue'
 import { formatDateTime } from '@/utils/format'
+import { nowMs } from '@/lib/clock'
 
 const store = useTournamentStore()
 const auth = useAuthStore()
@@ -42,7 +43,7 @@ const activeTintHover = computed(() => {
 const filteredMatches = computed(() => {
   const rows = groupMatches.value.map((match) => {
     const ddl = store.ddlForMatch(match)
-    const overdue = match.status === 'pending' && ddl && new Date(ddl).getTime() < Date.now()
+    const overdue = match.status === 'pending' && ddl && new Date(ddl).getTime() < nowMs.value
     return { match, ddl, overdue }
   })
   if (statusFilter.value === 'all') return rows
@@ -128,7 +129,7 @@ function onEntrySaved() {
         </thead>
         <tbody>
           <tr
-            v-for="(row, index) in filteredMatches"
+            v-for="row in filteredMatches"
             :key="row.match.id"
             class="border-b border-[#ede9e4] last:border-0 dark:border-[#2e2e2e]"
             :class="[
@@ -195,7 +196,7 @@ function onEntrySaved() {
       </div>
       <div class="divide-y divide-[#ede9e4] lg:hidden dark:divide-[#2e2e2e]">
         <div
-          v-for="(row, index) in filteredMatches"
+          v-for="row in filteredMatches"
           :key="row.match.id"
           class="p-4"
           :class="[

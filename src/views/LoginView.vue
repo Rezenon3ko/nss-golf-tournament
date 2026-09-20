@@ -31,7 +31,7 @@ async function submit() {
     return
   }
   if (await auth.login(password.value)) {
-    tournamentStore.ensureCloudSync()
+    tournamentStore.setCloudWriteEnabled(true)
     const next = typeof route.query.next === 'string' ? route.query.next : '/admin'
     router.replace(next)
     return

@@ -5,6 +5,7 @@ import BaseModal from '@/components/BaseModal.vue'
 import BaseButton from '@/components/BaseButton.vue'
 import PlayerBadge from '@/components/PlayerBadge.vue'
 import { formatDateTime } from '@/utils/format'
+import { countSetWins, countedSetCount } from '@/lib/scoring'
 
 const props = defineProps({
   match: {
@@ -51,19 +52,10 @@ const playerB = computed(() => store.playerById(props.match.playerBId))
 // 双方是否都已确定（对手待定时不可录入）
 const playersReady = computed(() => !!props.match.playerAId && !!props.match.playerBId)
 
-const winsPreview = computed(() => {
-  const wins = { A: 0, B: 0 }
-  for (const set of form.sets) {
-    if (set.a == null || set.b == null) continue
-    if (set.a < set.b) wins.A += 1
-    else if (set.b < set.a) wins.B += 1
-    else if (set.sdWinner) {
-      if (set.sdWinner === props.match.playerAId) wins.A += 1
-      else wins.B += 1
-    }
-  }
-  return wins
-})
+// 先到 need 局即封盘：之后误填的局不计入胜负与净胜杆
+const countedCount = computed(() => countedSetCount(form.sets, props.match))
+const winsPreview = computed(() => countSetWins(form.sets, props.match))
+const ignoredFrom = computed(() => (countedCount.value < form.sets.length ? countedCount.value : -1))
 
 const winnerPreview = computed(() => {
   if (winsPreview.value.A >= need) return props.match.playerAId
@@ -192,8 +184,18 @@ function save() {
             v-for="(set, index) in form.sets"
             :key="index"
             class="border-b border-[#ede9e4] dark:border-[#2e2e2e]"
+            :class="index >= ignoredFrom && ignoredFrom >= 0 ? 'opacity-55' : ''"
           >
-            <td data-label="局" class="py-2 pr-2 font-semibold">{{ index + 1 }}</td>
+            <td data-label="局" class="py-2 pr-2 font-semibold">
+              {{ index + 1 }}
+              <span
+                v-if="ignoredFrom >= 0 && index >= ignoredFrom"
+                class="ms-1 rounded bg-[#f6f5f4] px-1.5 py-0.5 text-[10px] font-normal text-[#5d5b54] dark:bg-[#333333] dark:text-[#a0a0a0]"
+                title="比赛已在此前分出胜负，本局不计入胜负与净胜杆"
+              >
+                不计入
+              </span>
+            </td>
             <td :data-label="`${playerA?.name || '甲'} 相对标准杆`" class="py-2 pr-2">
               <input
                 v-model.number="set.a"
@@ -225,6 +227,13 @@ function save() {
         </tbody>
       </table>
     </div>
+    <p
+      v-if="ignoredFrom >= 0"
+      class="-mt-3 mb-4 rounded-lg bg-[#f6f5f4] px-3 py-2 text-xs text-[#5d5b54] dark:bg-[#2a2a2a] dark:text-[#a0a0a0]"
+    >
+      已由第 {{ ignoredFrom }} 局决出胜负（{{ isBO5 ? '五局三胜' : '三局两胜' }}），
+      因此第 {{ ignoredFrom + 1 }} 局起不计入胜负与净胜杆；数据会原样保留，便于后续修正。
+    </p>
 
     <h4 class="mb-2 text-sm font-bold text-[#5d5b54] dark:text-[#a0a0a0]">结果截图链接</h4>
     <div class="mb-4">

@@ -16,8 +16,10 @@ import {
 } from '@mdi/js'
 import BaseIcon from '@/components/BaseIcon.vue'
 import { formatDateTime } from '@/utils/format'
+import { useFeedbackStore } from '@/stores/feedback'
 
 const store = useTournamentStore()
+const feedback = useFeedbackStore()
 
 const showEditor = ref(false)
 const editingId = ref(null)
@@ -35,7 +37,7 @@ function onAvatarChange(event) {
   input.value = ''
   if (!file) return
   if (!file.type.startsWith('image/')) {
-    window.alert('请选择图片文件（JPG / PNG）')
+    feedback.warn('请选择图片文件（JPG / PNG）')
     return
   }
   const reader = new FileReader()
@@ -61,10 +63,10 @@ function onAvatarChange(event) {
       )
       form.avatar = canvas.toDataURL('image/jpeg', 0.85)
     }
-    img.onerror = () => window.alert('图片读取失败，请换一张试试')
+    img.onerror = () => feedback.error('图片读取失败，请换一张试试')
     img.src = reader.result
   }
-  reader.onerror = () => window.alert('图片读取失败，请换一张试试')
+  reader.onerror = () => feedback.error('图片读取失败，请换一张试试')
   reader.readAsDataURL(file)
 }
 
@@ -88,7 +90,7 @@ function openEdit(player) {
 
 function savePlayer() {
   if (!form.name.trim()) {
-    window.alert('请填写选手名字')
+    feedback.warn('请填写选手名字')
     return
   }
   if (editingId.value) {
@@ -107,28 +109,55 @@ function savePlayer() {
     })
   }
   showEditor.value = false
+  feedback.success(editingId.value ? '选手信息已更新' : '选手已添加')
 }
 
-function removePlayer(player) {
-  if (!window.confirm(`确认删除选手「${player.name}」？`)) return
-  const ok = store.removePlayer(player.id)
-  if (!ok) window.alert('该选手已有关联比赛记录，无法删除，可改为停用')
+async function removePlayer(player) {
+  const ok = await feedback.confirm({
+    title: '删除选手',
+    message: `确认删除选手「${player.name}」？该选手的所有资料将从名单中移除。`,
+    confirmLabel: '删除',
+    danger: true,
+  })
+  if (!ok) return
+  const removed = store.removePlayer(player.id)
+  if (!removed) feedback.error('该选手已有关联比赛记录，无法删除，可改为停用')
+  else feedback.success(`已删除选手「${player.name}」`)
 }
 
-function doDraw() {
-  if (!window.confirm('将清空当前分组并重新随机分配，确定继续？')) return
+async function doDraw() {
+  const ok = await feedback.confirm({
+    title: '重新抽签',
+    message: '将清空当前分组并重新随机分配（加密随机），确定继续？',
+    confirmLabel: '重新抽签',
+  })
+  if (!ok) return
   store.drawGroups()
+  feedback.success('已完成随机抽签，请检查分组后发布')
 }
 
-function doPublish() {
-  if (!window.confirm('确认发布分组？发布后将生成全部小组赛赛程，且无法直接重抽。')) return
-  const ok = store.publishGroups()
-  if (!ok) window.alert('当前分组不满足约束（每组 4 人、每档各 1 人）')
+async function doPublish() {
+  const ok = await feedback.confirm({
+    title: '发布分组',
+    message: '确认发布分组？发布后将生成全部小组赛赛程（24 场），且无法直接重抽。',
+    confirmLabel: '发布分组',
+  })
+  if (!ok) return
+  const published = store.publishGroups()
+  if (!published) feedback.error('当前分组不满足约束（每组 4 人、每档各 1 人）')
+  else feedback.success('分组已发布，小组赛赛程已生成')
 }
 
-function doReset() {
-  if (!window.confirm('确认重置赛事？将清空全部赛程、赛果与证据（保留选手名单）。')) return
+async function doReset() {
+  const ok = await feedback.confirm({
+    title: '重置赛事',
+    message: '确认重置赛事？将清空全部赛程、赛果与证据（保留选手名单）。此操作不可撤销。',
+    confirmLabel: '重置赛事',
+    danger: true,
+  })
+  if (!ok) return
   store.resetTournament()
+  feedback.success('赛事已重置（选手名单已保留）')
 }
 
 const tierPlayers = computed(() => {
@@ -167,10 +196,16 @@ function onSlotChange(groupId, tierIndex, event) {
   store.setDraftGroup(groupId, tierIndex, event.target.value || null)
 }
 
-function doClearDraft() {
-  if (window.confirm('确认清空手动分组选择？所有下拉将回到「未选择」。')) {
-    store.clearDraft()
-  }
+async function doClearDraft() {
+  const ok = await feedback.confirm({
+    title: '清空手动分组',
+    message: '确认清空手动分组选择？所有下拉将回到「未选择」。',
+    confirmLabel: '清空',
+    danger: true,
+  })
+  if (!ok) return
+  store.clearDraft()
+  feedback.success('手动分组已清空')
 }
 
 const valid = computed(() => store.constraintValid())

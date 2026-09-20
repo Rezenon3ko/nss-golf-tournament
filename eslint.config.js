@@ -20,6 +20,27 @@ export default defineConfig([
     },
   },
 
+  {
+    name: 'test/files-to-lint',
+    files: ['test/**/*.{js,mjs}'],
+    languageOptions: {
+      globals: {
+        ...globals.node,
+      },
+    },
+  },
+
+  {
+    // 构建配置在 Node 环境执行
+    name: 'config/files-to-lint',
+    files: ['*.config.{js,mjs}'],
+    languageOptions: {
+      globals: {
+        ...globals.node,
+      },
+    },
+  },
+
   js.configs.recommended,
   ...pluginVue.configs['flat/essential'],
   skipFormatting,

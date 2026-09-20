@@ -66,23 +66,11 @@ const champion = computed(() => store.playerById(store.championId))
 
 <template>
   <div class="mx-auto max-w-6xl px-4 py-6">
-    <div
-      class="hero-card hero-card--img relative mb-6 overflow-hidden rounded-2xl p-6 text-[#1a1a1a] shadow-xl md:p-8 dark:text-[#e6e6e6]"
-    >
+    <div class="notion-card relative mb-6 p-6 text-[#1a1a1a] md:p-8 dark:text-[#e6e6e6]">
       <div
         class="absolute inset-x-0 top-0 h-1 bg-linear-to-r from-transparent via-[#b8860b] to-transparent"
       ></div>
-      <div
-        class="pointer-events-none absolute inset-0 opacity-20"
-        style="background-image: radial-gradient(rgba(0,0,0,0.12) 2px, transparent 2.5px); background-size: 36px 36px"
-      ></div>
-      <div
-        class="pointer-events-none absolute inset-0 hidden bg-linear-to-br from-white/15 via-white/5 to-transparent dark:block"
-      ></div>
-      <div
-        class="pointer-events-none absolute inset-0 hidden bg-[#121212]/60 dark:block"
-      ></div>
-      <div class="relative z-10 text-center">
+      <div class="text-center">
         <p
           class="mb-2 flex items-center justify-center gap-2 text-sm font-semibold tracking-wide text-[#5d5b54] dark:text-[#c7c7c7]"
         >
@@ -107,7 +95,7 @@ const champion = computed(() => store.playerById(store.championId))
                 ? 'border-[#8c6d1f] bg-linear-to-br from-[#f0d78c] via-[#c9a24b] to-[#8c6d1f] text-[#241a08]'
                 : stageOrder.indexOf(key) < stageIndex
                   ? 'border-[#1aae39]/60 bg-[#1aae39]/15 text-[#0f6b28] dark:border-[#4a8f6b]/70 dark:bg-[#1d3a2a] dark:text-[#7ec8a0]'
-                  : 'border-black/15 bg-white/70 text-[#5d5b54] dark:border-white/20 dark:bg-white/10 dark:text-[#c7c7c7]'
+                  : 'border-black/15 bg-[#f6f5f4] text-[#5d5b54] dark:border-white/20 dark:bg-white/10 dark:text-[#c7c7c7]'
             "
           >
             {{ name }}

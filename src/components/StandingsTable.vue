@@ -4,6 +4,7 @@ import { useTournamentStore } from '@/stores/tournament'
 import { useAuthStore } from '@/stores/auth'
 import PlayerBadge from '@/components/PlayerBadge.vue'
 import BaseButton from '@/components/BaseButton.vue'
+import { useFeedbackStore } from '@/stores/feedback'
 import { mdiDiceMultiple } from '@mdi/js'
 
 const props = defineProps({
@@ -15,6 +16,7 @@ const props = defineProps({
 
 const store = useTournamentStore()
 const auth = useAuthStore()
+const feedback = useFeedbackStore()
 
 const rows = computed(() => store.getStandings(props.groupId))
 
@@ -42,14 +44,19 @@ const tintHover = computed(() => {
 const complete = computed(() => !!store.groupComplete[props.groupId])
 const hasDraw = computed(() => rows.value.some((row) => row.needsDraw))
 
-function resolveDraw() {
+async function resolveDraw() {
   const names = rows.value
     .filter((row) => row.needsDraw)
     .map((row) => row.name)
     .join('、')
-  if (window.confirm(`按规则顺序仍无法区分 ${names}，是否发起随机抽签？`)) {
-    store.resolveTiebreak(props.groupId)
-  }
+  const ok = await feedback.confirm({
+    title: `${props.groupId} 组并列抽签`,
+    message: `按规则顺序（积分 → 相互战绩 → 净胜局 → 净胜杆）仍无法区分 ${names}，是否发起随机抽签决定名次？`,
+    confirmLabel: '发起抽签',
+  })
+  if (!ok) return
+  store.resolveTiebreak(props.groupId)
+  feedback.success(`${props.groupId} 组并列名次已抽签确定`)
 }
 
 function rankClass(rank) {

@@ -1,19 +1,27 @@
 <script setup>
+import { watch } from 'vue'
 import { RouterView } from 'vue-router'
 import { useTournamentStore } from '@/stores/tournament'
 import { useAuthStore } from '@/stores/auth'
-import BaseIcon from '@/components/BaseIcon.vue'
 import GolfLogo from '@/components/GolfLogo.vue'
+import SyncBanner from '@/components/SyncBanner.vue'
+import ToastHost from '@/components/ToastHost.vue'
+import ConfirmDialog from '@/components/ConfirmDialog.vue'
 
 const tournamentStore = useTournamentStore()
 const authStore = useAuthStore()
 
-// 数据与登录会话初始化；若已是主办方（会话恢复），把本地数据同步到云端
+// 数据与登录会话初始化。
+// 只有主办方登录后才允许写云端；首次登录会把待同步的改动推上去，
+// 不会再无条件覆盖云端数据（覆盖前有版本校验）。
 Promise.all([tournamentStore.init(), authStore.init()]).then(() => {
-  if (authStore.isAdmin) {
-    tournamentStore.ensureCloudSync()
-  }
+  tournamentStore.setCloudWriteEnabled(authStore.isAdmin)
 })
+
+watch(
+  () => authStore.isAdmin,
+  (isAdmin) => tournamentStore.setCloudWriteEnabled(isAdmin),
+)
 </script>
 
 <template>
@@ -27,5 +35,10 @@ Promise.all([tournamentStore.init(), authStore.init()]).then(() => {
       <p class="text-sm text-[#5d5b54] dark:text-[#a0a0a0]">正在加载赛事数据…</p>
     </div>
   </div>
-  <RouterView v-else />
+  <template v-else>
+    <RouterView />
+    <ToastHost />
+    <ConfirmDialog />
+    <SyncBanner />
+  </template>
 </template>
