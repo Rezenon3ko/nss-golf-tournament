@@ -3,11 +3,7 @@ import { computed, ref } from 'vue'
 import { useTournamentStore } from '@/stores/tournament'
 import BaseButton from '@/components/BaseButton.vue'
 import { downloadText, toCsv } from '@/utils/format'
-import {
-  mdiFileDelimited,
-  mdiCodeJson,
-  mdiClipboardText,
-} from '@mdi/js'
+import { mdiFileDelimited, mdiCodeJson, mdiClipboardText } from '@mdi/js'
 
 const store = useTournamentStore()
 
@@ -58,7 +54,11 @@ function downloadCsv(name, rows) {
 }
 
 function downloadJson() {
-  downloadText('ghostfish-tournament.json', JSON.stringify(store.exportSnapshot(), null, 2), 'application/json')
+  downloadText(
+    'ghostfish-tournament.json',
+    JSON.stringify(store.exportSnapshot(), null, 2),
+    'application/json',
+  )
 }
 
 function bracketText() {
@@ -72,7 +72,9 @@ function bracketText() {
             return ` ${s.a}:${s.b}`
           })()
         : ''
-    lines.push(`${n.label}：${store.playerName(n.playerAId)} vs ${store.playerName(n.playerBId)}${score}`)
+    lines.push(
+      `${n.label}：${store.playerName(n.playerAId)} vs ${store.playerName(n.playerBId)}${score}`,
+    )
   }
   if (store.championId) {
     lines.push('')
@@ -146,7 +148,10 @@ async function copyBracket() {
 
     <details class="notion-card mt-4 p-5 text-sm">
       <summary class="cursor-pointer font-bold">预览对阵文本</summary>
-      <pre class="mt-3 whitespace-pre-wrap rounded-xl notion-card-soft p-4 text-xs dark:bg-[#333333]">{{ bracketText() }}</pre>
+      <pre
+        class="notion-card-soft mt-3 rounded-xl p-4 text-xs whitespace-pre-wrap dark:bg-[#333333]"
+        >{{ bracketText() }}</pre
+      >
     </details>
   </div>
 </template>

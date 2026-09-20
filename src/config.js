@@ -1,5 +1,3 @@
-export const containerMaxW = 'xl:max-w-6xl xl:mx-auto'
-
 const env = typeof import.meta !== 'undefined' && import.meta.env ? import.meta.env : {}
 
 export const SUPABASE_URL = String(env.VITE_SUPABASE_URL || '')
@@ -8,7 +6,6 @@ export const USE_SUPABASE = env.VITE_USE_SUPABASE === 'true'
 export const ADMIN_EMAIL = String(env.VITE_ADMIN_EMAIL || 'admin@nss.local')
 
 export const siteName = '鬼吃鱼高尔夫锦标赛'
-export const siteSubtitle = 'NSS · 16人 · 小组赛 + 淘汰赛'
 
 // 本地回退模式的主办方口令：通过 .env 的 VITE_ADMIN_PASSWORD 提供（不提交到仓库）。
 // 启用 Supabase 后登录改用 Supabase 主办方账号密码，此处不再使用。

@@ -58,32 +58,32 @@ async function submit() {
         <p class="mt-1 text-sm text-[#5d5b54] dark:text-[#a0a0a0]">主办方登录</p>
       </div>
 
-      <form
-        class="notion-card p-6"
-        @submit.prevent="submit"
-      >
+      <form class="notion-card p-6" @submit.prevent="submit">
         <label class="mb-2 block text-sm font-bold">主办方口令</label>
         <div class="relative mb-3">
-          <span class="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[#a4a097]">
+          <span class="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-[#a4a097]">
             <BaseIcon :path="mdiLock" size="18" />
           </span>
           <input
             v-model="password"
             :type="showPassword ? 'text' : 'password'"
             placeholder="请输入口令"
-            class="w-full rounded-lg border border-[#c8c4be] py-2.5 pl-10 pr-10 dark:border-[#454545] dark:bg-[#333333]"
+            class="w-full rounded-lg border border-[#c8c4be] py-2.5 pr-10 pl-10 dark:border-[#454545] dark:bg-[#333333]"
             autocomplete="current-password"
           />
           <button
             type="button"
-            class="absolute right-3 top-1/2 inline-flex h-8 w-8 -translate-y-1/2 items-center justify-center text-[#a4a097] hover:text-[#37352f]"
+            class="absolute top-1/2 right-3 inline-flex h-8 w-8 -translate-y-1/2 items-center justify-center text-[#a4a097] hover:text-[#37352f]"
             @click="showPassword = !showPassword"
           >
             <BaseIcon :path="showPassword ? mdiEyeOff : mdiEye" size="18" />
           </button>
         </div>
 
-        <p v-if="error" class="mb-3 rounded-lg bg-[#fdecec] px-3 py-2 text-sm text-[#e03131] dark:bg-[#3d2020]">
+        <p
+          v-if="error"
+          class="mb-3 rounded-lg bg-[#fdecec] px-3 py-2 text-sm text-[#e03131] dark:bg-[#3d2020]"
+        >
           {{ error }}
         </p>
 

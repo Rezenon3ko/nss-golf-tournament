@@ -21,11 +21,6 @@ export const useDarkModeStore = defineStore('darkMode', () => {
     }
   }
 
-  function reset() {
-    localStorage.removeItem(darkModeKey)
-    init()
-  }
-
   function set(payload = null, persist = false) {
     const setIsEnabled = payload !== null ? payload : !isEnabled.value
 
@@ -56,7 +51,6 @@ export const useDarkModeStore = defineStore('darkMode', () => {
     isEnabled,
     isInProgress,
     init,
-    reset,
     set,
   }
 })

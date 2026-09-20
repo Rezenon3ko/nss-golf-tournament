@@ -8,7 +8,6 @@ import { useDarkModeStore } from '@/stores/darkMode'
 const props = defineProps({
   label: [String, Number],
   icon: String,
-  iconSize: [String, Number],
   href: String,
   target: String,
   to: [String, Object],
@@ -17,19 +16,12 @@ const props = defineProps({
     type: String,
     default: 'white',
   },
-  as: String,
   small: Boolean,
-  outline: Boolean,
-  active: Boolean,
   disabled: Boolean,
   roundedFull: Boolean,
 })
 
 const is = computed(() => {
-  if (props.as) {
-    return props.as
-  }
-
   if (props.to) {
     return RouterLink
   }
@@ -63,7 +55,7 @@ const componentClass = computed(() => {
     'border',
     props.disabled ? 'cursor-not-allowed' : 'cursor-pointer',
     props.roundedFull ? 'rounded-full' : 'rounded-sm',
-    getButtonColor(props.color, props.outline, !props.disabled, props.active),
+    getButtonColor(props.color, !props.disabled),
   ]
 
   if (!props.label && props.icon) {
@@ -75,7 +67,7 @@ const componentClass = computed(() => {
   }
 
   if (props.disabled) {
-    base.push(props.outline ? 'opacity-50' : 'opacity-70')
+    base.push('opacity-70')
   }
 
   return base
@@ -92,7 +84,7 @@ const componentClass = computed(() => {
     :target="target"
     :disabled="disabled"
   >
-    <BaseIcon v-if="icon" :path="icon" :size="iconSize" />
+    <BaseIcon v-if="icon" :path="icon" />
     <span v-if="label" :class="labelClass">{{ label }}</span>
   </component>
 </template>

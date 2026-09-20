@@ -5,11 +5,7 @@ import { useAuthStore } from '@/stores/auth'
 import { formatDateTime, formatCountdown } from '@/utils/format'
 import MatchStatusPill from '@/components/MatchStatusPill.vue'
 import BaseButton from '@/components/BaseButton.vue'
-import {
-  mdiCalendarClock,
-  mdiTrophy,
-  mdiChevronRight,
-} from '@mdi/js'
+import { mdiCalendarClock, mdiTrophy, mdiChevronRight } from '@mdi/js'
 import BaseIcon from '@/components/BaseIcon.vue'
 
 const store = useTournamentStore()
@@ -101,7 +97,9 @@ const champion = computed(() => store.playerById(store.championId))
             {{ name }}
           </span>
         </div>
-        <div class="mx-auto mt-4 h-2 w-full max-w-md overflow-hidden rounded-full bg-black/10 dark:bg-white/15">
+        <div
+          class="mx-auto mt-4 h-2 w-full max-w-md overflow-hidden rounded-full bg-black/10 dark:bg-white/15"
+        >
           <div
             class="h-full rounded-full bg-linear-to-br from-[#f0d78c] via-[#c9a24b] to-[#8c6d1f] transition-all"
             :style="{ width: `${Math.max(0, (stageIndex + 1) / 4) * 100}%` }"
@@ -123,10 +121,7 @@ const champion = computed(() => store.playerById(store.championId))
       />
     </div>
 
-    <div
-      v-if="store.championId && champion"
-      class="notion-banner-yellow mb-6 p-6 text-center"
-    >
+    <div v-if="store.championId && champion" class="notion-banner-yellow mb-6 p-6 text-center">
       <BaseIcon :path="mdiTrophy" size="40" class="mx-auto mb-2 text-[#b45309]" />
       <p class="mb-1 text-sm font-semibold text-[#7c5200] dark:text-[#d8c48a]">🏆 2026 冠军</p>
       <p
@@ -145,11 +140,10 @@ const champion = computed(() => store.playerById(store.championId))
     </div>
 
     <div class="grid gap-4 lg:grid-cols-2">
-      <div
-        v-if="currentDdl"
-        class="notion-card p-5"
-      >
-        <div class="mb-3 flex items-center gap-2 text-sm font-semibold text-[#5d5b54] dark:text-[#a0a0a0]">
+      <div v-if="currentDdl" class="notion-card p-5">
+        <div
+          class="mb-3 flex items-center gap-2 text-sm font-semibold text-[#5d5b54] dark:text-[#a0a0a0]"
+        >
           <BaseIcon :path="mdiCalendarClock" size="18" />
           当前轮次 DDL
         </div>
@@ -159,7 +153,11 @@ const champion = computed(() => store.playerById(store.championId))
           class="mt-1 text-sm font-semibold"
           :class="currentDdl.pending ? 'text-[#dd5b00] dark:text-[#d9bf7e]' : 'text-[#1aae39]'"
         >
-          {{ currentDdl.pending ? `${currentDdl.pending} 场比赛待完成 · ${formatCountdown(currentDdl.ddl)}` : '本轮比赛已完成' }}
+          {{
+            currentDdl.pending
+              ? `${currentDdl.pending} 场比赛待完成 · ${formatCountdown(currentDdl.ddl)}`
+              : '本轮比赛已完成'
+          }}
         </p>
         <BaseButton
           v-if="auth.isAdmin"
@@ -171,13 +169,13 @@ const champion = computed(() => store.playerById(store.championId))
         />
       </div>
 
-      <div
-        class="notion-card p-5"
-        :class="store.championId ? 'lg:col-span-2' : ''"
-      >
+      <div class="notion-card p-5" :class="store.championId ? 'lg:col-span-2' : ''">
         <div class="mb-3 flex items-center justify-between">
           <span class="text-sm font-semibold text-[#5d5b54] dark:text-[#a0a0a0]">最近赛果</span>
-          <RouterLink to="/groups" class="flex items-center gap-0.5 text-sm font-medium text-[#8c6d1f] dark:text-[#d8c48a]">
+          <RouterLink
+            to="/groups"
+            class="flex items-center gap-0.5 text-sm font-medium text-[#8c6d1f] dark:text-[#d8c48a]"
+          >
             查看全部
             <BaseIcon :path="mdiChevronRight" size="16" />
           </RouterLink>
@@ -193,7 +191,9 @@ const champion = computed(() => store.playerById(store.championId))
               <b>{{ store.matchScore(match).a }}:{{ store.matchScore(match).b }}</b>
               {{ store.playerName(match.playerBId) }}
             </span>
-            <span class="shrink-0 text-sm text-[#a4a097]">{{ formatDateTime(match.updatedAt) }}</span>
+            <span class="shrink-0 text-sm text-[#a4a097]">{{
+              formatDateTime(match.updatedAt)
+            }}</span>
           </div>
         </div>
         <p v-else class="text-sm text-[#a4a097]">暂无已完赛记录</p>
@@ -203,16 +203,38 @@ const champion = computed(() => store.playerById(store.championId))
     <div class="mt-4 grid gap-4 lg:grid-cols-2">
       <div class="notion-card p-5">
         <div class="mb-3 flex items-center justify-between">
-          <span class="text-sm font-semibold text-[#5d5b54] dark:text-[#a0a0a0]">各组积分榜速览</span>
-          <RouterLink to="/standings" class="flex items-center gap-0.5 text-sm font-medium text-[#8c6d1f] dark:text-[#d8c48a]">
+          <span class="text-sm font-semibold text-[#5d5b54] dark:text-[#a0a0a0]"
+            >各组积分榜速览</span
+          >
+          <RouterLink
+            to="/standings"
+            class="flex items-center gap-0.5 text-sm font-medium text-[#8c6d1f] dark:text-[#d8c48a]"
+          >
             进入积分榜
             <BaseIcon :path="mdiChevronRight" size="16" />
           </RouterLink>
         </div>
         <div class="grid gap-3 sm:grid-cols-2">
-          <div v-for="g in ['A', 'B', 'C', 'D']" :key="g" :class="['rounded-xl p-3', g === 'A' ? 'notion-tint-lavender' : g === 'B' ? 'notion-tint-mint' : g === 'C' ? 'notion-tint-sky' : 'notion-tint-peach']">
+          <div
+            v-for="g in ['A', 'B', 'C', 'D']"
+            :key="g"
+            :class="[
+              'rounded-xl p-3',
+              g === 'A'
+                ? 'notion-tint-lavender'
+                : g === 'B'
+                  ? 'notion-tint-mint'
+                  : g === 'C'
+                    ? 'notion-tint-sky'
+                    : 'notion-tint-peach',
+            ]"
+          >
             <p class="mb-2 text-sm font-bold text-[#5d5b54] dark:text-[#c7c7c7]">{{ g }} 组</p>
-            <div v-for="row in standingsSummary[g]" :key="row.playerId" class="flex justify-between py-1 text-base">
+            <div
+              v-for="row in standingsSummary[g]"
+              :key="row.playerId"
+              class="flex justify-between py-1 text-base"
+            >
               <span class="text-[#37352f] dark:text-[#c7c7c7]">{{ row.rank }}. {{ row.name }}</span>
               <span class="font-semibold">{{ row.points }} 分</span>
             </div>
@@ -223,7 +245,10 @@ const champion = computed(() => store.playerById(store.championId))
       <div class="notion-card p-5">
         <div class="mb-3 flex items-center justify-between">
           <span class="text-sm font-semibold text-[#5d5b54] dark:text-[#a0a0a0]">淘汰赛进度</span>
-          <RouterLink to="/bracket" class="flex items-center gap-0.5 text-sm font-medium text-[#8c6d1f] dark:text-[#d8c48a]">
+          <RouterLink
+            to="/bracket"
+            class="flex items-center gap-0.5 text-sm font-medium text-[#8c6d1f] dark:text-[#d8c48a]"
+          >
             进入对阵
             <BaseIcon :path="mdiChevronRight" size="16" />
           </RouterLink>
@@ -236,10 +261,15 @@ const champion = computed(() => store.playerById(store.championId))
           >
             <span class="font-semibold text-[#5d5b54] dark:text-[#a0a0a0]">{{ node.label }}</span>
             <span class="flex items-center gap-2">
-              <span v-if="node.playerAId && node.playerBId" class="text-[#37352f] dark:text-[#c7c7c7]">
+              <span
+                v-if="node.playerAId && node.playerBId"
+                class="text-[#37352f] dark:text-[#c7c7c7]"
+              >
                 {{ store.playerName(node.playerAId) }} vs {{ store.playerName(node.playerBId) }}
               </span>
-              <span v-else class="text-[#a4a097]">{{ node.expectedA }} vs {{ node.expectedB }}</span>
+              <span v-else class="text-[#a4a097]"
+                >{{ node.expectedA }} vs {{ node.expectedB }}</span
+              >
               <MatchStatusPill :status="node.status" />
             </span>
           </div>

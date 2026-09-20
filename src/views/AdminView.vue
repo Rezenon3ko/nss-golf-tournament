@@ -16,7 +16,12 @@ import {
 const store = useTournamentStore()
 
 const cards = [
-  { to: '/admin/players', icon: mdiAccountGroup, title: '选手与分组', desc: '管理名单、档位、抽签分组' },
+  {
+    to: '/admin/players',
+    icon: mdiAccountGroup,
+    title: '选手与分组',
+    desc: '管理名单、档位、抽签分组',
+  },
   { to: '/admin/matches', icon: mdiGolf, title: '赛果录入', desc: '录入 BO3 / BO5 成绩与截图' },
   { to: '/admin/ddl', icon: mdiCalendarClock, title: 'DDL 与逾期', desc: '设置截止时间、逾期判负' },
   { to: '/admin/evidence', icon: mdiFolderImage, title: '证据与日志', desc: '截图留档、操作追溯' },
@@ -34,7 +39,11 @@ const todos = computed(() => {
     list.push({ type: 'info', text: `${pending} 场比赛待完成 / 待录入`, to: '/admin/matches' })
   }
   if (store.overdueMatches.length > 0) {
-    list.push({ type: 'danger', text: `${store.overdueMatches.length} 场已逾期，等待裁决`, to: '/admin/ddl' })
+    list.push({
+      type: 'danger',
+      text: `${store.overdueMatches.length} 场已逾期，等待裁决`,
+      to: '/admin/ddl',
+    })
   }
   for (const g of ['A', 'B', 'C', 'D']) {
     if (store.getStandings(g).some((r) => r.needsDraw)) {
@@ -49,7 +58,7 @@ const todos = computed(() => {
 </script>
 
 <template>
-  <div class="p-6" :class="'xl:max-w-6xl xl:mx-auto'">
+  <div class="p-6" :class="'xl:mx-auto xl:max-w-6xl'">
     <div class="mb-5">
       <h1 class="text-2xl font-bold">主办方后台</h1>
       <p class="text-sm text-[#5d5b54] dark:text-[#a0a0a0]">
@@ -83,7 +92,9 @@ const todos = computed(() => {
     </div>
 
     <div class="notion-card p-5">
-      <div class="mb-3 flex items-center gap-2 text-sm font-bold text-[#5d5b54] dark:text-[#a0a0a0]">
+      <div
+        class="mb-3 flex items-center gap-2 text-sm font-bold text-[#5d5b54] dark:text-[#a0a0a0]"
+      >
         <BaseIcon :path="mdiClipboardCheck" size="18" />
         待办
       </div>
@@ -91,7 +102,7 @@ const todos = computed(() => {
         <div
           v-for="(todo, i) in todos"
           :key="i"
-          class="flex items-center justify-between notion-card-soft px-4 py-3 text-sm"
+          class="notion-card-soft flex items-center justify-between px-4 py-3 text-sm"
         >
           <span class="flex items-center gap-2">
             <BaseIcon
@@ -107,13 +118,7 @@ const todos = computed(() => {
             />
             {{ todo.text }}
           </span>
-          <BaseButton
-            v-if="todo.to"
-            :to="todo.to"
-            label="去处理"
-            color="whiteDark"
-            small
-          />
+          <BaseButton v-if="todo.to" :to="todo.to" label="去处理" color="whiteDark" small />
         </div>
       </div>
     </div>

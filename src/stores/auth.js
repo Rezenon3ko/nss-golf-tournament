@@ -1,12 +1,6 @@
 import { defineStore } from 'pinia'
 import { computed, ref } from 'vue'
-import {
-  ADMIN_PASSWORD,
-  ADMIN_EMAIL,
-  AUTH_STORAGE_KEY,
-  AUTH_TTL_MS,
-  USE_SUPABASE,
-} from '@/config'
+import { ADMIN_PASSWORD, ADMIN_EMAIL, AUTH_STORAGE_KEY, AUTH_TTL_MS, USE_SUPABASE } from '@/config'
 import { supabase } from '@/lib/supabase'
 
 function now() {

@@ -46,8 +46,7 @@ const rows = computed(() => {
       const matchStageOk = stageFilter.value === 'all' || matchStage === stageFilter.value
       const matchStatusOk = statusFilter.value === 'all' || displayStatus === statusFilter.value
       const groupOk =
-        groupFilter.value === 'all' ||
-        (matchStage === 'group' && m.groupId === groupFilter.value)
+        groupFilter.value === 'all' || (matchStage === 'group' && m.groupId === groupFilter.value)
       return matchStageOk && matchStatusOk && groupOk
     })
     .map((match) => {
@@ -144,93 +143,97 @@ function onSaved() {
 
     <div class="notion-card">
       <div class="hidden overflow-x-auto lg:block">
-      <table class="hover-gold notion-table w-full text-sm">
-        <thead>
-          <tr class="border-b border-[#e5e3df] text-left text-xs text-[#5d5b54] dark:border-[#3d3d3d] dark:text-[#a0a0a0]">
-            <th class="w-20 px-4 py-3">阶段</th>
-            <th class="px-4 py-3">对阵</th>
-            <th class="px-4 py-3">比分</th>
-            <th class="px-4 py-3">DDL</th>
-            <th class="px-4 py-3">状态</th>
-            <th class="px-4 py-3 text-right">操作</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr
-            v-for="{ match, ddl, overdue } in rows"
-            :key="match.id"
-            class="border-b border-[#ede9e4] last:border-0 dark:border-[#2e2e2e]"
-            :class="overdue ? 'rounded-lg bg-[#fdecec] dark:bg-[#2a1a1a]' : ''"
-          >
-            <td class="whitespace-nowrap px-4 py-3 text-[#5d5b54] dark:text-[#a0a0a0]">{{ stageLabel(match) }}</td>
-            <td class="px-4 py-3">
-              <div class="grid w-full min-w-[240px] grid-cols-[1fr_auto_1fr] items-center gap-2">
-                <PlayerBadge :player="store.playerById(match.playerAId)" size="sm" />
-                <span class="text-center text-[#a4a097]">vs</span>
-                <PlayerBadge
-                  :player="store.playerById(match.playerBId)"
-                  size="sm"
-                  reverse
-                  class="justify-self-end"
-                />
-              </div>
-            </td>
-            <td class="whitespace-nowrap px-4 py-3 font-bold">
-              {{
-                match.status === 'complete'
-                  ? `${store.matchScore(match).a} : ${store.matchScore(match).b}`
-                  : match.status === 'forfeit'
-                    ? '判负'
-                    : '-'
-              }}
-            </td>
-            <td class="whitespace-nowrap px-4 py-3 text-xs text-[#5d5b54] dark:text-[#a0a0a0]">
-              {{ formatDateTime(ddl) }}
-            </td>
-            <td class="px-4 py-3">
-              <MatchStatusPill :status="displayStatus({ match, overdue })" />
-            </td>
-            <td class="px-4 py-3">
-              <div class="flex items-center justify-end gap-1 whitespace-nowrap">
-                <BaseButton label="查看" color="whiteDark" small @click="detailMatch = match" />
-                <BaseButton
-                  label="录入/编辑"
-                  color="purple"
-                  small
-                  @click="entryMatch = match"
-                />
-                <template v-if="match.status === 'pending'">
-                  <BaseButton
-                    :label="`${store.playerName(match.playerAId)}负`"
-                    color="danger"
-                    small
-                    :disabled="!store.canJudgeForfeit(match, 'A')"
-                    @click="forfeit({ match }, 'A')"
+        <table class="hover-gold notion-table w-full text-sm">
+          <thead>
+            <tr
+              class="border-b border-[#e5e3df] text-left text-xs text-[#5d5b54] dark:border-[#3d3d3d] dark:text-[#a0a0a0]"
+            >
+              <th class="w-20 px-4 py-3">阶段</th>
+              <th class="px-4 py-3">对阵</th>
+              <th class="px-4 py-3">比分</th>
+              <th class="px-4 py-3">DDL</th>
+              <th class="px-4 py-3">状态</th>
+              <th class="px-4 py-3 text-right">操作</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr
+              v-for="{ match, ddl, overdue } in rows"
+              :key="match.id"
+              class="border-b border-[#ede9e4] last:border-0 dark:border-[#2e2e2e]"
+              :class="overdue ? 'rounded-lg bg-[#fdecec] dark:bg-[#2a1a1a]' : ''"
+            >
+              <td class="px-4 py-3 whitespace-nowrap text-[#5d5b54] dark:text-[#a0a0a0]">
+                {{ stageLabel(match) }}
+              </td>
+              <td class="px-4 py-3">
+                <div class="grid w-full min-w-[240px] grid-cols-[1fr_auto_1fr] items-center gap-2">
+                  <PlayerBadge :player="store.playerById(match.playerAId)" size="sm" />
+                  <span class="text-center text-[#a4a097]">vs</span>
+                  <PlayerBadge
+                    :player="store.playerById(match.playerBId)"
+                    size="sm"
+                    reverse
+                    class="justify-self-end"
                   />
-                  <BaseButton
-                    :label="`${store.playerName(match.playerBId)}负`"
-                    color="danger"
-                    small
-                    :disabled="!store.canJudgeForfeit(match, 'B')"
-                    @click="forfeit({ match }, 'B')"
-                  />
-                  <BaseButton
-                    label="双方负"
-                    color="warning"
-                    small
-                    :disabled="!store.canJudgeForfeit(match, 'both')"
-                    @click="forfeit({ match }, 'both')"
-                  />
-                  <BaseButton label="延期" color="whiteDark" small @click="forfeit({ match }, 'extend')" />
-                </template>
-              </div>
-            </td>
-          </tr>
-          <tr v-if="!rows.length">
-            <td colspan="6" class="px-4 py-8 text-center text-[#a4a097]">没有符合条件的比赛</td>
-          </tr>
-        </tbody>
-      </table>
+                </div>
+              </td>
+              <td class="px-4 py-3 font-bold whitespace-nowrap">
+                {{
+                  match.status === 'complete'
+                    ? `${store.matchScore(match).a} : ${store.matchScore(match).b}`
+                    : match.status === 'forfeit'
+                      ? '判负'
+                      : '-'
+                }}
+              </td>
+              <td class="px-4 py-3 text-xs whitespace-nowrap text-[#5d5b54] dark:text-[#a0a0a0]">
+                {{ formatDateTime(ddl) }}
+              </td>
+              <td class="px-4 py-3">
+                <MatchStatusPill :status="displayStatus({ match, overdue })" />
+              </td>
+              <td class="px-4 py-3">
+                <div class="flex items-center justify-end gap-1 whitespace-nowrap">
+                  <BaseButton label="查看" color="whiteDark" small @click="detailMatch = match" />
+                  <BaseButton label="录入/编辑" color="purple" small @click="entryMatch = match" />
+                  <template v-if="match.status === 'pending'">
+                    <BaseButton
+                      :label="`${store.playerName(match.playerAId)}负`"
+                      color="danger"
+                      small
+                      :disabled="!store.canJudgeForfeit(match, 'A')"
+                      @click="forfeit({ match }, 'A')"
+                    />
+                    <BaseButton
+                      :label="`${store.playerName(match.playerBId)}负`"
+                      color="danger"
+                      small
+                      :disabled="!store.canJudgeForfeit(match, 'B')"
+                      @click="forfeit({ match }, 'B')"
+                    />
+                    <BaseButton
+                      label="双方负"
+                      color="warning"
+                      small
+                      :disabled="!store.canJudgeForfeit(match, 'both')"
+                      @click="forfeit({ match }, 'both')"
+                    />
+                    <BaseButton
+                      label="延期"
+                      color="whiteDark"
+                      small
+                      @click="forfeit({ match }, 'extend')"
+                    />
+                  </template>
+                </div>
+              </td>
+            </tr>
+            <tr v-if="!rows.length">
+              <td colspan="6" class="px-4 py-8 text-center text-[#a4a097]">没有符合条件的比赛</td>
+            </tr>
+          </tbody>
+        </table>
       </div>
       <div class="divide-y divide-[#ede9e4] lg:hidden dark:divide-[#2e2e2e]">
         <div
@@ -288,7 +291,10 @@ function onSaved() {
               @click="forfeit({ match }, 'extend')"
             />
           </div>
-          <div v-if="match.status === 'pending'" class="mt-1 grid grid-cols-[1fr_auto_1fr] items-center gap-1">
+          <div
+            v-if="match.status === 'pending'"
+            class="mt-1 grid grid-cols-[1fr_auto_1fr] items-center gap-1"
+          >
             <BaseButton
               :label="`${store.playerName(match.playerAId)}负`"
               color="danger"

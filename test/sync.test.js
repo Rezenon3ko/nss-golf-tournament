@@ -6,6 +6,7 @@ import {
   createConflictError,
   isDuplicateKey,
   isMissingRevisionColumn,
+  isNoRowsError,
   nextRetryDelay,
 } from '../src/lib/sync.js'
 
@@ -40,6 +41,25 @@ test('isDuplicateKey 识别并发插入冲突', () => {
   assert.equal(isDuplicateKey({ code: '23505' }), true)
   assert.equal(isDuplicateKey({ message: 'duplicate key value violates unique constraint' }), true)
   assert.equal(isDuplicateKey({ message: 'boom' }), false)
+})
+
+test('isNoRowsError 只把「0 行」当正常空表，不吞掉「多行」与其他错误', () => {
+  const zeroRows = {
+    code: 'PGRST116',
+    details: 'Results contain 0 rows, application/vnd.pgrst.object+json requires 1 row',
+    message: 'JSON object requested, multiple (or no) rows returned',
+  }
+  const manyRows = {
+    code: 'PGRST116',
+    details: 'Results contain 3 rows, application/vnd.pgrst.object+json requires 1 row',
+    message: 'JSON object requested, multiple (or no) rows returned',
+  }
+
+  assert.equal(isNoRowsError(zeroRows), true)
+  assert.equal(isNoRowsError(manyRows), false, '多行是真实错误，不能被当成空表')
+  assert.equal(isNoRowsError({ code: '42501', message: 'permission denied' }), false)
+  assert.equal(isNoRowsError(null), false)
+  assert.equal(isNoRowsError(new TypeError('Failed to fetch')), false)
 })
 
 test('createConflictError 携带云端快照', () => {

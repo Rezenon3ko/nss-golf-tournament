@@ -36,10 +36,37 @@ export function isDuplicateKey(error) {
   return codeOf(error) === '23505' || /duplicate key value/i.test(messageOf(error))
 }
 
+/**
+ * 「表里没有这一行」不是失败。
+ *
+ * `.maybeSingle()` 只会在服务端返回多行时被 SDK 归一化；若服务端对 0 行返回
+ * 406 + PGRST116（details 里是 "Results contain 0 rows"），调用方会拿到 error。
+ * 首次部署（云端还没有数据）与「行被删掉后重建」都会走到这里，
+ * 必须当成 data = null 处理，否则会被误判为云端不可用而进入本地模式。
+ */
+export function isNoRowsError(error) {
+  if (!error) return false
+  const details = String(error.details || '')
+  const message = `${details} ${messageOf(error)}`
+  if (!/PGRST116/i.test(codeOf(error)) && !/JSON object requested/i.test(message)) return false
+  return /0 rows/i.test(details) || /Results contain 0 rows/i.test(message)
+}
+
 export function createConflictError(remote) {
   const error = new Error('云端数据已被其他设备更新')
   error.isConflict = true
   error.remote = remote || null
+  return error
+}
+
+/**
+ * 更新命中 0 行、但云端版本号并没有前进时用这个：
+ * 这不是并发冲突，而是写入没被放行（RLS 策略未匹配，例如换了账号或策略绑定了别的 UID）。
+ * 若当成冲突处理，界面会一直弹「云端已被其他设备更新」，误导主办方。
+ */
+export function createForbiddenError(message = '当前账号没有写入权限，请确认已用主办方账号登录') {
+  const error = new Error(message)
+  error.isForbidden = true
   return error
 }
 
@@ -52,6 +79,12 @@ export function classifySyncError(error) {
   const code = codeOf(error)
   const status = Number(error?.status ?? error?.statusCode ?? 0)
 
+  if (error?.isForbidden) {
+    return {
+      kind: 'forbidden',
+      message: message || '当前账号没有写入权限，请确认已用主办方账号登录',
+    }
+  }
   if (status === 401 || /jwt|token|not authenticated|refresh token/i.test(message)) {
     return { kind: 'auth', message: '主办方登录已过期，请重新登录后再同步' }
   }

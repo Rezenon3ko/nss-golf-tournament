@@ -55,10 +55,21 @@ async function freshStore({
   missingRevisionColumn = false,
   writeEnabled = true,
   cache = null,
+  rlsBlocksUpdate = false,
+  rlsBlocksInsert = false,
+  emptyRowResponse = 'pgrst116',
 } = {}) {
   const resolvedRow =
     row === 'auto' ? (value === null ? null : { key: 'main', value, revision }) : row
-  backend.reset({ row: resolvedRow, readError, writeError, missingRevisionColumn })
+  backend.reset({
+    row: resolvedRow,
+    readError,
+    writeError,
+    missingRevisionColumn,
+    rlsBlocksUpdate,
+    rlsBlocksInsert,
+    emptyRowResponse,
+  })
   localStorage.clear()
   if (cache) localStorage.setItem(CACHE_KEY, JSON.stringify(cache))
   setActivePinia(createPinia())
@@ -94,11 +105,29 @@ test('修改后带版本号写入云端，连续改动合并为一次写入', as
 })
 
 test('云端还没有数据时，主办方登录后写入首份数据', async () => {
-  const store = await freshStore({ row: null })
+  // 先不开启写入，检查「空表」的判定结果
+  const store = await freshStore({ row: null, writeEnabled: false })
 
+  // 空表时 PostgREST 返回 406 + PGRST116：必须当作「还没有数据」，而不是「读不到云端」
   assert.equal(store.sync.mode, 'cloud')
+  assert.equal(store.sync.degraded, false)
+  assert.equal(store.sync.status, 'idle')
   assert.equal(store.sync.revision, 0)
   assert.equal(store.sync.pendingChanges, true)
+
+  store.setCloudWriteEnabled(true)
+  assert.ok(await waitFor(() => backend.row !== null))
+  assert.equal(backend.row.revision, 1)
+})
+
+test('空表也可能是 200 + null：同样按「还没有数据」处理', async () => {
+  const store = await freshStore({ row: null, emptyRowResponse: 'null', writeEnabled: false })
+
+  assert.equal(store.sync.mode, 'cloud')
+  assert.equal(store.sync.degraded, false)
+  assert.equal(store.sync.pendingChanges, true)
+
+  store.setCloudWriteEnabled(true)
   assert.ok(await waitFor(() => backend.row !== null))
   assert.equal(backend.row.revision, 1)
 })
@@ -129,6 +158,30 @@ test('数据库触发器推进版本号时，客户端读回服务端版本并�
   assert.equal(backend.row.revision, 11)
   assert.equal(store.sync.revision, 11)
   assert.deepEqual(names(cloudState()), ['云端选手', '甲', '乙'])
+})
+
+test('RLS 未放行导致更新命中 0 行时，报“没有写入权限”而不是版本冲突', async () => {
+  const store = await freshStore({ revision: 3, rlsBlocksUpdate: true })
+
+  store.addPlayer({ name: '无权写入', tier: 1 })
+
+  assert.ok(await waitFor(() => store.sync.status === 'error'))
+  assert.equal(store.sync.status, 'error', '不应进入冲突态')
+  assert.equal(store.sync.conflictRemote, null)
+  assert.match(store.sync.message, /没有写入权限/)
+  assert.equal(backend.row.revision, 3, '云端未被改动')
+  assert.equal(store.sync.pendingChanges, true, '改动仍保留在本机等待重试')
+})
+
+test('云端确实被其他设备推进时仍判定为冲突（与权限问题区分开）', async () => {
+  const store = await freshStore({ revision: 3 })
+  backend.bumpRemoteRevision()
+
+  store.addPlayer({ name: '本机改动', tier: 1 })
+
+  assert.ok(await waitFor(() => store.sync.status === 'conflict'))
+  assert.equal(store.sync.conflictRemote.revision, 4)
+  assert.doesNotMatch(store.sync.message, /没有写入权限/)
 })
 
 test('冲突时选择「采用云端版本」会丢弃本机未同步改动', async () => {

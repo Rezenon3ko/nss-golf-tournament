@@ -59,7 +59,6 @@ function openEntry(match) {
 function onEntrySaved() {
   entryMatch.value = null
 }
-
 </script>
 
 <template>
@@ -94,108 +93,105 @@ function onEntrySaved() {
     </div>
 
     <div class="mb-4 flex flex-wrap gap-x-4 gap-y-1 text-sm text-[#5d5b54] dark:text-[#a0a0a0]">
-      <span
-        v-for="round in [1, 2, 3]"
-        :key="round"
-        class="inline-flex items-baseline gap-1"
-      >
+      <span v-for="round in [1, 2, 3]" :key="round" class="inline-flex items-baseline gap-1">
         <span class="w-[85px] shrink-0">第{{ round }}轮 DDL：</span>
         <span>
-          {{ formatDateTime(store.ddlRounds.find((d) => d.stage === 'group' && d.round === round)?.ddl) }}
+          {{
+            formatDateTime(
+              store.ddlRounds.find((d) => d.stage === 'group' && d.round === round)?.ddl,
+            )
+          }}
         </span>
       </span>
     </div>
 
     <div class="notion-card">
       <div class="hidden overflow-x-auto lg:block">
-      <table class="notion-table w-full table-fixed text-base">
-        <thead>
-          <tr class="border-b border-[#e5e3df] text-left text-sm text-[#5d5b54] dark:border-[#3d3d3d] dark:text-[#a0a0a0]">
-            <th class="w-20 px-4 py-3">轮次</th>
-            <th class="w-[320px] px-4 py-3">对阵</th>
-            <th class="w-20 px-4 py-3">比分</th>
-            <th class="w-16 px-4 py-3">SD</th>
-            <th class="w-48 px-4 py-3">DDL</th>
-            <th class="w-28 px-4 py-3">状态</th>
-            <th class="w-36 px-4 py-3 text-right">操作</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr
-            v-for="row in filteredMatches"
-            :key="row.match.id"
-            class="border-b border-[#ede9e4] last:border-0 dark:border-[#2e2e2e]"
-            :class="[
-              row.overdue ? 'rounded-lg bg-[#fdecec] dark:bg-[#2a1a1a]' : '',
-              activeTintHover,
-            ]"
-          >
-            <td class="px-4 py-3 font-semibold text-[#5d5b54] dark:text-[#a0a0a0]">
-              第 {{ row.match.round }} 轮
-            </td>
-            <td class="px-4 py-3">
-              <div class="grid w-full grid-cols-[1fr_auto_1fr] items-center gap-2">
-                <PlayerBadge :player="store.playerById(row.match.playerAId)" />
-                <span class="text-center text-[#a4a097]">vs</span>
-                <PlayerBadge
-                  :player="store.playerById(row.match.playerBId)"
-                  reverse
-                  class="justify-self-end"
+        <table class="notion-table w-full table-fixed text-base">
+          <thead>
+            <tr
+              class="border-b border-[#e5e3df] text-left text-sm text-[#5d5b54] dark:border-[#3d3d3d] dark:text-[#a0a0a0]"
+            >
+              <th class="w-20 px-4 py-3">轮次</th>
+              <th class="w-[320px] px-4 py-3">对阵</th>
+              <th class="w-20 px-4 py-3">比分</th>
+              <th class="w-16 px-4 py-3">SD</th>
+              <th class="w-48 px-4 py-3">DDL</th>
+              <th class="w-28 px-4 py-3">状态</th>
+              <th class="w-36 px-4 py-3 text-right">操作</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr
+              v-for="row in filteredMatches"
+              :key="row.match.id"
+              class="border-b border-[#ede9e4] last:border-0 dark:border-[#2e2e2e]"
+              :class="[
+                row.overdue ? 'rounded-lg bg-[#fdecec] dark:bg-[#2a1a1a]' : '',
+                activeTintHover,
+              ]"
+            >
+              <td class="px-4 py-3 font-semibold text-[#5d5b54] dark:text-[#a0a0a0]">
+                第 {{ row.match.round }} 轮
+              </td>
+              <td class="px-4 py-3">
+                <div class="grid w-full grid-cols-[1fr_auto_1fr] items-center gap-2">
+                  <PlayerBadge :player="store.playerById(row.match.playerAId)" />
+                  <span class="text-center text-[#a4a097]">vs</span>
+                  <PlayerBadge
+                    :player="store.playerById(row.match.playerBId)"
+                    reverse
+                    class="justify-self-end"
+                  />
+                </div>
+              </td>
+              <td class="px-4 py-3 font-bold">
+                {{
+                  row.match.status === 'complete'
+                    ? `${store.matchScore(row.match).a} : ${store.matchScore(row.match).b}`
+                    : row.match.status === 'forfeit'
+                      ? '判负'
+                      : '-'
+                }}
+              </td>
+              <td class="px-4 py-3 text-[#a4a097]">
+                {{
+                  row.match.sets.some((s) => s.a != null && s.b != null && s.a === s.b) ? '是' : '-'
+                }}
+              </td>
+              <td class="px-4 py-3 text-sm text-[#5d5b54] dark:text-[#a0a0a0]">
+                {{ formatDateTime(row.ddl) }}
+              </td>
+              <td class="px-4 py-3">
+                <MatchStatusPill
+                  :status="displayStatus({ match: row.match, overdue: row.overdue })"
                 />
-              </div>
-            </td>
-            <td class="px-4 py-3 font-bold">
-              {{
-                row.match.status === 'complete'
-                  ? `${store.matchScore(row.match).a} : ${store.matchScore(row.match).b}`
-                  : row.match.status === 'forfeit'
-                    ? '判负'
-                    : '-'
-              }}
-            </td>
-            <td class="px-4 py-3 text-[#a4a097]">
-              {{
-                row.match.sets.some(
-                  (s) => s.a != null && s.b != null && s.a === s.b,
-                )
-                  ? '是'
-                  : '-'
-              }}
-            </td>
-            <td class="px-4 py-3 text-sm text-[#5d5b54] dark:text-[#a0a0a0]">
-              {{ formatDateTime(row.ddl) }}
-            </td>
-            <td class="px-4 py-3">
-              <MatchStatusPill :status="displayStatus({ match: row.match, overdue: row.overdue })" />
-            </td>
-            <td class="px-4 py-3 text-right">
-              <div class="flex flex-wrap items-center justify-end gap-1">
-                <BaseButton label="查看" color="whiteDark" small @click="openDetail(row.match)" />
-                <BaseButton
-                  v-if="auth.isAdmin"
-                  label="录入"
-                  color="gold"
-                  small
-                  @click="openEntry(row.match)"
-                />
-              </div>
-            </td>
-          </tr>
-          <tr v-if="!filteredMatches.length">
-            <td colspan="7" class="px-4 py-8 text-center text-[#a4a097]">暂无比赛</td>
-          </tr>
-        </tbody>
-      </table>
+              </td>
+              <td class="px-4 py-3 text-right">
+                <div class="flex flex-wrap items-center justify-end gap-1">
+                  <BaseButton label="查看" color="whiteDark" small @click="openDetail(row.match)" />
+                  <BaseButton
+                    v-if="auth.isAdmin"
+                    label="录入"
+                    color="gold"
+                    small
+                    @click="openEntry(row.match)"
+                  />
+                </div>
+              </td>
+            </tr>
+            <tr v-if="!filteredMatches.length">
+              <td colspan="7" class="px-4 py-8 text-center text-[#a4a097]">暂无比赛</td>
+            </tr>
+          </tbody>
+        </table>
       </div>
       <div class="divide-y divide-[#ede9e4] lg:hidden dark:divide-[#2e2e2e]">
         <div
           v-for="row in filteredMatches"
           :key="row.match.id"
           class="p-4"
-          :class="[
-              row.overdue ? 'rounded-lg bg-[#fdecec] dark:bg-[#2a1a1a]' : '',
-              activeTintHover,
-            ]"
+          :class="[row.overdue ? 'rounded-lg bg-[#fdecec] dark:bg-[#2a1a1a]' : '', activeTintHover]"
         >
           <div class="mb-2 flex items-center justify-between gap-2">
             <span class="text-sm font-semibold text-[#5d5b54] dark:text-[#a0a0a0]">
@@ -221,7 +217,6 @@ function onEntrySaved() {
                   ? '判负'
                   : '-'
             }}</span>
-
           </div>
           <div
             class="mt-2 flex items-center justify-between gap-2 text-sm text-[#5d5b54] dark:text-[#a0a0a0]"
@@ -245,11 +240,7 @@ function onEntrySaved() {
       </div>
     </div>
 
-    <MatchDetailModal
-      v-if="detailMatch"
-      :match="detailMatch"
-      @close="detailMatch = null"
-    />
+    <MatchDetailModal v-if="detailMatch" :match="detailMatch" @close="detailMatch = null" />
     <ScoreEntryModal
       v-if="entryMatch"
       :match="entryMatch"

@@ -35,9 +35,7 @@ const stageLabel = computed(() => {
   return store.STAGE_LABELS[props.match.stage] || ''
 })
 
-const relatedEvidence = computed(() =>
-  store.evidence.filter((e) => e.matchId === props.match.id),
-)
+const relatedEvidence = computed(() => store.evidence.filter((e) => e.matchId === props.match.id))
 
 function setLabel(set) {
   const a = set.a
@@ -46,21 +44,19 @@ function setLabel(set) {
   if (a == null || b == null) return '未赛'
   if (a < b) return `${store.playerName(props.match.playerAId)}胜`
   if (b < a) return `${store.playerName(props.match.playerBId)}胜`
-  return set.sdWinner
-    ? `平局 · SD → ${store.playerName(set.sdWinner)}`
-    : '平局'
+  return set.sdWinner ? `平局 · SD → ${store.playerName(set.sdWinner)}` : '平局'
 }
 </script>
 
 <template>
-  <BaseModal :title="`${store.playerName(match.playerAId)} vs ${store.playerName(match.playerBId)}`" @close="emit('close')">
+  <BaseModal
+    :title="`${store.playerName(match.playerAId)} vs ${store.playerName(match.playerBId)}`"
+    @close="emit('close')"
+  >
     <div class="mb-4 flex flex-wrap items-center gap-3">
       <MatchStatusPill :status="match.status" />
       <span class="text-sm text-[#5d5b54] dark:text-[#a0a0a0]">{{ stageLabel }}</span>
-      <span
-        v-if="match.status === 'forfeit'"
-        class="text-sm text-[#dd5b00] dark:text-[#d9bf7e]"
-      >
+      <span v-if="match.status === 'forfeit'" class="text-sm text-[#dd5b00] dark:text-[#d9bf7e]">
         {{
           match.forfeitBy === 'A'
             ? `${store.playerName(match.playerAId)}判负`
@@ -71,9 +67,7 @@ function setLabel(set) {
       </span>
     </div>
 
-    <div
-      class="mb-4 grid grid-cols-[1fr_auto_1fr] items-center gap-2 notion-card-soft p-4"
-    >
+    <div class="notion-card-soft mb-4 grid grid-cols-[1fr_auto_1fr] items-center gap-2 p-4">
       <PlayerBadge :player="playerA" />
       <span class="text-xl font-bold">
         {{ match.status === 'complete' ? `${matchScore.a} : ${matchScore.b}` : '-' }}
@@ -89,7 +83,9 @@ function setLabel(set) {
     <div class="mb-4 overflow-x-auto">
       <table class="notion-table w-full text-sm">
         <thead>
-          <tr class="border-b border-[#e5e3df] text-left text-xs text-[#5d5b54] dark:border-[#3d3d3d] dark:text-[#a0a0a0]">
+          <tr
+            class="border-b border-[#e5e3df] text-left text-xs text-[#5d5b54] dark:border-[#3d3d3d] dark:text-[#a0a0a0]"
+          >
             <th class="py-2 pr-2">局</th>
             <th class="py-2 pr-2">{{ playerA?.name || '甲' }} 相对标准杆</th>
             <th class="py-2 pr-2">{{ playerB?.name || '乙' }} 相对标准杆</th>
@@ -113,17 +109,28 @@ function setLabel(set) {
                 不计入
               </span>
             </td>
-            <td :data-label="`${playerA?.name || '甲'} 相对标准杆`" class="py-2 pr-2">{{ set.a ?? '-' }}</td>
-            <td :data-label="`${playerB?.name || '乙'} 相对标准杆`" class="py-2 pr-2">{{ set.b ?? '-' }}</td>
+            <td :data-label="`${playerA?.name || '甲'} 相对标准杆`" class="py-2 pr-2">
+              {{ set.a ?? '-' }}
+            </td>
+            <td :data-label="`${playerB?.name || '乙'} 相对标准杆`" class="py-2 pr-2">
+              {{ set.b ?? '-' }}
+            </td>
             <td data-label="结果" class="py-2">{{ setLabel(set) }}</td>
           </tr>
         </tbody>
       </table>
     </div>
 
-    <div v-if="match.disconnect" class="notion-tint-yellow mb-4 rounded-xl p-4 text-sm dark:bg-[#2b2415]">
+    <div
+      v-if="match.disconnect"
+      class="notion-tint-yellow mb-4 rounded-xl p-4 text-sm dark:bg-[#2b2415]"
+    >
       <p class="mb-1 font-bold text-[#793400] dark:text-[#d9bf7e]">掉线登记</p>
-      <p>掉线发生局：第 {{ match.disconnect.setIndex + 1 }} 局 · 已完成洞数：{{ match.disconnect.holesCompleted }}</p>
+      <p>
+        掉线发生局：第 {{ match.disconnect.setIndex + 1 }} 局 · 已完成洞数：{{
+          match.disconnect.holesCompleted
+        }}
+      </p>
       <p v-if="match.disconnect.note">{{ match.disconnect.note }}</p>
       <p v-if="match.disconnect.links?.length" class="mt-1">
         证据：
@@ -166,7 +173,9 @@ function setLabel(set) {
           rel="noopener"
           class="text-sm text-[#0075de] underline"
         >
-          {{ ev.name }}（{{ ev.type === 'result' ? '赛果截图' : ev.type === 'disconnect' ? '掉线证据' : '其他' }}）
+          {{ ev.name }}（{{
+            ev.type === 'result' ? '赛果截图' : ev.type === 'disconnect' ? '掉线证据' : '其他'
+          }}）
         </a>
       </div>
     </template>

@@ -106,7 +106,7 @@ const sections = [
       <div
         v-for="(section, index) in sections"
         :key="section.title"
-        class="overflow-hidden notion-card"
+        class="notion-card overflow-hidden"
       >
         <button
           type="button"

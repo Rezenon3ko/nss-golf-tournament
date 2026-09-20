@@ -86,36 +86,38 @@ async function copyNotice() {
       </p>
     </div>
 
-    <div class="mb-6 notion-card">
+    <div class="notion-card mb-6">
       <div class="hidden overflow-x-auto lg:block">
-      <table class="notion-table w-full text-sm">
-        <thead>
-          <tr class="border-b border-[#e5e3df] text-left text-xs text-[#5d5b54] dark:border-[#3d3d3d] dark:text-[#a0a0a0]">
-            <th class="px-4 py-3">轮次</th>
-            <th class="px-4 py-3">DDL</th>
-            <th class="px-4 py-3 text-right">操作</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr
-            v-for="d in store.ddlRounds"
-            :key="d.key"
-            class="border-b border-[#ede9e4] last:border-0 dark:border-[#2e2e2e]"
-          >
-            <td class="px-4 py-3 font-semibold">{{ d.label }}</td>
-            <td class="px-4 py-3">
-              <input
-                v-model="localDdl[d.key]"
-                type="datetime-local"
-                class="rounded-sm border border-[#c8c4be] px-3 py-2 dark:border-[#454545] dark:bg-[#333333]"
-              />
-            </td>
-            <td class="px-4 py-3 text-right">
-              <BaseButton label="保存" color="purple" small @click="saveDdl(d.key)" />
-            </td>
-          </tr>
-        </tbody>
-      </table>
+        <table class="notion-table w-full text-sm">
+          <thead>
+            <tr
+              class="border-b border-[#e5e3df] text-left text-xs text-[#5d5b54] dark:border-[#3d3d3d] dark:text-[#a0a0a0]"
+            >
+              <th class="px-4 py-3">轮次</th>
+              <th class="px-4 py-3">DDL</th>
+              <th class="px-4 py-3 text-right">操作</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr
+              v-for="d in store.ddlRounds"
+              :key="d.key"
+              class="border-b border-[#ede9e4] last:border-0 dark:border-[#2e2e2e]"
+            >
+              <td class="px-4 py-3 font-semibold">{{ d.label }}</td>
+              <td class="px-4 py-3">
+                <input
+                  v-model="localDdl[d.key]"
+                  type="datetime-local"
+                  class="rounded-sm border border-[#c8c4be] px-3 py-2 dark:border-[#454545] dark:bg-[#333333]"
+                />
+              </td>
+              <td class="px-4 py-3 text-right">
+                <BaseButton label="保存" color="purple" small @click="saveDdl(d.key)" />
+              </td>
+            </tr>
+          </tbody>
+        </table>
       </div>
       <div class="divide-y divide-[#ede9e4] lg:hidden dark:divide-[#2e2e2e]">
         <div v-for="d in store.ddlRounds" :key="d.key" class="p-4">
@@ -132,12 +134,18 @@ async function copyNotice() {
       </div>
     </div>
 
-    <div class="mb-4 notion-card p-5">
+    <div class="notion-card mb-4 p-5">
       <div class="mb-3 flex items-center justify-between">
         <span class="text-sm font-bold text-[#5d5b54] dark:text-[#a0a0a0]">
           逾期待裁决（{{ store.overdueMatches.length }}）
         </span>
-        <BaseButton :icon="mdiClipboardText" label="生成群通知文案" color="whiteDark" small @click="copyNotice" />
+        <BaseButton
+          :icon="mdiClipboardText"
+          label="生成群通知文案"
+          color="whiteDark"
+          small
+          @click="copyNotice"
+        />
       </div>
       <p v-if="copied" class="mb-2 text-sm text-[#0075de]">{{ copied }}</p>
       <div v-if="store.overdueMatches.length" class="flex flex-col gap-2">
@@ -165,7 +173,12 @@ async function copyNotice() {
               @click="forfeit({ match }, 'B')"
             />
             <BaseButton label="双方负" color="warning" small @click="forfeit({ match }, 'both')" />
-            <BaseButton label="延期" color="whiteDark" small @click="forfeit({ match }, 'extend')" />
+            <BaseButton
+              label="延期"
+              color="whiteDark"
+              small
+              @click="forfeit({ match }, 'extend')"
+            />
           </div>
         </div>
       </div>
@@ -174,7 +187,10 @@ async function copyNotice() {
 
     <details class="notion-card p-5 text-sm">
       <summary class="cursor-pointer font-bold">预览通知文案</summary>
-      <pre class="mt-3 whitespace-pre-wrap rounded-xl notion-card-soft p-4 text-xs dark:bg-[#333333]">{{ buildNotice() }}</pre>
+      <pre
+        class="notion-card-soft mt-3 rounded-xl p-4 text-xs whitespace-pre-wrap dark:bg-[#333333]"
+        >{{ buildNotice() }}</pre
+      >
     </details>
   </div>
 </template>

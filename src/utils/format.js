@@ -8,14 +8,6 @@ export function formatDateTime(iso) {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`
 }
 
-export function formatDate(iso) {
-  if (!iso) return '未设置'
-  const d = new Date(iso)
-  if (Number.isNaN(d.getTime())) return String(iso)
-  const pad = (n) => String(n).padStart(2, '0')
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
-}
-
 export function formatCountdown(iso, now = nowMs.value) {
   if (!iso) return ''
   const target = new Date(iso).getTime()
@@ -49,5 +41,7 @@ export function toCsv(rows) {
     const s = v === null || v === undefined ? '' : String(v)
     return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s
   }
-  return [headers.join(','), ...rows.map((r) => headers.map((h) => escape(r[h])).join(','))].join('\n')
+  return [headers.join(','), ...rows.map((r) => headers.map((h) => escape(r[h])).join(','))].join(
+    '\n',
+  )
 }

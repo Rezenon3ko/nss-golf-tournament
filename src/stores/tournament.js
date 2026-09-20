@@ -7,8 +7,10 @@ import {
   WRITE_DEBOUNCE_MS,
   classifySyncError,
   createConflictError,
+  createForbiddenError,
   isDuplicateKey,
   isMissingRevisionColumn,
+  isNoRowsError,
   nextRetryDelay,
 } from '@/lib/sync'
 import { countSetWins, countedSets, needWins, setWinnerId } from '@/lib/scoring'
@@ -106,10 +108,22 @@ const SEED_PLAYERS = [
 ]
 
 const SEED_TIERS = {
-  p1: 1, p2: 1, p3: 1, p4: 1,
-  p5: 2, p6: 2, p7: 2, p8: 2,
-  p9: 3, p10: 3, p11: 3, p12: 3,
-  p13: 4, p14: 4, p15: 4, p16: 4,
+  p1: 1,
+  p2: 1,
+  p3: 1,
+  p4: 1,
+  p5: 2,
+  p6: 2,
+  p7: 2,
+  p8: 2,
+  p9: 3,
+  p10: 3,
+  p11: 3,
+  p12: 3,
+  p13: 4,
+  p14: 4,
+  p15: 4,
+  p16: 4,
 }
 
 function buildSeedDdl() {
@@ -137,9 +151,7 @@ function buildSeed() {
     ddlRounds: buildSeedDdl(),
     tiebreakResolutions: {},
     evidence: [],
-    logs: [
-      { id: 'lg-1', time: now(), by: '系统', message: '初始状态：等待抽签分组' },
-    ],
+    logs: [{ id: 'lg-1', time: now(), by: '系统', message: '初始状态：等待抽签分组' }],
     championId: null,
     drawHistory: [],
   }
@@ -330,11 +342,12 @@ function getStandingsFor(state, groupId) {
     for (let k = 0; k < rows.length; k += 1) {
       const row = rows[k]
       const same = (a, b) =>
-        !!a && !!b
-        && a.points === b.points
-        && a.h2hWins === b.h2hWins
-        && a.setDiff === b.setDiff
-        && a.strokeDiff === b.strokeDiff
+        !!a &&
+        !!b &&
+        a.points === b.points &&
+        a.h2hWins === b.h2hWins &&
+        a.setDiff === b.setDiff &&
+        a.strokeDiff === b.strokeDiff
       let s = k
       while (s > 0 && same(rows[s - 1], row)) s -= 1
       let e = k
@@ -374,13 +387,69 @@ function knockoutSeedMatches(state) {
     return row.playerId
   }
   return [
-    { stage: 'qf', order: 1, label: '八强 1', a: idAt('A', 0), b: idAt('B', 1), expectedA: 'A组第1名', expectedB: 'B组第2名' },
-    { stage: 'qf', order: 2, label: '八强 2', a: idAt('C', 0), b: idAt('D', 1), expectedA: 'C组第1名', expectedB: 'D组第2名' },
-    { stage: 'qf', order: 3, label: '八强 3', a: idAt('A', 1), b: idAt('B', 0), expectedA: 'A组第2名', expectedB: 'B组第1名' },
-    { stage: 'qf', order: 4, label: '八强 4', a: idAt('C', 1), b: idAt('D', 0), expectedA: 'C组第2名', expectedB: 'D组第1名' },
-    { stage: 'sf', order: 1, label: '半决赛 1', a: null, b: null, expectedA: '八强1胜者', expectedB: '八强2胜者' },
-    { stage: 'sf', order: 2, label: '半决赛 2', a: null, b: null, expectedA: '八强3胜者', expectedB: '八强4胜者' },
-    { stage: 'final', order: 1, label: '决赛', a: null, b: null, expectedA: '上半区胜者', expectedB: '下半区胜者' },
+    {
+      stage: 'qf',
+      order: 1,
+      label: '八强 1',
+      a: idAt('A', 0),
+      b: idAt('B', 1),
+      expectedA: 'A组第1名',
+      expectedB: 'B组第2名',
+    },
+    {
+      stage: 'qf',
+      order: 2,
+      label: '八强 2',
+      a: idAt('C', 0),
+      b: idAt('D', 1),
+      expectedA: 'C组第1名',
+      expectedB: 'D组第2名',
+    },
+    {
+      stage: 'qf',
+      order: 3,
+      label: '八强 3',
+      a: idAt('A', 1),
+      b: idAt('B', 0),
+      expectedA: 'A组第2名',
+      expectedB: 'B组第1名',
+    },
+    {
+      stage: 'qf',
+      order: 4,
+      label: '八强 4',
+      a: idAt('C', 1),
+      b: idAt('D', 0),
+      expectedA: 'C组第2名',
+      expectedB: 'D组第1名',
+    },
+    {
+      stage: 'sf',
+      order: 1,
+      label: '半决赛 1',
+      a: null,
+      b: null,
+      expectedA: '八强1胜者',
+      expectedB: '八强2胜者',
+    },
+    {
+      stage: 'sf',
+      order: 2,
+      label: '半决赛 2',
+      a: null,
+      b: null,
+      expectedA: '八强3胜者',
+      expectedB: '八强4胜者',
+    },
+    {
+      stage: 'final',
+      order: 1,
+      label: '决赛',
+      a: null,
+      b: null,
+      expectedA: '上半区胜者',
+      expectedB: '下半区胜者',
+    },
   ]
 }
 
@@ -543,8 +612,7 @@ function syncKnockout(state, persistFn) {
     } else if (f1 && sf2Void) {
       // 下半区整体作废：上半区决赛选手直接夺冠；若其半决赛真实完赛，败者递补亚军
       const champ = f1
-      const runnerUp =
-        !sfWalkover[1] && sf1 && matchWinner(sf1) === champ ? loserOf(sf1) : null
+      const runnerUp = !sfWalkover[1] && sf1 && matchWinner(sf1) === champ ? loserOf(sf1) : null
       final.playerAId = champ
       final.playerBId = null
       final.walkover = '对手半区作废，直接夺冠'
@@ -554,8 +622,7 @@ function syncKnockout(state, persistFn) {
     } else if (f2 && sf1Void) {
       // 上半区整体作废：下半区决赛选手直接夺冠；若其半决赛真实完赛，败者递补亚军
       const champ = f2
-      const runnerUp =
-        !sfWalkover[2] && sf2 && matchWinner(sf2) === champ ? loserOf(sf2) : null
+      const runnerUp = !sfWalkover[2] && sf2 && matchWinner(sf2) === champ ? loserOf(sf2) : null
       final.playerAId = champ
       final.playerBId = null
       final.walkover = '对手半区作废，直接夺冠'
@@ -728,6 +795,8 @@ export const useTournamentStore = defineStore('tournament', () => {
         sync.supportsRevision = false
         return fetchRemoteRow()
       }
+      // 表里还没有 main 行（首次部署）不是错误，交给上层走「首次写入」分支
+      if (isNoRowsError(error)) return null
       throw error
     }
     if (!data) return null
@@ -773,11 +842,13 @@ export const useTournamentStore = defineStore('tournament', () => {
     // 更新未命中：要么行不存在（首次写入），要么云端版本已被别人推进
     if (!data || data.length === 0) {
       const remote = await fetchRemoteRow()
-      if (remote) throw createConflictError(remote)
+      if (remote) {
+        // 版本号没变却更新不到行 → 不是并发冲突，是写入没被放行（RLS）
+        if (Number(remote.revision) === Number(baseRevision)) throw createForbiddenError()
+        throw createConflictError(remote)
+      }
 
-      const inserted = await supabase
-        .from('tournament_state')
-        .insert({ key: SYNC_ROW_KEY, ...row })
+      const inserted = await supabase.from('tournament_state').insert({ key: SYNC_ROW_KEY, ...row })
       if (inserted.error) {
         if (isDuplicateKey(inserted.error)) throw createConflictError(await fetchRemoteRow())
         if (isMissingRevisionColumn(inserted.error)) {
@@ -853,12 +924,7 @@ export const useTournamentStore = defineStore('tournament', () => {
   // 主办方登录状态变化时调用；首次登录会把待同步的改动推上去
   function setCloudWriteEnabled(enabled) {
     cloudWriteEnabled.value = !!enabled
-    if (
-      enabled &&
-      sync.mode === 'cloud' &&
-      sync.pendingChanges &&
-      sync.status !== 'conflict'
-    ) {
+    if (enabled && sync.mode === 'cloud' && sync.pendingChanges && sync.status !== 'conflict') {
       cloudQueued = true
       flushQueued()
     }
@@ -1091,9 +1157,7 @@ export const useTournamentStore = defineStore('tournament', () => {
   }
 
   function removePlayer(id) {
-    const hasMatches = matches.value.some(
-      (m) => m.playerAId === id || m.playerBId === id,
-    )
+    const hasMatches = matches.value.some((m) => m.playerAId === id || m.playerBId === id)
     if (hasMatches) return false
     const player = players.value.find((p) => p.id === id)
     players.value = players.value.filter((p) => p.id !== id)
@@ -1244,7 +1308,9 @@ export const useTournamentStore = defineStore('tournament', () => {
 
   function ddlForMatch(match) {
     if (match.stage === 'group') {
-      return ddlRounds.value.find((d) => d.stage === 'group' && d.round === match.round)?.ddl || null
+      return (
+        ddlRounds.value.find((d) => d.stage === 'group' && d.round === match.round)?.ddl || null
+      )
     }
     return ddlRounds.value.find((d) => d.stage === match.stage)?.ddl || null
   }
@@ -1338,7 +1404,9 @@ export const useTournamentStore = defineStore('tournament', () => {
       match.winnerId = matchWinner(match)
       match.updatedAt = now()
       match.log.push({ time: now(), by: '主办方', message: `判定：${labels[decision]}` })
-      addLog(`${playerName(match.playerAId)} vs ${playerName(match.playerBId)} 判定 ${labels[decision]}`)
+      addLog(
+        `${playerName(match.playerAId)} vs ${playerName(match.playerBId)} 判定 ${labels[decision]}`,
+      )
     }
     if (match.stage !== 'group') {
       syncKnockoutInternal()
@@ -1452,9 +1520,7 @@ export const useTournamentStore = defineStore('tournament', () => {
   const knockoutMatches = computed(() => {
     const seeds = knockoutSeedMatches(stateView())
     return seeds.map((seed) => {
-      const match = matches.value.find(
-        (m) => m.stage === seed.stage && m.order === seed.order,
-      )
+      const match = matches.value.find((m) => m.stage === seed.stage && m.order === seed.order)
       if (match) {
         const aId = match.playerAId || seed.a || null
         const bId = match.playerBId || seed.b || null
@@ -1481,14 +1547,6 @@ export const useTournamentStore = defineStore('tournament', () => {
     })
   })
 
-  const pendingCount = computed(
-    () => matches.value.filter((m) => m.status === 'pending').length,
-  )
-
-  const completedCount = computed(
-    () => matches.value.filter((m) => m.status === 'complete' || m.status === 'forfeit').length,
-  )
-
   const overdueMatches = computed(() => {
     const current = nowMs.value
     return matches.value
@@ -1506,12 +1564,6 @@ export const useTournamentStore = defineStore('tournament', () => {
       .sort((a, b) => b.updatedAt - a.updatedAt)
       .slice(0, 6),
   )
-
-  const ddlByKey = computed(() => {
-    const map = {}
-    for (const d of ddlRounds.value) map[d.key] = d.ddl || null
-    return map
-  })
 
   // 本地引用，避免 this 问题
   function getStandings(groupId) {
@@ -1544,7 +1596,6 @@ export const useTournamentStore = defineStore('tournament', () => {
     reconnect,
     useRemoteVersion,
     useLocalVersion,
-    addLog,
     addPlayer,
     updatePlayer,
     removePlayer,
@@ -1569,17 +1620,13 @@ export const useTournamentStore = defineStore('tournament', () => {
     allGroupsComplete,
     stage,
     knockoutMatches,
-    pendingCount,
-    completedCount,
     overdueMatches,
     latestResults,
-    ddlByKey,
     getStandings,
-    matchWinner,
     matchScore,
     STAGE_LABELS,
     STATUS_LABELS,
   }
 })
 
-export { GROUPS, STAGE_LABELS, STATUS_LABELS, matchScore, matchWinner }
+export { GROUPS, STAGE_LABELS, STATUS_LABELS, matchScore }

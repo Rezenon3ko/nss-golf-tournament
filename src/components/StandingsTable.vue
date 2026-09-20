@@ -57,62 +57,66 @@ function rankClass(rank) {
   <div>
     <div class="notion-card">
       <div class="hidden overflow-x-auto lg:block">
-      <table class="notion-table w-full table-fixed text-base">
-        <thead>
-          <tr class="border-b border-[#e5e3df] text-left text-sm text-[#5d5b54] dark:border-[#3d3d3d] dark:text-[#a0a0a0]">
-            <th class="w-16 px-4 py-3">排名</th>
-            <th class="w-48 px-4 py-3">选手</th>
-            <th class="w-20 px-4 py-3">场</th>
-            <th class="w-20 px-4 py-3">胜</th>
-            <th class="w-20 px-4 py-3">负</th>
-            <th class="w-20 px-4 py-3">积分</th>
-            <th class="w-20 px-4 py-3">净胜局</th>
-            <th class="w-20 px-4 py-3">净胜杆</th>
-            <th class="w-20 px-4 py-3">备注</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr
-            v-for="row in rows"
-            :key="row.playerId"
-            class="border-b border-[#ede9e4] last:border-0 dark:border-[#2e2e2e]"
-            :class="[row.rank <= 2 ? tintBg : '', tintHover]"
-          >
-            <td class="px-4 py-3">
-              <span
-                class="inline-flex h-7 w-7 items-center justify-center rounded-full text-sm font-bold"
-                :class="rankClass(row.rank)"
-              >
-                {{ row.rank }}
-              </span>
-            </td>
-            <td class="px-4 py-3">
-              <PlayerBadge :player="store.playerById(row.playerId)" />
-            </td>
-            <td class="px-4 py-3">{{ row.played }}</td>
-            <td class="px-4 py-3">{{ row.wins }}</td>
-            <td class="px-4 py-3">{{ row.losses }}</td>
-            <td class="px-4 py-3 font-bold">{{ row.points }}</td>
-            <td class="px-4 py-3">{{ row.setDiff > 0 ? `+${row.setDiff}` : row.setDiff }}</td>
-            <td class="px-4 py-3">{{ row.strokeDiff > 0 ? `+${row.strokeDiff}` : row.strokeDiff }}</td>
-            <td class="px-4 py-3">
-              <span
-                v-if="complete && row.rank <= 2"
-                class="rounded-full bg-[#d9f3e1] px-2 py-0.5 text-sm font-semibold text-[#1aae39] dark:bg-[#1d3a2a] dark:text-[#7ec8a0]"
-              >
-                🏆 晋级
-              </span>
-              <span
-                v-else-if="row.needsDraw"
-                class="rounded-full bg-amber-100 px-2 py-0.5 text-sm font-semibold text-[#793400] dark:bg-[#3a2f1a] dark:text-[#d9bf7e]"
-              >
-                待抽签
-              </span>
-              <span v-else class="text-sm text-[#a4a097]">-</span>
-            </td>
-          </tr>
-        </tbody>
-      </table>
+        <table class="notion-table w-full table-fixed text-base">
+          <thead>
+            <tr
+              class="border-b border-[#e5e3df] text-left text-sm text-[#5d5b54] dark:border-[#3d3d3d] dark:text-[#a0a0a0]"
+            >
+              <th class="w-16 px-4 py-3">排名</th>
+              <th class="w-48 px-4 py-3">选手</th>
+              <th class="w-20 px-4 py-3">场</th>
+              <th class="w-20 px-4 py-3">胜</th>
+              <th class="w-20 px-4 py-3">负</th>
+              <th class="w-20 px-4 py-3">积分</th>
+              <th class="w-20 px-4 py-3">净胜局</th>
+              <th class="w-20 px-4 py-3">净胜杆</th>
+              <th class="w-20 px-4 py-3">备注</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr
+              v-for="row in rows"
+              :key="row.playerId"
+              class="border-b border-[#ede9e4] last:border-0 dark:border-[#2e2e2e]"
+              :class="[row.rank <= 2 ? tintBg : '', tintHover]"
+            >
+              <td class="px-4 py-3">
+                <span
+                  class="inline-flex h-7 w-7 items-center justify-center rounded-full text-sm font-bold"
+                  :class="rankClass(row.rank)"
+                >
+                  {{ row.rank }}
+                </span>
+              </td>
+              <td class="px-4 py-3">
+                <PlayerBadge :player="store.playerById(row.playerId)" />
+              </td>
+              <td class="px-4 py-3">{{ row.played }}</td>
+              <td class="px-4 py-3">{{ row.wins }}</td>
+              <td class="px-4 py-3">{{ row.losses }}</td>
+              <td class="px-4 py-3 font-bold">{{ row.points }}</td>
+              <td class="px-4 py-3">{{ row.setDiff > 0 ? `+${row.setDiff}` : row.setDiff }}</td>
+              <td class="px-4 py-3">
+                {{ row.strokeDiff > 0 ? `+${row.strokeDiff}` : row.strokeDiff }}
+              </td>
+              <td class="px-4 py-3">
+                <span
+                  v-if="complete && row.rank <= 2"
+                  class="rounded-full bg-[#d9f3e1] px-2 py-0.5 text-sm font-semibold text-[#1aae39] dark:bg-[#1d3a2a] dark:text-[#7ec8a0]"
+                >
+                  🏆 晋级
+                </span>
+                <span
+                  v-else-if="row.needsDraw"
+                  class="rounded-full bg-amber-100 px-2 py-0.5 text-sm font-semibold text-[#793400] dark:bg-[#3a2f1a] dark:text-[#d9bf7e]"
+                >
+                  待抽签
+                </span>
+                <span v-else class="text-sm text-[#a4a097]">-</span>
+              </td>
+            </tr>
+          </tbody>
+        </table>
       </div>
       <div class="lg:hidden">
         <div
@@ -136,11 +140,14 @@ function rankClass(rank) {
             />
             <span class="shrink-0 text-base font-bold">{{ row.points }} 分</span>
           </div>
-          <div class="mt-1 flex items-center justify-between gap-2 pl-10 text-sm font-medium text-[#5d5b54] dark:text-[#c7c7c7]">
+          <div
+            class="mt-1 flex items-center justify-between gap-2 pl-10 text-sm font-medium text-[#5d5b54] dark:text-[#c7c7c7]"
+          >
             <span>
               胜{{ row.wins }} 负{{ row.losses }} · 净胜局{{
                 row.setDiff > 0 ? `+${row.setDiff}` : row.setDiff
-              }} · 净胜杆{{ row.strokeDiff > 0 ? `+${row.strokeDiff}` : row.strokeDiff }}
+              }}
+              · 净胜杆{{ row.strokeDiff > 0 ? `+${row.strokeDiff}` : row.strokeDiff }}
             </span>
             <span
               v-if="complete && row.rank <= 2"

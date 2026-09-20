@@ -53,18 +53,20 @@ function tierClass(tier) {
     <div class="mb-4 flex flex-wrap items-center justify-between gap-3">
       <div>
         <h1 class="text-2xl font-bold">选手</h1>
-        <p class="text-sm text-[#5d5b54] dark:text-[#a0a0a0]">共 {{ store.players.length }} 名选手 · 按档位分组</p>
+        <p class="text-sm text-[#5d5b54] dark:text-[#a0a0a0]">
+          共 {{ store.players.length }} 名选手 · 按档位分组
+        </p>
       </div>
       <div class="flex flex-wrap items-center gap-2">
         <div class="relative">
-          <span class="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[#a4a097]">
+          <span class="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-[#a4a097]">
             <BaseIcon :path="mdiMagnify" size="16" />
           </span>
           <input
             v-model="search"
             type="search"
             placeholder="搜索选手 ID"
-            class="w-56 rounded-full border border-[#c8c4be] py-2 pl-9 pr-3 text-sm dark:border-[#454545] dark:bg-[#1e1e1e]"
+            class="w-56 rounded-full border border-[#c8c4be] py-2 pr-3 pl-9 text-sm dark:border-[#454545] dark:bg-[#1e1e1e]"
           />
         </div>
         <div class="flex flex-wrap gap-1">
@@ -104,7 +106,10 @@ function tierClass(tier) {
           </span>
         </div>
         <div class="flex flex-wrap gap-1">
-          <span class="rounded-full px-2 py-0.5 text-sm font-semibold" :class="tierClass(player.tier)">
+          <span
+            class="rounded-full px-2 py-0.5 text-sm font-semibold"
+            :class="tierClass(player.tier)"
+          >
             {{ player.tier }}档
           </span>
           <span
@@ -120,15 +125,21 @@ function tierClass(tier) {
           class="mt-auto grid grid-cols-3 gap-1 border-t border-[#ede9e4] pt-2 text-center text-sm text-[#5d5b54] dark:border-[#2e2e2e] dark:text-[#a0a0a0]"
         >
           <div>
-            <p class="text-base font-bold text-[#1a1a1a] dark:text-[#e6e6e6]">{{ statsOf(player).played }}</p>
+            <p class="text-base font-bold text-[#1a1a1a] dark:text-[#e6e6e6]">
+              {{ statsOf(player).played }}
+            </p>
             <p>场次</p>
           </div>
           <div>
-            <p class="text-base font-bold text-[#1a1a1a] dark:text-[#e6e6e6]">{{ statsOf(player).points }}</p>
+            <p class="text-base font-bold text-[#1a1a1a] dark:text-[#e6e6e6]">
+              {{ statsOf(player).points }}
+            </p>
             <p>积分</p>
           </div>
           <div>
-            <p class="text-base font-bold text-[#1a1a1a] dark:text-[#e6e6e6]">{{ statsOf(player).setDiff }}</p>
+            <p class="text-base font-bold text-[#1a1a1a] dark:text-[#e6e6e6]">
+              {{ statsOf(player).setDiff }}
+            </p>
             <p>净胜局</p>
           </div>
         </div>

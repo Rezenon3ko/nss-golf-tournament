@@ -1,8 +1,6 @@
 @import 'tailwindcss';
 @plugin '@tailwindcss/forms';
 
-@source inline('style-{basic,white}');
-
 @custom-variant dark (&:where(.dark, .dark *));
 
 @theme {
@@ -33,14 +31,10 @@
   --color-group-d-accent: #7a5c46;
 }
 
-@import './_checkbox-radio-switch.css';
 @import './_keyframes.css';
-@import './_progress.css';
 @import './_scrollbars.css';
 @import './_table.css';
 
-@import './styles/_basic.css';
-@import './styles/_white.css';
 @import './notion.css';
 
 /*
@@ -54,8 +48,15 @@
 
 @layer base {
   body {
-    font-family: Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC',
-      'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+    font-family:
+      Inter,
+      -apple-system,
+      BlinkMacSystemFont,
+      'Segoe UI',
+      'PingFang SC',
+      'Hiragino Sans GB',
+      'Microsoft YaHei',
+      sans-serif;
   }
 }
 @layer base {

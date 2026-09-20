@@ -17,7 +17,7 @@ globalThis.localStorage = {
 
 const { backend } = await import('./fixtures/supabase-stub.js')
 const { nowMs, tick } = await import('../src/lib/clock.js')
-const { formatCountdown, formatDate, formatDateTime } = await import('../src/utils/format.js')
+const { formatCountdown, formatDateTime } = await import('../src/utils/format.js')
 const { useTournamentStore } = await import('../src/stores/tournament.js')
 
 const HOUR = 3600000
@@ -35,10 +35,9 @@ test('formatCountdown 按传入的「当前时间」计算，不需要真实等�
   assert.equal(formatCountdown('不是时间', target), '')
 })
 
-test('formatDateTime / formatDate 处理空值与非法值', () => {
+test('formatDateTime 处理空值与非法值', () => {
   assert.equal(formatDateTime(''), '未设置')
   assert.equal(formatDateTime('2026-08-30T23:59'), '2026-08-30 23:59')
-  assert.equal(formatDate('2026-08-30T23:59'), '2026-08-30')
   assert.equal(formatDateTime('乱七八糟'), '乱七八糟')
 })
 

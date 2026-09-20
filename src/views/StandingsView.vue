@@ -18,10 +18,7 @@ import StandingsTable from '@/components/StandingsTable.vue'
     <div v-for="g in GROUPS" :key="g" class="mb-8">
       <h2 class="mb-2 flex items-center gap-2 text-lg font-bold">
         {{ g }} 组
-        <span
-          class="rounded-full px-2 py-0.5 text-xs font-semibold"
-          :class="groupChipClass(g)"
-        >
+        <span class="rounded-full px-2 py-0.5 text-xs font-semibold" :class="groupChipClass(g)">
           {{ store.groupComplete[g] ? '已结束' : '小组赛进行中' }}
         </span>
       </h2>

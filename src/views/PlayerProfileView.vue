@@ -50,7 +50,7 @@ function stageLabel(match) {
     </RouterLink>
 
     <template v-if="player">
-      <div class="mb-5 notion-card p-5">
+      <div class="notion-card mb-5 p-5">
         <div class="flex flex-wrap items-center justify-between gap-4">
           <div>
             <PlayerBadge :player="player" size="lg" />
@@ -61,19 +61,19 @@ function stageLabel(match) {
             </div>
           </div>
           <div v-if="groupRow" class="grid grid-cols-2 gap-4 text-center sm:grid-cols-4">
-            <div class="rounded-xl notion-card-soft px-4 py-2">
+            <div class="notion-card-soft rounded-xl px-4 py-2">
               <p class="text-xs text-[#a4a097]">排名</p>
               <p class="text-xl font-bold">第 {{ groupRow.rank }} 名</p>
             </div>
-            <div class="rounded-xl notion-card-soft px-4 py-2">
+            <div class="notion-card-soft rounded-xl px-4 py-2">
               <p class="text-xs text-[#a4a097]">积分</p>
               <p class="text-xl font-bold">{{ groupRow.points }}</p>
             </div>
-            <div class="rounded-xl notion-card-soft px-4 py-2">
+            <div class="notion-card-soft rounded-xl px-4 py-2">
               <p class="text-xs text-[#a4a097]">净胜局</p>
               <p class="text-xl font-bold">{{ groupRow.setDiff }}</p>
             </div>
-            <div class="rounded-xl notion-card-soft px-4 py-2">
+            <div class="notion-card-soft rounded-xl px-4 py-2">
               <p class="text-xs text-[#a4a097]">净胜杆</p>
               <p class="text-xl font-bold">{{ groupRow.strokeDiff }}</p>
             </div>
@@ -98,10 +98,12 @@ function stageLabel(match) {
         </button>
       </div>
 
-      <div class="overflow-x-auto notion-card">
+      <div class="notion-card overflow-x-auto">
         <table class="notion-table w-full text-sm">
           <thead>
-            <tr class="border-b border-[#e5e3df] text-left text-xs text-[#5d5b54] dark:border-[#3d3d3d] dark:text-[#a0a0a0]">
+            <tr
+              class="border-b border-[#e5e3df] text-left text-xs text-[#5d5b54] dark:border-[#3d3d3d] dark:text-[#a0a0a0]"
+            >
               <th class="px-4 py-3">阶段</th>
               <th class="px-4 py-3">对阵</th>
               <th class="px-4 py-3">比分</th>

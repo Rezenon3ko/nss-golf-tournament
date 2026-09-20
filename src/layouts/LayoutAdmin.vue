@@ -31,9 +31,6 @@ function go(item) {
   if (item.to) {
     router.push(item.to)
   }
-  if (item.isToggleLightDark) {
-    darkModeStore.set(null, true)
-  }
   if (item.isLogout) {
     authStore.logout()
     router.push('/')
@@ -62,7 +59,9 @@ function logout() {
           </button>
           <span class="flex items-center gap-2 font-bold">
             <GolfLogo :size="32" />
-            <span class="text-[#37352f] dark:text-[#e6e6e6]"><span class="hidden sm:inline">{{ siteName }} · </span>主办方后台</span>
+            <span class="text-[#37352f] dark:text-[#e6e6e6]"
+              ><span class="hidden sm:inline">{{ siteName }} · </span>主办方后台</span
+            >
           </span>
         </div>
         <div class="flex items-center gap-1">
@@ -85,7 +84,7 @@ function logout() {
             <span class="hidden sm:inline">查看前台</span>
           </RouterLink>
           <div
-            class="flex items-center gap-2 rounded-full bg-[#f0eeec] py-1 pl-1 pr-1 dark:bg-[#333333] sm:pr-3"
+            class="flex items-center gap-2 rounded-full bg-[#f0eeec] py-1 pr-1 pl-1 sm:pr-3 dark:bg-[#333333]"
           >
             <img
               v-if="tournamentStore.adminAvatar"
@@ -136,9 +135,7 @@ function logout() {
             {{ item.label }}
           </RouterLink>
         </div>
-        <div
-          class="mt-auto space-y-1 border-t border-[#e5e3df] pt-3 dark:border-[#3d3d3d]"
-        >
+        <div class="mt-auto space-y-1 border-t border-[#e5e3df] pt-3 dark:border-[#3d3d3d]">
           <button
             v-for="item in menuAsideBottom"
             :key="item.label"

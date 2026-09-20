@@ -17,6 +17,13 @@ import {
 import BaseIcon from '@/components/BaseIcon.vue'
 import { formatDateTime } from '@/utils/format'
 import { useFeedbackStore } from '@/stores/feedback'
+import {
+  avatarStorageEnabled,
+  blobToDataUrl,
+  fileToAvatarBlob,
+  removeAvatarByUrl,
+  uploadAvatar,
+} from '@/lib/avatars'
 
 const store = useTournamentStore()
 const feedback = useFeedbackStore()
@@ -30,8 +37,11 @@ const form = reactive({
   tier: 4,
 })
 
-// 头像上传：本地裁剪为正方形并压缩，存成 dataURL（随赛事数据一起保存）
-function onAvatarChange(event) {
+// 头像上传：裁剪压缩后上传 Storage，赛事数据里只留公开 URL；
+// 未配置 Supabase 时回退为 dataURL（随本机缓存保存）
+const avatarBusy = ref(false)
+
+async function onAvatarChange(event) {
   const input = event.target
   const file = input.files && input.files[0]
   input.value = ''
@@ -40,34 +50,17 @@ function onAvatarChange(event) {
     feedback.warn('请选择图片文件（JPG / PNG）')
     return
   }
-  const reader = new FileReader()
-  reader.onload = () => {
-    const img = new Image()
-    img.onload = () => {
-      const size = 256
-      const canvas = document.createElement('canvas')
-      canvas.width = size
-      canvas.height = size
-      const ctx = canvas.getContext('2d')
-      const side = Math.min(img.width, img.height)
-      ctx.drawImage(
-        img,
-        (img.width - side) / 2,
-        (img.height - side) / 2,
-        side,
-        side,
-        0,
-        0,
-        size,
-        size,
-      )
-      form.avatar = canvas.toDataURL('image/jpeg', 0.85)
-    }
-    img.onerror = () => feedback.error('图片读取失败，请换一张试试')
-    img.src = reader.result
+  avatarBusy.value = true
+  try {
+    const blob = await fileToAvatarBlob(file)
+    const url = await uploadAvatar(blob, { id: editingId.value })
+    form.avatar = url || (await blobToDataUrl(blob))
+    if (url) feedback.success('头像已上传')
+  } catch (err) {
+    feedback.error(`头像处理失败：${err?.message || err}`)
+  } finally {
+    avatarBusy.value = false
   }
-  reader.onerror = () => feedback.error('图片读取失败，请换一张试试')
-  reader.readAsDataURL(file)
 }
 
 function openAdd() {
@@ -93,6 +86,8 @@ function savePlayer() {
     feedback.warn('请填写选手名字')
     return
   }
+  // 换头像时旧对象不再被引用，顺手清掉，避免 Storage 里越积越多
+  const previousAvatar = editingId.value ? store.playerById(editingId.value)?.avatar : null
   if (editingId.value) {
     store.updatePlayer(editingId.value, {
       name: form.name,
@@ -109,6 +104,7 @@ function savePlayer() {
     })
   }
   showEditor.value = false
+  if (previousAvatar && previousAvatar !== form.avatar) void removeAvatarByUrl(previousAvatar)
   feedback.success(editingId.value ? '选手信息已更新' : '选手已添加')
 }
 
@@ -122,7 +118,11 @@ async function removePlayer(player) {
   if (!ok) return
   const removed = store.removePlayer(player.id)
   if (!removed) feedback.error('该选手已有关联比赛记录，无法删除，可改为停用')
-  else feedback.success(`已删除选手「${player.name}」`)
+  else {
+    // 顺带清理 Storage 里的头像对象（失败不影响删除结果）
+    if (player.avatar) void removeAvatarByUrl(player.avatar)
+    feedback.success(`已删除选手「${player.name}」`)
+  }
 }
 
 async function doDraw() {
@@ -274,7 +274,9 @@ function tierClass(tier) {
         <div class="hidden overflow-x-auto lg:block">
           <table class="hover-gold notion-table w-full text-base">
             <thead class="bg-[#f6f5f4] dark:bg-[#1e1e1e]">
-              <tr class="border-b border-[#e5e3df] text-left text-sm text-[#5d5b54] dark:border-[#3d3d3d] dark:text-[#a0a0a0]">
+              <tr
+                class="border-b border-[#e5e3df] text-left text-sm text-[#5d5b54] dark:border-[#3d3d3d] dark:text-[#a0a0a0]"
+              >
                 <th class="py-2 pr-2">选手</th>
                 <th class="py-2 pr-2">最佳成绩</th>
                 <th class="py-2 pr-2">档位</th>
@@ -291,16 +293,29 @@ function tierClass(tier) {
                 <td class="py-2 pr-2"><PlayerBadge :player="player" /></td>
                 <td class="py-2 pr-2">{{ player.bestScore ?? '-' }}</td>
                 <td class="py-2 pr-2">
-                  <span class="rounded-full px-2 py-0.5 text-sm font-semibold" :class="tierClass(player.tier)">
+                  <span
+                    class="rounded-full px-2 py-0.5 text-sm font-semibold"
+                    :class="tierClass(player.tier)"
+                  >
                     {{ player.tier }}档
                   </span>
                 </td>
                 <td class="py-2 pr-2">{{ player.groupId || '-' }}</td>
                 <td class="py-2 text-right">
-                  <button type="button" class="inline-flex h-8 w-8 items-center justify-center text-[#a4a097] hover:text-[#1aae39]" title="编辑" @click="openEdit(player)">
+                  <button
+                    type="button"
+                    class="inline-flex h-8 w-8 items-center justify-center text-[#a4a097] hover:text-[#1aae39]"
+                    title="编辑"
+                    @click="openEdit(player)"
+                  >
                     <BaseIcon :path="mdiPencil" size="16" />
                   </button>
-                  <button type="button" class="inline-flex h-8 w-8 items-center justify-center text-[#a4a097] hover:text-[#e03131]" title="删除" @click="removePlayer(player)">
+                  <button
+                    type="button"
+                    class="inline-flex h-8 w-8 items-center justify-center text-[#a4a097] hover:text-[#e03131]"
+                    title="删除"
+                    @click="removePlayer(player)"
+                  >
                     <BaseIcon :path="mdiDelete" size="16" />
                   </button>
                 </td>
@@ -317,7 +332,10 @@ function tierClass(tier) {
             <PlayerBadge :player="player" size="sm" truncate class="min-w-0 flex-1" />
             <div class="shrink-0 text-right text-sm text-[#5d5b54] dark:text-[#a0a0a0]">
               <div>
-                <span class="rounded-full px-2 py-0.5 text-sm font-semibold" :class="tierClass(player.tier)">
+                <span
+                  class="rounded-full px-2 py-0.5 text-sm font-semibold"
+                  :class="tierClass(player.tier)"
+                >
                   {{ player.tier }}档
                 </span>
                 · {{ player.groupId || '未分组' }}
@@ -325,10 +343,20 @@ function tierClass(tier) {
               <div>最佳 {{ player.bestScore ?? '-' }}</div>
             </div>
             <div class="flex shrink-0">
-              <button type="button" class="inline-flex h-8 w-8 items-center justify-center text-[#a4a097] hover:text-[#1aae39]" title="编辑" @click="openEdit(player)">
+              <button
+                type="button"
+                class="inline-flex h-8 w-8 items-center justify-center text-[#a4a097] hover:text-[#1aae39]"
+                title="编辑"
+                @click="openEdit(player)"
+              >
                 <BaseIcon :path="mdiPencil" size="16" />
               </button>
-              <button type="button" class="inline-flex h-8 w-8 items-center justify-center text-[#a4a097] hover:text-[#e03131]" title="删除" @click="removePlayer(player)">
+              <button
+                type="button"
+                class="inline-flex h-8 w-8 items-center justify-center text-[#a4a097] hover:text-[#e03131]"
+                title="删除"
+                @click="removePlayer(player)"
+              >
                 <BaseIcon :path="mdiDelete" size="16" />
               </button>
             </div>
@@ -364,22 +392,14 @@ function tierClass(tier) {
         <div class="notion-card p-5">
           <div class="mb-1 flex items-center justify-between">
             <h2 class="font-bold">手动分组</h2>
-            <BaseButton
-              label="清空手动选择"
-              color="whiteDark"
-              small
-              @click="doClearDraft"
-            />
+            <BaseButton label="清空手动选择" color="whiteDark" small @click="doClearDraft" />
           </div>
           <p class="mb-3 text-sm text-[#a4a097]">
-            默认全部为「未选择」；为每个小组的 1-4 档各选一名选手，同一选手不会重复出现在两组，四组都选满后才能发布。
+            默认全部为「未选择」；为每个小组的 1-4
+            档各选一名选手，同一选手不会重复出现在两组，四组都选满后才能发布。
           </p>
           <div class="grid gap-3 sm:grid-cols-2">
-            <div
-              v-for="g in GROUPS"
-              :key="g"
-              class="notion-card-soft p-3"
-            >
+            <div v-for="g in GROUPS" :key="g" class="notion-card-soft p-3">
               <p class="mb-2 text-sm font-bold text-[#5d5b54] dark:text-[#a0a0a0]">{{ g }}组</p>
               <div v-for="t in [1, 2, 3, 4]" :key="t" class="mb-2 last:mb-0">
                 <label class="mb-1 block text-sm text-[#a4a097]">{{ t }}档</label>
@@ -408,7 +428,11 @@ function tierClass(tier) {
             <h2 class="font-bold">抽签分组</h2>
             <span
               class="rounded-full px-2.5 py-1 text-sm font-semibold"
-              :class="valid ? 'rounded-full bg-[#d9f3e1] px-2.5 py-1 text-sm font-semibold text-[#1aae39] dark:bg-[#1d3a2a] dark:text-[#7ec8a0]' : 'rounded-full bg-[#ffe8d4] px-2.5 py-1 text-sm font-semibold text-[#793400] dark:bg-[#3a2f1a] dark:text-[#d9bf7e]'"
+              :class="
+                valid
+                  ? 'rounded-full bg-[#d9f3e1] px-2.5 py-1 text-sm font-semibold text-[#1aae39] dark:bg-[#1d3a2a] dark:text-[#7ec8a0]'
+                  : 'rounded-full bg-[#ffe8d4] px-2.5 py-1 text-sm font-semibold text-[#793400] dark:bg-[#3a2f1a] dark:text-[#d9bf7e]'
+              "
             >
               {{ valid ? '✅ 满足全部约束' : '未满足约束' }}
             </span>
@@ -417,11 +441,7 @@ function tierClass(tier) {
             尚未分组：点击「随机抽签」，或在上方「手动分组」里为每组选择选手。
           </p>
           <div v-if="store.draft" class="mb-3 grid gap-2 sm:grid-cols-2">
-            <div
-              v-for="g in GROUPS"
-              :key="g"
-              class="notion-card-soft p-3 text-sm"
-            >
+            <div v-for="g in GROUPS" :key="g" class="notion-card-soft p-3 text-sm">
               <p class="mb-1 font-bold text-[#5d5b54] dark:text-[#a0a0a0]">{{ g }}组</p>
               <div class="flex flex-wrap gap-1">
                 <span
@@ -441,7 +461,10 @@ function tierClass(tier) {
             <BaseIcon :path="mdiCheckCircle" size="16" />
             分组已发布，赛程已生成。如需重新抽签请先「重置赛事」。
           </div>
-          <p v-else class="flex items-center gap-2 rounded-lg bg-[#fef7d6] px-3 py-2 text-sm text-[#793400] dark:bg-[#332a18] dark:text-[#d9bf7e]">
+          <p
+            v-else
+            class="flex items-center gap-2 rounded-lg bg-[#fef7d6] px-3 py-2 text-sm text-[#793400] dark:bg-[#332a18] dark:text-[#d9bf7e]"
+          >
             <BaseIcon :path="mdiAlertCircle" size="16" />
             分组为草稿状态，需「确认发布分组」后生成赛程。
           </p>
@@ -449,10 +472,7 @@ function tierClass(tier) {
       </div>
     </div>
 
-    <div
-      v-if="store.drawHistory.length"
-      class="mt-6 mb-4 notion-card p-5"
-    >
+    <div v-if="store.drawHistory.length" class="notion-card mt-6 mb-4 p-5">
       <h2 class="mb-3 font-bold">抽签记录（可验证）</h2>
       <div class="flex flex-col gap-2">
         <div
@@ -473,7 +493,9 @@ function tierClass(tier) {
             <p class="mt-1 text-[#5d5b54] dark:text-[#a0a0a0]">
               分组：
               <span v-for="g in ['A', 'B', 'C', 'D']" :key="g" class="me-2">
-                {{ g }}组（{{ (rec.groups[g] || []).map((id) => store.playerName(id)).join('、') }}）
+                {{ g }}组（{{
+                  (rec.groups[g] || []).map((id) => store.playerName(id)).join('、')
+                }}）
               </span>
             </p>
           </div>
@@ -506,18 +528,32 @@ function tierClass(tier) {
             <div class="flex flex-col items-start gap-1">
               <label
                 class="cursor-pointer rounded-lg border border-[#c8c4be] px-3 py-1.5 text-sm font-bold hover:bg-[#f0eeec] dark:border-[#454545] dark:hover:bg-[#3d3d3d]"
+                :class="avatarBusy ? 'pointer-events-none opacity-60' : ''"
               >
-                选择图片
-                <input type="file" accept="image/*" class="hidden" @change="onAvatarChange" />
+                {{ avatarBusy ? '上传中…' : '选择图片' }}
+                <input
+                  type="file"
+                  accept="image/*"
+                  class="hidden"
+                  :disabled="avatarBusy"
+                  @change="onAvatarChange"
+                />
               </label>
               <button
-                v-if="form.avatar"
+                v-if="form.avatar && !avatarBusy"
                 type="button"
                 class="text-xs font-semibold text-[#e03131] hover:underline dark:text-[#bd9aa1]"
                 @click="form.avatar = null"
               >
                 移除头像
               </button>
+              <p class="text-xs text-[#a4a097]">
+                {{
+                  avatarStorageEnabled()
+                    ? '上传到云端存储，其他设备立即可见'
+                    : '本地模式：头像随赛事数据保存在本机'
+                }}
+              </p>
             </div>
           </div>
           <p class="mt-1 text-xs text-[#a4a097]">支持 JPG / PNG，自动裁剪为正方形并压缩后保存</p>

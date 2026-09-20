@@ -12,7 +12,6 @@ const props = defineProps({
     type: String,
     required: true,
   },
-  icon: String,
   small: Boolean,
   outline: Boolean,
   extraClass: {
@@ -28,11 +27,5 @@ const componentClass = computed(() => [
 </script>
 
 <template>
-  <PillTagPlain
-    class="rounded-full border"
-    :class="componentClass"
-    :icon="icon"
-    :label="label"
-    :small="small"
-  />
+  <PillTagPlain class="rounded-full border" :class="componentClass" :label="label" :small="small" />
 </template>

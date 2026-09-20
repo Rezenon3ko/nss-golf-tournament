@@ -55,7 +55,9 @@ const playersReady = computed(() => !!props.match.playerAId && !!props.match.pla
 // 先到 need 局即封盘：之后误填的局不计入胜负与净胜杆
 const countedCount = computed(() => countedSetCount(form.sets, props.match))
 const winsPreview = computed(() => countSetWins(form.sets, props.match))
-const ignoredFrom = computed(() => (countedCount.value < form.sets.length ? countedCount.value : -1))
+const ignoredFrom = computed(() =>
+  countedCount.value < form.sets.length ? countedCount.value : -1,
+)
 
 const winnerPreview = computed(() => {
   if (winsPreview.value.A >= need) return props.match.playerAId
@@ -137,10 +139,7 @@ function save() {
     width="max-w-3xl"
     @close="emit('close')"
   >
-    <div
-      v-if="!playersReady"
-      class="notion-tint-yellow mb-4 rounded-xl p-3 text-sm font-semibold"
-    >
+    <div v-if="!playersReady" class="notion-tint-yellow mb-4 rounded-xl p-3 text-sm font-semibold">
       对手尚未确定，本场暂不能录入比分；等上一轮对阵出结果后即可录入。
     </div>
 
@@ -153,12 +152,14 @@ function save() {
         }}
       </span>
       <span>{{ isBO5 ? '五局三胜（BO5）' : '三局两胜（BO3）' }}</span>
-      <span>DDL：{{ store.ddlForMatch(match) ? formatDateTime(store.ddlForMatch(match)) : '未设置' }}</span>
+      <span
+        >DDL：{{
+          store.ddlForMatch(match) ? formatDateTime(store.ddlForMatch(match)) : '未设置'
+        }}</span
+      >
     </div>
 
-    <div
-      class="mb-4 grid grid-cols-[1fr_auto_1fr] items-center gap-2 notion-card-soft p-4"
-    >
+    <div class="notion-card-soft mb-4 grid grid-cols-[1fr_auto_1fr] items-center gap-2 p-4">
       <PlayerBadge :player="playerA" />
       <span class="text-xl font-bold">{{ winsPreview.A }} : {{ winsPreview.B }}</span>
       <div class="justify-self-end">
@@ -172,7 +173,9 @@ function save() {
     <div class="mb-4 overflow-x-auto">
       <table class="notion-table w-full text-sm">
         <thead>
-          <tr class="border-b border-[#e5e3df] text-left text-xs text-[#5d5b54] dark:border-[#3d3d3d] dark:text-[#a0a0a0]">
+          <tr
+            class="border-b border-[#e5e3df] text-left text-xs text-[#5d5b54] dark:border-[#3d3d3d] dark:text-[#a0a0a0]"
+          >
             <th class="py-2 pr-2">局</th>
             <th class="py-2 pr-2">{{ playerA?.name || '甲' }} 相对标准杆</th>
             <th class="py-2 pr-2">{{ playerB?.name || '乙' }} 相对标准杆</th>
@@ -216,7 +219,7 @@ function save() {
               <select
                 v-model="set.sdWinner"
                 :disabled="!(set.a != null && set.b != null && set.a === set.b)"
-                class="w-32 rounded-sm border border-[#c8c4be] px-2 py-1.5 pr-7 dark:border-[#454545] dark:bg-[#333333] disabled:cursor-not-allowed disabled:opacity-50"
+                class="w-32 rounded-sm border border-[#c8c4be] px-2 py-1.5 pr-7 disabled:cursor-not-allowed disabled:opacity-50 dark:border-[#454545] dark:bg-[#333333]"
               >
                 <option :value="null">无（非平局）</option>
                 <option :value="match.playerAId">{{ playerA?.name }}</option>
@@ -231,8 +234,8 @@ function save() {
       v-if="ignoredFrom >= 0"
       class="-mt-3 mb-4 rounded-lg bg-[#f6f5f4] px-3 py-2 text-xs text-[#5d5b54] dark:bg-[#2a2a2a] dark:text-[#a0a0a0]"
     >
-      已由第 {{ ignoredFrom }} 局决出胜负（{{ isBO5 ? '五局三胜' : '三局两胜' }}），
-      因此第 {{ ignoredFrom + 1 }} 局起不计入胜负与净胜杆；数据会原样保留，便于后续修正。
+      已由第 {{ ignoredFrom }} 局决出胜负（{{ isBO5 ? '五局三胜' : '三局两胜' }}）， 因此第
+      {{ ignoredFrom + 1 }} 局起不计入胜负与净胜杆；数据会原样保留，便于后续修正。
     </p>
 
     <h4 class="mb-2 text-sm font-bold text-[#5d5b54] dark:text-[#a0a0a0]">结果截图链接</h4>
@@ -250,7 +253,7 @@ function save() {
         <div
           v-for="(link, i) in form.resultLinks"
           :key="i"
-          class="flex items-center justify-between gap-2 rounded notion-card-soft px-3 py-1.5 text-sm"
+          class="notion-card-soft flex items-center justify-between gap-2 rounded px-3 py-1.5 text-sm"
         >
           <span class="truncate text-[#0075de]">{{ link }}</span>
           <button type="button" class="text-[#e03131]" @click="removeLink(i)">移除</button>
@@ -265,10 +268,7 @@ function save() {
         本场有掉线情况
       </label>
     </h4>
-    <div
-      v-if="form.hasDisconnect"
-      class="notion-tint-yellow mb-4 rounded-xl p-4 dark:bg-[#2b2415]"
-    >
+    <div v-if="form.hasDisconnect" class="notion-tint-yellow mb-4 rounded-xl p-4 dark:bg-[#2b2415]">
       <div class="mb-2 grid gap-2 sm:grid-cols-2">
         <div>
           <label class="mb-1 block text-xs font-semibold">掉线发生局</label>
@@ -276,9 +276,7 @@ function save() {
             v-model.number="form.disconnect.setIndex"
             class="w-full rounded-sm border border-[#c8c4be] px-2 py-1.5 pr-8 dark:border-[#454545] dark:bg-[#333333]"
           >
-            <option v-for="(set, i) in form.sets" :key="i" :value="i">
-              第 {{ i + 1 }} 局
-            </option>
+            <option v-for="(set, i) in form.sets" :key="i" :value="i">第 {{ i + 1 }} 局</option>
           </select>
         </div>
         <div>
@@ -316,14 +314,14 @@ function save() {
           class="notion-card-soft flex items-center justify-between gap-2 px-3 py-1.5 text-sm"
         >
           <span class="truncate text-[#0075de]">{{ link }}</span>
-          <button type="button" class="text-[#e03131]" @click="removeDisconnectLink(i)">移除</button>
+          <button type="button" class="text-[#e03131]" @click="removeDisconnectLink(i)">
+            移除
+          </button>
         </div>
       </div>
     </div>
 
-    <div
-      class="mb-4 rounded-xl bg-[#e5f6ea] p-4 text-sm dark:bg-[#142a1e]"
-    >
+    <div class="mb-4 rounded-xl bg-[#e5f6ea] p-4 text-sm dark:bg-[#142a1e]">
       <p class="font-semibold text-[#1aae39] dark:text-[#7ec8a0]">
         判定预览：
         <template v-if="winnerPreview">
@@ -334,10 +332,16 @@ function save() {
       </p>
     </div>
 
-    <p v-if="error" class="mb-3 rounded-lg bg-[#fdecec] px-3 py-2 text-sm text-[#e03131] dark:bg-[#3d2020]">
+    <p
+      v-if="error"
+      class="mb-3 rounded-lg bg-[#fdecec] px-3 py-2 text-sm text-[#e03131] dark:bg-[#3d2020]"
+    >
       {{ error }}
     </p>
-    <p v-if="success" class="mb-3 rounded-lg bg-[#e5f6ea] px-3 py-2 text-sm text-[#1aae39] dark:bg-[#183023]">
+    <p
+      v-if="success"
+      class="mb-3 rounded-lg bg-[#e5f6ea] px-3 py-2 text-sm text-[#1aae39] dark:bg-[#183023]"
+    >
       {{ success }}
     </p>
 

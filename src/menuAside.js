@@ -47,12 +47,10 @@ export const menuAsideBottom = [
     to: '/',
     label: '查看前台',
     icon: mdiEye,
-    color: 'info',
   },
   {
     label: '退出登录',
     icon: mdiLogout,
-    color: 'info',
     isLogout: true,
   },
 ]

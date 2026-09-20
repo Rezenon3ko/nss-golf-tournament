@@ -45,8 +45,15 @@
 .notion-body {
   background: var(--notion-canvas);
   color: var(--notion-ink);
-  font-family: Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC',
-    'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+  font-family:
+    Inter,
+    -apple-system,
+    BlinkMacSystemFont,
+    'Segoe UI',
+    'PingFang SC',
+    'Hiragino Sans GB',
+    'Microsoft YaHei',
+    sans-serif;
 }
 
 .dark .notion-body {
@@ -82,14 +89,38 @@
 }
 
 /* 粉彩功能卡（回响 Notion 数据库属性色） */
-.notion-tint-lavender { background: var(--notion-tint-lavender); color: var(--notion-charcoal); }
-.notion-tint-mint     { background: var(--notion-tint-mint);     color: var(--notion-charcoal); }
-.notion-tint-sky      { background: var(--notion-tint-sky);      color: var(--notion-charcoal); }
-.notion-tint-peach    { background: var(--notion-tint-peach);    color: var(--notion-charcoal); }
-.notion-tint-rose     { background: var(--notion-tint-rose);     color: var(--notion-charcoal); }
-.notion-tint-yellow   { background: var(--notion-tint-yellow);   color: var(--notion-charcoal); }
-.notion-tint-cream    { background: var(--notion-tint-cream);    color: var(--notion-charcoal); }
-.notion-tint-gray     { background: var(--notion-tint-gray);     color: var(--notion-charcoal); }
+.notion-tint-lavender {
+  background: var(--notion-tint-lavender);
+  color: var(--notion-charcoal);
+}
+.notion-tint-mint {
+  background: var(--notion-tint-mint);
+  color: var(--notion-charcoal);
+}
+.notion-tint-sky {
+  background: var(--notion-tint-sky);
+  color: var(--notion-charcoal);
+}
+.notion-tint-peach {
+  background: var(--notion-tint-peach);
+  color: var(--notion-charcoal);
+}
+.notion-tint-rose {
+  background: var(--notion-tint-rose);
+  color: var(--notion-charcoal);
+}
+.notion-tint-yellow {
+  background: var(--notion-tint-yellow);
+  color: var(--notion-charcoal);
+}
+.notion-tint-cream {
+  background: var(--notion-tint-cream);
+  color: var(--notion-charcoal);
+}
+.notion-tint-gray {
+  background: var(--notion-tint-gray);
+  color: var(--notion-charcoal);
+}
 
 .dark .notion-tint-lavender {
   background: var(--color-group-a-dark);
@@ -166,7 +197,12 @@
 
 /* 表格表头：Notion 微标签 */
 .notion-table thead th {
-  font-family: Inter, -apple-system, 'Segoe UI', 'PingFang SC', sans-serif;
+  font-family:
+    Inter,
+    -apple-system,
+    'Segoe UI',
+    'PingFang SC',
+    sans-serif;
   font-size: 12px;
   font-weight: 600;
   letter-spacing: 0.02em;

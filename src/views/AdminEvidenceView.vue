@@ -73,7 +73,9 @@ async function remove(id) {
     <div class="mb-5 flex flex-wrap items-center justify-between gap-3">
       <div>
         <h1 class="text-2xl font-bold">证据与日志</h1>
-        <p class="text-sm text-[#5d5b54] dark:text-[#a0a0a0]">赛果截图 / 掉线证据统一留档 · 操作日志可追溯</p>
+        <p class="text-sm text-[#5d5b54] dark:text-[#a0a0a0]">
+          赛果截图 / 掉线证据统一留档 · 操作日志可追溯
+        </p>
       </div>
       <BaseButton :icon="mdiPlus" label="添加证据" color="purple" @click="showAdd = true" />
     </div>
@@ -95,10 +97,12 @@ async function remove(id) {
       </button>
     </div>
 
-    <div class="mb-6 overflow-x-auto notion-card">
+    <div class="notion-card mb-6 overflow-x-auto">
       <table class="notion-table w-full text-sm">
         <thead>
-          <tr class="border-b border-[#e5e3df] text-left text-xs text-[#5d5b54] dark:border-[#3d3d3d] dark:text-[#a0a0a0]">
+          <tr
+            class="border-b border-[#e5e3df] text-left text-xs text-[#5d5b54] dark:border-[#3d3d3d] dark:text-[#a0a0a0]"
+          >
             <th class="px-4 py-3">名称</th>
             <th class="px-4 py-3">关联比赛</th>
             <th class="px-4 py-3">类型</th>
@@ -157,7 +161,9 @@ async function remove(id) {
 
     <div class="notion-card p-5">
       <h2 class="mb-3 font-bold">操作日志（最近 30 条）</h2>
-      <ul class="flex max-h-72 flex-col gap-1 overflow-y-auto text-sm text-[#37352f] dark:text-[#c7c7c7]">
+      <ul
+        class="flex max-h-72 flex-col gap-1 overflow-y-auto text-sm text-[#37352f] dark:text-[#c7c7c7]"
+      >
         <li v-for="log in store.logs.slice(0, 30)" :key="log.id" class="flex gap-2">
           <span class="shrink-0 text-xs text-[#a4a097]">{{ formatDateTime(log.time) }}</span>
           <span class="shrink-0 font-semibold">{{ log.by }}</span>

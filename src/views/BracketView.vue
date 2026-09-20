@@ -38,7 +38,7 @@ const champion = computed(() => store.playerById(store.championId))
 
     <div
       v-if="store.championId && champion"
-      class="mb-5 rounded-2xl notion-banner-yellow p-6 text-center"
+      class="notion-banner-yellow mb-5 rounded-2xl p-6 text-center"
     >
       <BaseIcon :path="mdiTrophy" size="40" class="mx-auto mb-2 text-[#b45309]" />
       <p class="mb-1 text-sm text-[#7c5200] dark:text-[#d8c48a]">🏆 冠军</p>
@@ -57,10 +57,7 @@ const champion = computed(() => store.playerById(store.championId))
       </template>
     </div>
 
-    <div
-      v-if="!store.allGroupsComplete"
-      class="notion-tint-yellow mb-5 rounded-xl p-5 text-sm"
-    >
+    <div v-if="!store.allGroupsComplete" class="notion-tint-yellow mb-5 rounded-xl p-5 text-sm">
       小组赛尚未全部结束：已完成的小组会先把晋级选手填入八强对应位置，其余位置显示预计对位。
     </div>
 
@@ -68,11 +65,7 @@ const champion = computed(() => store.playerById(store.championId))
       <BracketTree :nodes="store.knockoutMatches" @open-match="openMatch" />
     </div>
 
-    <MatchDetailModal
-      v-if="detailMatch"
-      :match="detailMatch"
-      @close="detailMatch = null"
-    />
+    <MatchDetailModal v-if="detailMatch" :match="detailMatch" @close="detailMatch = null" />
     <ScoreEntryModal
       v-if="entryMatch"
       :match="entryMatch"

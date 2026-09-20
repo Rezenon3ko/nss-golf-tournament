@@ -5,6 +5,7 @@
 ## 功能
 
 **公开端（只读）**
+
 - 首页总览：阶段进度、轮次 DDL、积分榜速览、最近赛果、淘汰赛进度
 - 小组赛：A/B/C/D 四组赛程、BO3 比分、SD 标记、逾期高亮
 - 积分榜：四组同页展示，按规则自动排序（积分 → 相互战绩 → 净胜局 → 净胜杆 → 主办方抽签）
@@ -13,19 +14,20 @@
 - 规则：规则九章在线查阅
 
 **管理端（主办方）**
+
 - 选手与分组：名单管理、加密级随机抽签（crypto.getRandomValues）并留可验证记录、约束校验
 - 赛果录入：BO3/BO5、相对标准杆记分、平局 SD 胜者、掉线合并登记、截图链接
 - DDL 与逾期：每周日 23:59 预设，逾期判负（A负 / B负 / 双方负 / 延期）、群通知文案
 - 证据与日志：赛果截图、掉线证据留档，操作日志可追溯
 - 数据导出：CSV / JSON / 对阵文本
 
-其他：深色模式（首屏不闪白）、真实选手头像、移动端适配、应用内提示与确认弹窗
-（不阻塞操作，弹窗支持 ESC 关闭与键盘焦点循环）。
+其他：深色模式（首屏不闪白）、真实选手头像（压缩后存入 Supabase Storage，赛事数据里只留 URL）、
+移动端适配、应用内提示与确认弹窗（不阻塞操作，弹窗支持 ESC 关闭与键盘焦点循环）。
 
 ## 技术栈
 
 - Vue 3 + Vite + Tailwind CSS 4 + Pinia + vue-router
-- Supabase（数据库 + 登录鉴权，RLS 行级安全）
+- Supabase（Postgres + 登录鉴权 + Storage，RLS 行级安全）
 - 界面基础：[Admin One Tailwind Vue 3](https://justboil.me/tailwind-admin-templates/free-vue-dashboard/)（MIT）
 
 ## 快速开始
@@ -56,8 +58,20 @@ CI：GitHub Actions 在 push / PR 时执行 `lint` + `test` + `build`（见 `.gi
 4. 复制 `.env.example` 为 `.env` 填入项目信息（anon key 为公开值，可放心放在前端）。
 
 > 云端首次写入会在主办方登录后自动触发；本地已有数据会同步到云端。
-> 已经建过表的老项目，请重新执行一次 `supabase/schema.sql`（幂等）以补上 `revision` / `updated_at`
-> 列与版本号触发器。
+> 已经建过表的老项目，请重新执行一次 `supabase/schema.sql`（幂等）以补上 `revision` /
+> `updated_at` / `updated_by` 三列与两个触发器（写入时盖章版本号与时间，首次插入也有），
+> 同时会创建头像用的 Storage bucket `avatars`（公开读、登录可写，单文件上限 512 KB）。
+
+### 头像存储
+
+头像压缩成 256×256 JPEG（约 15 KB）后上传到 Storage，赛事数据里只保留公开 URL，
+因此整份赛事 JSON 保持在几 KB——改一次 DDL、录一场比分都只上传几 KB，而不是几百 KB。
+路径带时间戳（`<选手 id>-<时间戳>.jpg`），换头像即换 URL，可安全使用一年长缓存，
+读取由 Storage 自带的边缘 CDN 承担；删除选手时会顺带清理对应对象。
+未配置 Supabase 时回退为 dataURL（随本机缓存保存），行为与以前一致。
+
+万一有残留的孤儿对象（例如上传成功但没点保存、或删除时网络失败），可在
+Supabase Dashboard → Storage → `avatars` 里对照赛事数据手动删除。
 
 ## 数据与重置
 
@@ -78,6 +92,8 @@ CI：GitHub Actions 在 push / PR 时执行 `lint` + `test` + `build`（见 `.gi
 
 数据库侧还有一个 `before update` 触发器：任何写入（含旧版页面、Dashboard 手改、手跑 SQL）
 都会让 `revision` 自增，所以「别处改了数据」也会被检测成冲突，而不是被静默覆盖。
+`updated_at` 与 `updated_by` 同样由数据库盖章（不采信前端提交的值）；两人共用一个管理员账号时，
+`updated_by` 只能区分「管理员 / service_role」，想按人追溯需要各自建账号。
 
 ## 部署
 

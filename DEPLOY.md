@@ -34,21 +34,21 @@ git push -u origin main
 3. 授权 GitHub，选择刚推送的仓库
 4. 构建配置：
 
-| 项目 | 值 |
-| --- | --- |
-| Framework preset | Vue |
-| Build command | `npm run build` |
-| Build output directory | `dist` |
-| Node version | 默认（20+ 即可） |
+| 项目                   | 值               |
+| ---------------------- | ---------------- |
+| Framework preset       | Vue              |
+| Build command          | `npm run build`  |
+| Build output directory | `dist`           |
+| Node version           | 默认（20+ 即可） |
 
 5. **环境变量**（Environment variables）添加：
 
-| 变量名 | 值 |
-| --- | --- |
-| `VITE_SUPABASE_URL` | `https://psnrzbntwedznveopwcy.supabase.co` |
+| 变量名                   | 值                                               |
+| ------------------------ | ------------------------------------------------ |
+| `VITE_SUPABASE_URL`      | `https://psnrzbntwedznveopwcy.supabase.co`       |
 | `VITE_SUPABASE_ANON_KEY` | `sb_publishable_6syVh8oN8GAB9zWBJQ49UQ_Aj_VsJtQ` |
-| `VITE_USE_SUPABASE` | `true` |
-| `VITE_ADMIN_EMAIL` | `admin@nss.local` |
+| `VITE_USE_SUPABASE`      | `true`                                           |
+| `VITE_ADMIN_EMAIL`       | `admin@nss.local`                                |
 
 6. 点 **Save and Deploy**，等 1-2 分钟，得到 `https://<项目名>.pages.dev` 链接。
 
@@ -69,13 +69,21 @@ lint、单元测试和构建，红了就说明这次改动有问题，先修再�
 
 ### 升级已有站点到 v4.2（同步可靠性）
 
-v4.2 起写入带版本校验（乐观锁），需要数据库补两列 + 一个触发器：
+v4.2 起写入带版本校验（乐观锁），v4.5 起加上审计列，需要数据库补三列 + 两个触发器：
 
 1. Supabase Dashboard → **SQL Editor** → 重新执行一遍 `supabase/schema.sql`（幂等，不会清数据）。
 2. 重新打开站点，右下角不再出现「数据库未升级」提示即完成。
 
-（若只想补这一部分，单独执行 `supabase/schema.sql` 里 `revision` / `updated_at` 两列
-与 `trg_tournament_state_touch` 触发器的语句即可。）
+（若只想补这一部分，单独执行 `supabase/schema.sql` 里 `revision` / `updated_at` / `updated_by`
+三列，以及 `touch_tournament_state`、`init_tournament_state` 两个函数与对应触发器的语句即可。）
+
+v4.6 起头像改为存放在 Storage（bucket `avatars`），重新执行一遍 `supabase/schema.sql` 即会创建。
+新上传的头像由前端直接存入该 bucket，赛事数据里只保留公开 URL（详见 README「头像存储」）。
+如需清理不再被引用的旧头像（换头像、删选手留下的文件），在 Dashboard → Storage → `avatars`
+里对照赛事数据手动删除即可。
+
+安全提醒：`VITE_` 前缀的环境变量会被打包进前端产物，任何 secret 密钥
+（`service_role` 或 `sb_secret_...`）都不要放进前端的 `VITE_*` 变量，也不要提交到仓库。
 
 若暂时不执行，站点仍可正常使用，只是退回覆盖式写入：多设备同时编辑时可能互相覆盖，
 页面右下角会持续提示。

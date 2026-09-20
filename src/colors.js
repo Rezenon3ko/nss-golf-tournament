@@ -1,8 +1,3 @@
-export const gradientBgBase = 'bg-linear-to-tr'
-export const gradientBgPurplePink = `${gradientBgBase} from-purple-400 via-pink-500 to-red-500`
-export const gradientBgDark = `${gradientBgBase} from-slate-700 via-slate-900 to-slate-800`
-export const gradientBgPinkRed = `${gradientBgBase} from-pink-400 via-red-500 to-yellow-500`
-
 export const colorsBgLight = {
   white: 'bg-white text-black',
   light: 'bg-white text-black dark:bg-slate-900/70 dark:text-white',
@@ -13,10 +8,12 @@ export const colorsBgLight = {
   info: 'bg-[#0075de] border-[#0075de] text-white dark:bg-[#5a7fa8] dark:border-blue-500',
   purple: 'bg-[#5645d4] border-[#5645d4] text-white dark:bg-[#756b96] dark:border-[#756b96]',
   gold: 'bg-[#d9b45c] border-transparent text-white dark:bg-[#b89335] dark:border-transparent dark:text-white',
-  goldSoft: 'bg-[#c9a24b]/25 border-transparent text-[#8c6d1f] dark:bg-[#c9a24b]/25 dark:border-transparent dark:text-[#e4d3a4]',
+  goldSoft:
+    'bg-[#c9a24b]/25 border-transparent text-[#8c6d1f] dark:bg-[#c9a24b]/25 dark:border-transparent dark:text-[#e4d3a4]',
 }
 
-export const colorsText = {
+// 仅供本文件的 colorsOutline 使用
+const colorsText = {
   white: 'text-black dark:text-[#e6e6e6]',
   light: 'text-gray-700 dark:text-[#a0a0a0]',
   contrast: 'dark:text-white',
@@ -42,7 +39,8 @@ export const colorsOutline = {
   goldSoft: [colorsText.goldSoft, 'border-transparent'],
 }
 
-export const getButtonColor = (color, isOutlined, hasHover, isActive = false) => {
+// 按钮配色：color 决定底色/描边/文字，hasHover 为 false 时不加悬停样式（禁用态）
+export const getButtonColor = (color, hasHover = true) => {
   const colors = {
     ring: {
       white: 'ring-gray-200 dark:ring-gray-500',
@@ -56,19 +54,6 @@ export const getButtonColor = (color, isOutlined, hasHover, isActive = false) =>
       purple: 'ring-[#a89ef0] dark:ring-[#5b5478]',
       gold: 'ring-[#e6c877] dark:ring-[#7a6a45]',
       goldSoft: 'ring-[#e6c877] dark:ring-[#7a6a45]',
-    },
-    active: {
-      white: 'bg-gray-100',
-      whiteDark: 'bg-gray-100 dark:bg-[#3d3d3d]',
-      lightDark: 'bg-gray-200 dark:bg-slate-700',
-      contrast: 'bg-gray-700 dark:bg-slate-100',
-      success: 'bg-[#12902d] dark:bg-[#2f6b4a]',
-      danger: 'bg-[#b52323] dark:bg-[#6e4a50]',
-      warning: 'bg-[#a84600] dark:bg-[#7a6a45]',
-      info: 'bg-[#005bab] dark:bg-[#4a6b91]',
-      purple: 'bg-[#4534b3] dark:bg-[#5b5478]',
-      gold: 'brightness-90',
-      goldSoft: 'bg-[#c9a24b]/40 dark:bg-[#c9a24b]/40',
     },
     bg: {
       white: 'bg-white text-black',
@@ -95,7 +80,8 @@ export const getButtonColor = (color, isOutlined, hasHover, isActive = false) =>
       warning:
         'hover:bg-[#a84600] hover:border-[#a84600] dark:hover:bg-[#96753c] dark:hover:border-[#8f7c52]',
       info: 'hover:bg-[#005bab] hover:border-[#005bab] dark:hover:bg-[#4a6b91] dark:hover:border-[#4a6b91]',
-      purple: 'hover:bg-[#4534b3] hover:border-[#4534b3] dark:hover:bg-[#666080] dark:hover:border-[#666080]',
+      purple:
+        'hover:bg-[#4534b3] hover:border-[#4534b3] dark:hover:bg-[#666080] dark:hover:border-[#666080]',
       gold: 'hover:brightness-95 dark:hover:brightness-95',
       goldSoft: 'hover:bg-[#c9a24b]/40 dark:hover:bg-[#c9a24b]/40',
     },
@@ -112,49 +98,14 @@ export const getButtonColor = (color, isOutlined, hasHover, isActive = false) =>
       gold: 'border-transparent dark:border-transparent',
       goldSoft: 'border-transparent dark:border-transparent',
     },
-    text: {
-      contrast: 'dark:text-[#e6e6e6]',
-      success: 'text-[#1aae39] dark:text-[#6fbe93]',
-      danger: 'text-[#e03131] dark:text-[#bd9aa1]',
-      warning: 'text-[#dd5b00] dark:text-[#c4b48d]',
-      info: 'text-[#0075de] dark:text-[#7fa3c9]',
-      purple: 'text-[#5645d4] dark:text-[#b3a8c6]',
-      gold: 'text-[#8c6d1f] dark:text-[#d8c48a]',
-      goldSoft: 'text-[#8c6d1f] dark:text-[#e4d3a4]',
-    },
-    outlineHover: {
-      contrast:
-        'hover:bg-black hover:text-white dark:hover:bg-white dark:hover:text-black',
-      success:
-        'hover:bg-[#1aae39] hover:text-white dark:hover:text-white dark:hover:border-emerald-500',
-      danger:
-        'hover:bg-[#e03131] hover:text-white dark:hover:text-white dark:hover:border-[#9c6a72]',
-      warning:
-        'hover:bg-[#dd5b00] hover:text-white dark:hover:text-white dark:hover:border-[#a08a5c]',
-      info: 'hover:bg-[#0075de] hover:text-white dark:hover:text-white dark:hover:border-blue-500',
-      purple: 'hover:bg-[#5645d4] hover:text-white dark:hover:text-white dark:hover:border-[#7e57c2]',
-      gold: 'hover:bg-[#cfa44a] hover:text-white dark:hover:text-white dark:hover:bg-[#a17f2c] dark:hover:border-transparent',
-      goldSoft: 'hover:bg-[#c9a24b]/35 dark:hover:bg-[#c9a24b]/35',
-    },
   }
 
   if (!colors.bg[color]) {
     return color
   }
 
-  const isOutlinedProcessed = isOutlined && ['white', 'whiteDark', 'lightDark'].indexOf(color) < 0
-
-  const base = [colors.borders[color], colors.ring[color]]
-
-  if (isActive) {
-    base.push(colors.active[color])
-  } else {
-    base.push(isOutlinedProcessed ? colors.text[color] : colors.bg[color])
-  }
-
-  if (hasHover) {
-    base.push(isOutlinedProcessed ? colors.outlineHover[color] : colors.bgHover[color])
-  }
+  const base = [colors.borders[color], colors.ring[color], colors.bg[color]]
+  if (hasHover) base.push(colors.bgHover[color])
 
   return base
 }

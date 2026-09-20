@@ -17,8 +17,12 @@ const emit = defineEmits(['open-match'])
 
 const store = useTournamentStore()
 
-const qf = computed(() => props.nodes.filter((n) => n.stage === 'qf').sort((a, b) => a.order - b.order))
-const sf = computed(() => props.nodes.filter((n) => n.stage === 'sf').sort((a, b) => a.order - b.order))
+const qf = computed(() =>
+  props.nodes.filter((n) => n.stage === 'qf').sort((a, b) => a.order - b.order),
+)
+const sf = computed(() =>
+  props.nodes.filter((n) => n.stage === 'sf').sort((a, b) => a.order - b.order),
+)
 const final = computed(() => props.nodes.find((n) => n.stage === 'final'))
 
 function scoreFor(node, side) {
@@ -59,18 +63,17 @@ function playerOf(node, side) {
               <span class="text-sm font-bold text-[#a4a097]">{{ node.label }}</span>
               <MatchStatusPill :status="node.status" />
             </div>
-            <div
-              class="mb-1.5 flex items-center justify-between rounded-lg px-2.5 py-2"
-            >
+            <div class="mb-1.5 flex items-center justify-between rounded-lg px-2.5 py-2">
               <PlayerBadge v-if="playerOf(node, 'a')" :player="playerOf(node, 'a')" />
               <span v-else class="text-base text-[#a4a097]">{{ node.expectedA }}</span>
               <span class="text-base font-bold">{{ scoreFor(node, 'a') }}</span>
             </div>
-            <div
-              class="flex items-center justify-between rounded-lg px-2.5 py-2"
-            >
+            <div class="flex items-center justify-between rounded-lg px-2.5 py-2">
               <PlayerBadge v-if="playerOf(node, 'b')" :player="playerOf(node, 'b')" />
-              <span v-else-if="node.status === 'walkover'" class="text-base font-bold text-[#8c6d1f]">
+              <span
+                v-else-if="node.status === 'walkover'"
+                class="text-base font-bold text-[#8c6d1f]"
+              >
                 直接晋级
               </span>
               <span v-else class="text-base text-[#a4a097]">{{ node.expectedB }}</span>
@@ -94,16 +97,12 @@ function playerOf(node, side) {
                 <span class="text-sm font-bold text-[#a4a097]">{{ node.label }}</span>
                 <MatchStatusPill :status="node.status" />
               </div>
-              <div
-                class="mb-1.5 flex items-center justify-between rounded-lg px-2.5 py-2"
-              >
+              <div class="mb-1.5 flex items-center justify-between rounded-lg px-2.5 py-2">
                 <PlayerBadge v-if="playerOf(node, 'a')" :player="playerOf(node, 'a')" />
                 <span v-else class="text-base text-[#a4a097]">{{ node.expectedA }}</span>
                 <span class="text-base font-bold">{{ scoreFor(node, 'a') }}</span>
               </div>
-              <div
-                class="flex items-center justify-between rounded-lg px-2.5 py-2"
-              >
+              <div class="flex items-center justify-between rounded-lg px-2.5 py-2">
                 <PlayerBadge v-if="playerOf(node, 'b')" :player="playerOf(node, 'b')" />
                 <span v-else class="text-base text-[#a4a097]">{{ node.expectedB }}</span>
                 <span class="text-base font-bold">{{ scoreFor(node, 'b') }}</span>
@@ -172,7 +171,10 @@ function playerOf(node, side) {
                     : ''
                 "
               />
-              <span v-else-if="final.status === 'walkover'" class="text-base font-bold text-[#8c6d1f]">
+              <span
+                v-else-if="final.status === 'walkover'"
+                class="text-base font-bold text-[#8c6d1f]"
+              >
                 直接夺冠
               </span>
               <span v-else class="text-base text-[#a4a097]">{{ final.expectedB }}</span>

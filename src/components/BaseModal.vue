@@ -12,11 +12,6 @@ defineProps({
     type: String,
     default: 'max-w-2xl',
   },
-  // 关闭按钮 / 遮罩 / ESC 是否可用（确认弹窗仍应允许关闭）
-  closable: {
-    type: Boolean,
-    default: true,
-  },
 })
 
 const emit = defineEmits(['close'])
@@ -108,7 +103,7 @@ onBeforeUnmount(() => {
 <template>
   <div
     class="fixed inset-0 z-[120] flex items-center justify-center bg-[#373158]/60 backdrop-blur-sm sm:p-4"
-    @click.self="closable && close()"
+    @click.self="close()"
   >
     <div
       ref="panel"
@@ -116,7 +111,7 @@ onBeforeUnmount(() => {
       aria-modal="true"
       :aria-labelledby="titleId"
       tabindex="-1"
-      class="flex h-full w-full flex-col overflow-hidden bg-white shadow-[rgba(15,15,15,0.16)_0px_16px_48px_-8px] dark:bg-[#1e1e1e] sm:h-auto sm:max-h-[92vh] sm:rounded-xl"
+      class="flex h-full w-full flex-col overflow-hidden bg-white shadow-[rgba(15,15,15,0.16)_0px_16px_48px_-8px] sm:h-auto sm:max-h-[92vh] sm:rounded-xl dark:bg-[#1e1e1e]"
       :class="width"
       @keydown="onKeydown"
     >
@@ -138,7 +133,7 @@ onBeforeUnmount(() => {
       </div>
       <div
         v-if="$slots.footer"
-        class="flex justify-end gap-2 border-t border-[#e5e3df] px-5 pb-[calc(0.75rem+env(safe-area-inset-bottom))] pt-3 dark:border-[#3d3d3d]"
+        class="flex justify-end gap-2 border-t border-[#e5e3df] px-5 pt-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] dark:border-[#3d3d3d]"
       >
         <slot name="footer" />
       </div>

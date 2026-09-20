@@ -22,6 +22,16 @@ export const backend = {
   missingRevisionColumn: false,
   // 模拟 schema.sql 里的 before update 触发器：revision 由数据库自己推进
   serverTrigger: false,
+  // 模拟 RLS 策略未放行：UPDATE 命中 0 行且不报错（PostgREST 的真实行为）
+  rlsBlocksUpdate: false,
+  // 模拟 RLS 拦截 INSERT：WITH CHECK 失败会返回 42501
+  rlsBlocksInsert: false,
+  // 模拟未配置 Storage（本地模式）
+  disableStorage: false,
+  // 空表时服务端的返回形态：'pgrst116'（PostgREST 默认，406 + PGRST116）或 'null'（200 + null）
+  emptyRowResponse: 'pgrst116',
+  storageUploads: [],
+  storageRemoves: [],
   writes: [],
   upserts: [],
   attempts: 0,
@@ -32,12 +42,22 @@ export const backend = {
     writeError = null,
     missingRevisionColumn = false,
     serverTrigger = false,
+    rlsBlocksUpdate = false,
+    rlsBlocksInsert = false,
+    disableStorage = false,
+    emptyRowResponse = 'pgrst116',
   } = {}) {
     this.row = row ? { ...row, value: clone(row.value) } : null
     this.readError = readError
     this.writeError = writeError
     this.missingRevisionColumn = missingRevisionColumn
     this.serverTrigger = serverTrigger
+    this.rlsBlocksUpdate = rlsBlocksUpdate
+    this.rlsBlocksInsert = rlsBlocksInsert
+    this.disableStorage = disableStorage
+    this.emptyRowResponse = emptyRowResponse
+    this.storageUploads = []
+    this.storageRemoves = []
     this.writes = []
     this.upserts = []
     this.attempts = 0
@@ -61,7 +81,19 @@ export const backend = {
     if (wantsRevision && this.missingRevisionColumn) {
       return Promise.resolve({ data: null, error: this.missingColumnError() })
     }
-    if (!this.row) return ok(null)
+    // 表里没有行：PostgREST 用 406 + PGRST116 表示「JSON object requested, 0 rows」
+    if (!this.row) {
+      if (this.emptyRowResponse === 'null') return ok(null)
+      return Promise.resolve({
+        data: null,
+        error: {
+          code: 'PGRST116',
+          details: 'Results contain 0 rows, application/vnd.pgrst.object+json requires 1 row',
+          hint: null,
+          message: 'JSON object requested, multiple (or no) rows returned',
+        },
+      })
+    }
     return ok({
       value: clone(this.row.value),
       ...(wantsRevision ? { revision: this.row.revision } : {}),
@@ -74,6 +106,7 @@ export const backend = {
       return Promise.resolve({ data: null, error: this.missingColumnError() })
     }
     this.attempts += 1
+    if (this.rlsBlocksUpdate) return ok([])
     const matches =
       this.row &&
       this.row.key === filters.key &&
@@ -94,6 +127,15 @@ export const backend = {
     if (this.writeError) return Promise.resolve({ data: null, error: this.writeError })
     if (this.missingRevisionColumn) {
       return Promise.resolve({ data: null, error: this.missingColumnError() })
+    }
+    if (this.rlsBlocksInsert) {
+      return Promise.resolve({
+        data: null,
+        error: {
+          code: '42501',
+          message: 'new row violates row-level security policy for table "tournament_state"',
+        },
+      })
     }
     if (this.row) {
       return Promise.resolve({
@@ -119,6 +161,33 @@ export const backend = {
 }
 
 export const supabase = {
+  get storage() {
+    if (backend.disableStorage) return null
+    return {
+      from(bucket) {
+        return {
+          upload(path, blob, options) {
+            backend.storageUploads.push({ bucket, path, blob, options })
+            if (backend.writeError) {
+              return Promise.resolve({ data: null, error: backend.writeError })
+            }
+            return Promise.resolve({ data: { path }, error: null })
+          },
+          getPublicUrl(path) {
+            return {
+              data: {
+                publicUrl: `https://stub.supabase.local/storage/v1/object/public/${bucket}/${path}`,
+              },
+            }
+          },
+          remove(paths) {
+            backend.storageRemoves.push({ bucket, paths })
+            return Promise.resolve({ data: paths, error: null })
+          },
+        }
+      },
+    }
+  },
   from() {
     return {
       select(columns) {
