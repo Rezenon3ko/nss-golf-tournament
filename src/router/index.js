@@ -21,6 +21,42 @@ const AdminEvidenceView = () => import('@/views/AdminEvidenceView.vue')
 const AdminExportView = () => import('@/views/AdminExportView.vue')
 const ErrorView = () => import('@/views/ErrorView.vue')
 
+// 首屏渲染完成后空闲时预取的页面：懒加载省了首屏体积，但会让「首次进入某页」
+// 多等一次网络往返（国内访问 Pages 的 RTT 可能几百毫秒）。公开端各页合计约 40 KB，
+// 在浏览器空闲时补齐，站内跳转就能恢复成瞬时；管理端只在登录后预取。
+const publicLoaders = [
+  LayoutPublic,
+  HomeView,
+  GroupsView,
+  StandingsView,
+  BracketView,
+  PlayersView,
+  PlayerProfileView,
+  RulesView,
+]
+const adminLoaders = [
+  LayoutAdmin,
+  AdminView,
+  AdminPlayersView,
+  AdminMatchesView,
+  AdminDdlView,
+  AdminEvidenceView,
+  AdminExportView,
+]
+
+export function prefetchRoutesWhenIdle(scope = 'public') {
+  if (typeof window === 'undefined') return
+  const loaders = scope === 'admin' ? adminLoaders : publicLoaders
+  const run = () => {
+    for (const load of loaders) load().catch(() => {})
+  }
+  if (typeof window.requestIdleCallback === 'function') {
+    window.requestIdleCallback(run, { timeout: 3000 })
+  } else {
+    window.setTimeout(run, 1200)
+  }
+}
+
 const routes = [
   {
     meta: {

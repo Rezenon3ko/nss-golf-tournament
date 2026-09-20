@@ -2,7 +2,8 @@ import { test } from 'node:test'
 import assert from 'node:assert/strict'
 
 // 相对路径导入，绕开测试替身，验证真实客户端的组装结果
-const { createSupabaseClient } = await import('../src/lib/supabase.js')
+const { createSupabaseClient } = await import('../src/lib/supabaseClient.js')
+const { getSupabase, isSupabaseConfigured } = await import('../src/lib/supabase.js')
 
 test('缺少 url 或 key 时返回 null（本地模式）', () => {
   assert.equal(createSupabaseClient('', 'key'), null)
@@ -28,6 +29,17 @@ test('只暴露本项目使用的三个入口：auth / from / storage', () => {
   // 未使用的部分不应存在（精简的意义所在）
   assert.equal(client.realtime, undefined)
   assert.equal(client.functions, undefined)
+})
+
+test('访问器按需加载客户端：只创建一次，未配置时返回 null', async () => {
+  assert.equal(isSupabaseConfigured(), true)
+
+  const [first, second] = await Promise.all([getSupabase(), getSupabase()])
+  assert.ok(first, '应返回客户端实例')
+  assert.equal(first, second, '并发调用复用同一个 Promise，不会重复创建')
+
+  const third = await getSupabase()
+  assert.equal(third, first, '后续调用复用同一实例')
 })
 
 test('from() / storage.from() 返回可链式调用的 builder', () => {

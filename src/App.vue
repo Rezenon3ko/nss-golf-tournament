@@ -1,6 +1,7 @@
 <script setup>
 import { watch } from 'vue'
 import { RouterView } from 'vue-router'
+import { prefetchRoutesWhenIdle } from '@/router'
 import { useTournamentStore } from '@/stores/tournament'
 import { useAuthStore } from '@/stores/auth'
 import GolfLogo from '@/components/GolfLogo.vue'
@@ -20,7 +21,12 @@ Promise.all([tournamentStore.init(), authStore.init()]).then(() => {
 
 watch(
   () => authStore.isAdmin,
-  (isAdmin) => tournamentStore.setCloudWriteEnabled(isAdmin),
+  (isAdmin) => {
+    tournamentStore.setCloudWriteEnabled(isAdmin)
+    // 登录后空闲时预取管理端页面，录赛果、改 DDL 时不必再等 chunk
+    if (isAdmin) prefetchRoutesWhenIdle('admin')
+  },
+  { immediate: true },
 )
 </script>
 

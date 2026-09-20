@@ -1,5 +1,4 @@
-import { supabase } from '@/lib/supabase'
-import { USE_SUPABASE } from '@/config'
+import { getSupabase, isSupabaseConfigured } from '@/lib/supabase'
 
 /**
  * 头像的裁剪、上传与地址解析。
@@ -17,7 +16,7 @@ const AVATAR_QUALITY = 0.85
 const AVATAR_CACHE_CONTROL = '31536000'
 
 export function avatarStorageEnabled() {
-  return Boolean(USE_SUPABASE && supabase?.storage)
+  return isSupabaseConfigured()
 }
 
 // 居中裁剪为正方形并压缩成 JPEG Blob（浏览器环境）
@@ -73,6 +72,8 @@ export function blobToDataUrl(blob) {
 // 把头像对象上传到 Storage，返回公开 URL；云端不可用时返回 null（调用方回退 dataURL）
 export async function uploadAvatar(blob, { id } = {}) {
   if (!avatarStorageEnabled() || !blob) return null
+  const supabase = await getSupabase()
+  if (!supabase) return null
   const path = avatarPath(id)
   const { error } = await supabase.storage.from(AVATAR_BUCKET).upload(path, blob, {
     contentType: blob.type || 'image/jpeg',
@@ -88,6 +89,8 @@ export async function uploadAvatar(blob, { id } = {}) {
 export async function removeAvatarByUrl(url) {
   const path = avatarPathFromUrl(url)
   if (!path || !avatarStorageEnabled()) return false
+  const supabase = await getSupabase()
+  if (!supabase) return false
   const { error } = await supabase.storage.from(AVATAR_BUCKET).remove([path])
   return !error
 }

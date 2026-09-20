@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia'
 import { computed, ref } from 'vue'
 import { ADMIN_PASSWORD, ADMIN_EMAIL, AUTH_STORAGE_KEY, AUTH_TTL_MS, USE_SUPABASE } from '@/config'
-import { supabase } from '@/lib/supabase'
+import { getSupabase } from '@/lib/supabase'
 
 function now() {
   return Date.now()
@@ -30,7 +30,8 @@ export const useAuthStore = defineStore('auth', () => {
   const isAdmin = computed(() => !!session.value)
 
   async function init() {
-    if (USE_SUPABASE && supabase) {
+    const supabase = USE_SUPABASE ? await getSupabase() : null
+    if (supabase) {
       const { data } = await supabase.auth.getSession()
       session.value = data.session ? { at: now() } : null
     } else {
@@ -40,7 +41,8 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   async function login(password) {
-    if (USE_SUPABASE && supabase) {
+    const supabase = USE_SUPABASE ? await getSupabase() : null
+    if (supabase) {
       const { error } = await supabase.auth.signInWithPassword({
         email: ADMIN_EMAIL,
         password: String(password ?? ''),
@@ -58,7 +60,8 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   async function logout() {
-    if (USE_SUPABASE && supabase) {
+    const supabase = USE_SUPABASE ? await getSupabase() : null
+    if (supabase) {
       await supabase.auth.signOut()
     }
     localStorage.removeItem(AUTH_STORAGE_KEY)

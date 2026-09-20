@@ -2,7 +2,7 @@ import { createApp } from 'vue'
 import { createPinia } from 'pinia'
 
 import App from './App.vue'
-import router from './router'
+import router, { prefetchRoutesWhenIdle } from './router'
 import { useFeedbackStore } from '@/stores/feedback'
 import { useDarkModeStore } from '@/stores/darkMode'
 import { siteName } from '@/config'
@@ -23,6 +23,9 @@ app.config.errorHandler = (err, instance, info) => {
 }
 
 app.use(pinia).use(router).mount('#app')
+
+// 首屏渲染完成后，空闲时预取公开端各页（站内跳转无需再等 chunk 下载）
+router.isReady().then(() => prefetchRoutesWhenIdle('public'))
 
 // Dark mode
 const darkModeStore = useDarkModeStore(pinia)

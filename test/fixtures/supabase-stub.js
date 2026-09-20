@@ -10,6 +10,10 @@ function ok(data) {
   return Promise.resolve({ data, error: null })
 }
 
+function delay(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms))
+}
+
 // 真库走 JSON 序列化；这里也用 JSON 往返，避免 Vue 响应式代理无法结构化克隆
 function clone(value) {
   return value === undefined ? undefined : JSON.parse(JSON.stringify(value))
@@ -28,6 +32,8 @@ export const backend = {
   rlsBlocksInsert: false,
   // 模拟未配置 Storage（本地模式）
   disableStorage: false,
+  // 模拟读取延迟（毫秒），用于验证「先用缓存上屏、云端随后到达」
+  readDelay: 0,
   // 空表时服务端的返回形态：'pgrst116'（PostgREST 默认，406 + PGRST116）或 'null'（200 + null）
   emptyRowResponse: 'pgrst116',
   storageUploads: [],
@@ -45,6 +51,7 @@ export const backend = {
     rlsBlocksUpdate = false,
     rlsBlocksInsert = false,
     disableStorage = false,
+    readDelay = 0,
     emptyRowResponse = 'pgrst116',
   } = {}) {
     this.row = row ? { ...row, value: clone(row.value) } : null
@@ -55,6 +62,7 @@ export const backend = {
     this.rlsBlocksUpdate = rlsBlocksUpdate
     this.rlsBlocksInsert = rlsBlocksInsert
     this.disableStorage = disableStorage
+    this.readDelay = readDelay
     this.emptyRowResponse = emptyRowResponse
     this.storageUploads = []
     this.storageRemoves = []
@@ -76,6 +84,11 @@ export const backend = {
   },
 
   read({ columns }) {
+    if (this.readDelay > 0) return delay(this.readDelay).then(() => this.readNow({ columns }))
+    return this.readNow({ columns })
+  },
+
+  readNow({ columns }) {
     if (this.readError) return Promise.resolve({ data: null, error: this.readError })
     const wantsRevision = String(columns || '').includes('revision')
     if (wantsRevision && this.missingRevisionColumn) {
@@ -217,4 +230,15 @@ export const supabase = {
       upsert: (row) => backend.upsert({ row }),
     }
   },
+}
+
+// 与应用侧 @/lib/supabase 的接口保持一致：按需获取客户端 + 是否配置云端
+export function getSupabase() {
+  return Promise.resolve(supabase)
+}
+
+export function isSupabaseConfigured() {
+  // 替身里用 disableStorage 表达「没有云端可用」（对应头像的单测场景）；
+  // 纯本地模式则由 config 替身的 USE_SUPABASE=false 表达。
+  return !backend.disableStorage
 }

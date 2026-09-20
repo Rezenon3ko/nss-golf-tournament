@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia'
 import { computed, reactive, ref } from 'vue'
 import { TOURNAMENT_STORAGE_KEY, USE_SUPABASE } from '@/config'
-import { supabase } from '@/lib/supabase'
+import { getSupabase, isSupabaseConfigured } from '@/lib/supabase'
 import {
   SYNC_ROW_KEY,
   WRITE_DEBOUNCE_MS,
@@ -782,6 +782,7 @@ export const useTournamentStore = defineStore('tournament', () => {
 
   // 读取云端快照：老库缺 revision 列时自动降级
   async function fetchRemoteRow() {
+    const supabase = await getSupabase()
     if (!supabase) throw new Error('Supabase 未初始化')
     const columns = sync.supportsRevision ? 'value,revision' : 'value'
     const { data, error } = await supabase
@@ -805,6 +806,7 @@ export const useTournamentStore = defineStore('tournament', () => {
 
   // 带乐观锁的写入：只有云端版本仍是我们读取的那一版才允许覆盖
   async function writeSnapshot(payload) {
+    const supabase = await getSupabase()
     if (!supabase) throw new Error('Supabase 未初始化')
 
     if (!sync.supportsRevision) {
@@ -866,7 +868,7 @@ export const useTournamentStore = defineStore('tournament', () => {
 
   async function flushCloud() {
     if (inFlight || !cloudQueued) return
-    if (!supabase || !cloudWriteEnabled.value) return
+    if (!cloudWriteEnabled.value || !isSupabaseConfigured()) return
     if (sync.mode !== 'cloud' || sync.status === 'conflict') return
 
     cloudQueued = false
@@ -945,7 +947,7 @@ export const useTournamentStore = defineStore('tournament', () => {
 
   // 降级模式（读不到云端）下重新连接
   async function reconnect() {
-    if (!supabase) return false
+    if (!isSupabaseConfigured()) return false
     sync.status = 'saving'
     sync.message = ''
     try {
@@ -1065,21 +1067,26 @@ export const useTournamentStore = defineStore('tournament', () => {
   }
 
   async function init() {
-    if (USE_SUPABASE && supabase) {
+    if (USE_SUPABASE) {
+      // 先用本机缓存把界面渲染出来（重复访问几乎瞬时），云端数据随后到达再更新。
+      // 同时提前进入 cloud 记账模式：这样「启动窗口内的编辑」会被标记为待同步，
+      // 而不是被当成无事发生、随后被云端快照覆盖。
+      const cached = loadLocal()
+      if (cached.found) ready.value = true
+      sync.mode = 'cloud'
+
       try {
         const row = await fetchRemoteRow()
-        sync.mode = 'cloud'
         sync.degraded = false
         sync.status = 'idle'
-        const local = loadLocal()
-        if (row && local.found && local.pending) {
-          // 上次有改动没同步成功（断网/关页太快）：保留本机状态，
-          // 把云端那份交给主办方选择，绝不静默覆盖
+        // 本机有未同步的改动（上次关页没传成功，或本次打开后立刻编辑）：
+        // 保留本机状态，把云端那份交给主办方选择，绝不静默覆盖
+        if (row && (sync.pendingChanges || (cached.found && cached.pending))) {
           sync.revision = row.revision
           sync.pendingChanges = true
           sync.conflictRemote = row
           sync.status = 'conflict'
-          sync.message = '本机缓存中有上次未同步成功的改动，请选择保留哪一份'
+          sync.message = '本机有未同步的改动，云端也已有数据，请选择保留哪一份'
           ready.value = true
           return
         }
@@ -1094,7 +1101,7 @@ export const useTournamentStore = defineStore('tournament', () => {
           // 云端建好表但还没有数据：先保留本地/种子数据，
           // 首次写入等主办方登录后由 setCloudWriteEnabled 触发（游客无写权限）
           sync.revision = 0
-          if (!local.found) seedState()
+          if (!cached.found) seedState()
           sync.pendingChanges = true
         }
         ready.value = true
@@ -1107,10 +1114,9 @@ export const useTournamentStore = defineStore('tournament', () => {
         sync.degraded = true
         sync.status = 'local-only'
         sync.message = '未能连接云端，当前修改只保存在本机'
-        const local = loadLocal()
-        if (!local.found) seedState()
+        if (!cached.found) seedState()
         // 缓存里已有未同步改动时，重连后同样交给主办方选择
-        if (local.pending) sync.pendingChanges = true
+        if (cached.pending) sync.pendingChanges = true
         ready.value = true
         return
       }

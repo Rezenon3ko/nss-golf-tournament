@@ -91,6 +91,60 @@ test('打开时从云端读取并记录版本号', async () => {
   assert.deepEqual(names(cachedSnapshot()), ['云端选手'])
 })
 
+test('有本机缓存时先用缓存上屏，云端数据到达后再更新', async () => {
+  backend.reset({
+    row: {
+      key: 'main',
+      value: { players: [{ id: 'p9', name: '云端最新', tier: 1 }], matches: [] },
+      revision: 9,
+    },
+    readDelay: 300,
+  })
+  localStorage.clear()
+  localStorage.setItem(
+    CACHE_KEY,
+    JSON.stringify({
+      players: [{ id: 'p1', name: '本机缓存', tier: 1 }],
+      matches: [],
+      __pending: false,
+    }),
+  )
+  setActivePinia(createPinia())
+  const store = useTournamentStore()
+
+  const pending = store.init()
+  // 云端读取还没返回（模拟 300ms 延迟），但界面已经能用缓存渲染了
+  assert.equal(store.ready, true, '有缓存时不应再等云端')
+  assert.deepEqual(names(store.exportSnapshot()), ['本机缓存'])
+
+  await pending
+  assert.deepEqual(names(store.exportSnapshot()), ['云端最新'], '云端数据到达后替换缓存')
+  assert.equal(store.sync.revision, 9)
+})
+
+test('打开后立刻编辑时，云端快照不会覆盖本机改动（转为冲突让主办方选择）', async () => {
+  backend.reset({
+    row: {
+      key: 'main',
+      value: { players: [{ id: 'p9', name: '云端最新', tier: 1 }], matches: [] },
+      revision: 9,
+    },
+    readDelay: 200,
+  })
+  localStorage.clear()
+  setActivePinia(createPinia())
+  const store = useTournamentStore()
+
+  const pending = store.init()
+  // 启动窗口内立刻改一笔（真实场景：打开页面马上点判负/改 DDL）
+  store.addPlayer({ name: '本机刚改的', tier: 1 })
+
+  await pending
+  assert.equal(store.sync.status, 'conflict', '不应静默采用云端数据')
+  assert.ok(names(store.exportSnapshot()).includes('本机刚改的'), '本机改动必须还在')
+  assert.equal(store.sync.conflictRemote.revision, 9)
+})
+
 test('修改后带版本号写入云端，连续改动合并为一次写入', async () => {
   const store = await freshStore({ revision: 3 })
 

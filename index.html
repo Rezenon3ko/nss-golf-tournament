@@ -10,6 +10,9 @@
 
     <meta name="description" content="NSS 鬼吃鱼高尔夫锦标赛 - 比赛记录与积分榜" />
     <meta name="theme-color" content="#ffffff" />
+    <!-- 头像来自 Supabase Storage 的 CDN：提前建连，省掉 DNS + TLS 往返（未配置时 href 为空，浏览器忽略） -->
+    <link rel="preconnect" href="%VITE_SUPABASE_URL%" crossorigin />
+    <link rel="dns-prefetch" href="%VITE_SUPABASE_URL%" />
 
     <!-- 首屏渲染前应用主题，避免深色模式闪白（与 stores/darkMode.js 使用同一个存储键） -->
     <script>
