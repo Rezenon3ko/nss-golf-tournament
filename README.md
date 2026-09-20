@@ -28,6 +28,8 @@
 
 - Vue 3 + Vite + Tailwind CSS 4 + Pinia + vue-router
 - Supabase（Postgres + 登录鉴权 + Storage，RLS 行级安全）
+  - 客户端用 `@supabase/auth-js` + `postgrest-js` + `storage-js` 三个子包自行组装
+    （见 `src/lib/supabase.js`），不引入未使用的 Realtime / Functions
 - 界面基础：[Admin One Tailwind Vue 3](https://justboil.me/tailwind-admin-templates/free-vue-dashboard/)（MIT）
 
 ## 快速开始
