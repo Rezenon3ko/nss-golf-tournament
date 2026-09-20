@@ -5,6 +5,7 @@ import { useAuthStore } from '@/stores/auth'
 import PlayerBadge from '@/components/PlayerBadge.vue'
 import BaseButton from '@/components/BaseButton.vue'
 import { useFeedbackStore } from '@/stores/feedback'
+import { groupRowClass, groupRowHoverClass } from '@/lib/groupColors'
 import { mdiDiceMultiple } from '@mdi/js'
 
 const props = defineProps({
@@ -20,27 +21,9 @@ const feedback = useFeedbackStore()
 
 const rows = computed(() => store.getStandings(props.groupId))
 
-// 前两名（出线）行背景：对应组色
-const tintBg = computed(() => {
-  const map = {
-    A: 'bg-[#e6e0f5] dark:bg-[#7469a6]',
-    B: 'bg-[#d9f3e1] dark:bg-[#6b7f72]',
-    C: 'bg-[#dcecfa] dark:bg-[#6b7890]',
-    D: 'bg-[#ffe8d4] dark:bg-[#8c7363]',
-  }
-  return map[props.groupId] || map.A
-})
-
-// 行悬停：对应组色的浅色版
-const tintHover = computed(() => {
-  const map = {
-    A: 'transition-colors hover:bg-[#f3effb] dark:hover:bg-[#8478b4]',
-    B: 'transition-colors hover:bg-[#ecf9f0] dark:hover:bg-[#7a8e81]',
-    C: 'transition-colors hover:bg-[#eef6fd] dark:hover:bg-[#79879f]',
-    D: 'transition-colors hover:bg-[#fff4ea] dark:hover:bg-[#9d8575]',
-  }
-  return map[props.groupId] || map.A
-})
+// 前两名（出线）行背景与悬停：统一取自 lib/groupColors
+const tintBg = computed(() => groupRowClass(props.groupId))
+const tintHover = computed(() => groupRowHoverClass(props.groupId))
 const complete = computed(() => !!store.groupComplete[props.groupId])
 const hasDraw = computed(() => rows.value.some((row) => row.needsDraw))
 

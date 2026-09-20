@@ -10,6 +10,7 @@ import MatchDetailModal from '@/components/MatchDetailModal.vue'
 import ScoreEntryModal from '@/components/ScoreEntryModal.vue'
 import { formatDateTime } from '@/utils/format'
 import { nowMs } from '@/lib/clock'
+import { groupRowHoverClass } from '@/lib/groupColors'
 
 const store = useTournamentStore()
 const auth = useAuthStore()
@@ -29,16 +30,8 @@ const statusFilters = [
 
 const groupMatches = computed(() => store.groupMatches[activeGroup.value])
 
-// 行悬停：当前组色的浅色版（交替行已去掉）
-const activeTintHover = computed(() => {
-  const map = {
-    A: 'transition-colors hover:bg-[#f3effb] dark:hover:bg-[#8478b4]',
-    B: 'transition-colors hover:bg-[#ecf9f0] dark:hover:bg-[#7a8e81]',
-    C: 'transition-colors hover:bg-[#eef6fd] dark:hover:bg-[#79879f]',
-    D: 'transition-colors hover:bg-[#fff4ea] dark:hover:bg-[#9d8575]',
-  }
-  return map[activeGroup.value] || map.A
-})
+// 行悬停：当前组色（统一取自 lib/groupColors）
+const activeTintHover = computed(() => groupRowHoverClass(activeGroup.value))
 
 const filteredMatches = computed(() => {
   const rows = groupMatches.value.map((match) => {

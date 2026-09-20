@@ -12,9 +12,10 @@ import GolfLogo from '@/components/GolfLogo.vue'
 import {
   mdiMenu,
   mdiClose,
-  mdiThemeLightDark,
   mdiLogout,
   mdiEye,
+  mdiWhiteBalanceSunny,
+  mdiWeatherNight,
 } from '@mdi/js'
 
 const route = useRoute()
@@ -67,15 +68,18 @@ function logout() {
         <div class="flex items-center gap-1">
           <button
             type="button"
-            class="inline-flex h-9 w-9 items-center justify-center rounded-md text-[#787671] hover:bg-[#f0eeec] dark:text-[#c7c7c7] dark:hover:bg-[#3d3d3d]"
+            class="inline-flex h-9 w-9 items-center justify-center rounded-md bg-[#c9a24b]/25 text-[#8c6d1f] hover:bg-[#c9a24b]/40 dark:bg-[#c9a24b]/25 dark:text-[#e4d3a4] dark:hover:bg-[#c9a24b]/40"
             :title="darkModeStore.isEnabled ? '切换到浅色模式' : '切换到深色模式'"
             @click="darkModeStore.set(null, true)"
           >
-            <BaseIcon :path="mdiThemeLightDark" size="20" />
+            <BaseIcon
+              :path="darkModeStore.isEnabled ? mdiWhiteBalanceSunny : mdiWeatherNight"
+              size="20"
+            />
           </button>
           <RouterLink
             to="/"
-            class="flex items-center gap-1 rounded-md px-2 py-1.5 text-sm text-[#5d5b54] hover:bg-[#f0eeec] hover:text-black dark:text-[#c7c7c7] dark:hover:bg-[#3d3d3d]"
+            class="inline-flex h-9 items-center gap-1 rounded-md px-2 text-sm text-[#5d5b54] hover:bg-[#f0eeec] hover:text-black dark:text-[#c7c7c7] dark:hover:bg-[#3d3d3d]"
           >
             <BaseIcon :path="mdiEye" size="18" />
             <span class="hidden sm:inline">查看前台</span>

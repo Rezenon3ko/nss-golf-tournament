@@ -39,7 +39,12 @@ const avatarClass = computed(() => {
 </script>
 
 <template>
-  <span class="inline-flex items-center gap-2" :class="[reverse ? 'flex-row-reverse' : '', truncate ? 'min-w-0' : '']">
+  <!--
+    用 block 级 flex（而不是 inline-flex）：头像 <img> 在 preflight 里是 display:block，
+    内联盒会以图片底边为基线，导致带头像的行比不带头像的行高 6px、内容整体上移 3px；
+    改成块级盒子后由父级（如 td 的 vertical-align: middle）负责垂直居中，行高也统一。
+  -->
+  <span class="flex items-center gap-2" :class="[reverse ? 'flex-row-reverse' : '', truncate ? 'min-w-0' : '']">
     <img
       v-if="player?.avatar && !imgFailed"
       :src="player.avatar"

@@ -92,28 +92,28 @@
 .notion-tint-gray     { background: var(--notion-tint-gray);     color: var(--notion-charcoal); }
 
 .dark .notion-tint-lavender {
-  background: #2a2a2a;
+  background: var(--color-group-a-dark);
   color: #e6e6e6;
   border: 1px solid #3d3d3d;
-  border-left: 3px solid #7469a6;
+  border-left: 3px solid var(--color-group-a-accent);
 }
 .dark .notion-tint-mint {
-  background: #2a2a2a;
+  background: var(--color-group-b-dark);
   color: #e6e6e6;
   border: 1px solid #3d3d3d;
-  border-left: 3px solid #6b7f72;
+  border-left: 3px solid var(--color-group-b-accent);
 }
 .dark .notion-tint-sky {
-  background: #2a2a2a;
+  background: var(--color-group-c-dark);
   color: #e6e6e6;
   border: 1px solid #3d3d3d;
-  border-left: 3px solid #6b7890;
+  border-left: 3px solid var(--color-group-c-accent);
 }
 .dark .notion-tint-peach {
-  background: #2a2a2a;
+  background: var(--color-group-d-dark);
   color: #e6e6e6;
   border: 1px solid #3d3d3d;
-  border-left: 3px solid #8c7363;
+  border-left: 3px solid var(--color-group-d-accent);
 }
 .dark .notion-tint-rose,
 .dark .notion-tint-yellow,

@@ -13,7 +13,6 @@ import {
   mdiWeatherNight,
 } from '@mdi/js'
 import BaseIcon from '@/components/BaseIcon.vue'
-import BaseButton from '@/components/BaseButton.vue'
 import GolfLogo from '@/components/GolfLogo.vue'
 import { useDarkModeStore } from '@/stores/darkMode'
 
@@ -37,9 +36,27 @@ function isActive(item) {
   return route.path.startsWith(item.to)
 }
 
+// 导航项统一样式：登录/后台/退出与其它导航项保持同一套排版。
+// 高度写死（桌面 h-9 / 移动 h-10），这样纯文字项、带图标的项、以及右侧 h-9 的图标按钮完全等高。
+const navItemClass =
+  'inline-flex h-9 items-center gap-1.5 rounded-md px-3 text-sm transition-colors'
+const navItemClassMobile =
+  'flex h-10 items-center gap-1.5 rounded-md px-3 text-sm transition-colors'
+// 图标外层收成 16px：BaseIcon 默认外层是 24px，会把带图标的行撑高 4px
+const navIconClass = { w: 'w-4', h: 'h-4' }
+const navIdleClass =
+  'text-[#5d5b54] hover:bg-[#f0eeec] hover:text-black dark:text-[#c7c7c7] dark:hover:bg-[#3d3d3d] dark:hover:text-slate-100'
+const navActiveClass =
+  'bg-[#c9a24b]/25 font-semibold text-[#8c6d1f] dark:bg-[#c9a24b]/25 dark:text-[#e4d3a4]'
+
 function logout() {
   auth.logout()
   router.push('/')
+}
+
+function logoutFromMobile() {
+  mobileOpen.value = false
+  logout()
 }
 </script>
 
@@ -57,12 +74,7 @@ function logout() {
             v-for="item in navItems"
             :key="item.to"
             :to="item.to"
-            class="rounded-md px-3 py-2 text-sm transition-colors"
-            :class="
-              isActive(item)
-                ? 'bg-[#c9a24b]/25 font-semibold text-[#8c6d1f] dark:bg-[#c9a24b]/25 dark:text-[#e4d3a4]'
-                : 'text-[#5d5b54] hover:bg-[#f0eeec] hover:text-black dark:text-[#c7c7c7] dark:hover:bg-[#3d3d3d] dark:hover:text-slate-100'
-            "
+            :class="[navItemClass, isActive(item) ? navActiveClass : navIdleClass]"
           >
             {{ item.label }}
           </RouterLink>
@@ -79,23 +91,29 @@ function logout() {
               />
             </button>
             <template v-if="auth.isAdmin">
-              <BaseButton
-                :to="'/admin'"
-                :icon="mdiViewDashboard"
-                label="主办方后台"
-                color="goldSoft"
-                small
-              />
-              <BaseButton :icon="mdiLogout" label="退出" color="whiteDark" small @click="logout" />
+              <RouterLink
+                to="/admin"
+                :class="[
+                  navItemClass,
+                  route.path.startsWith('/admin') ? navActiveClass : navIdleClass,
+                ]"
+              >
+                <BaseIcon :path="mdiViewDashboard" size="16" v-bind="navIconClass" />
+                主办方后台
+              </RouterLink>
+              <button type="button" :class="[navItemClass, navIdleClass]" @click="logout">
+                <BaseIcon :path="mdiLogout" size="16" v-bind="navIconClass" />
+                退出
+              </button>
             </template>
-            <BaseButton
+            <RouterLink
               v-else
               :to="{ name: 'login', query: { next: route.fullPath } }"
-              :icon="mdiLock"
-              label="主办方登录"
-              color="goldSoft"
-              small
-            />
+              :class="[navItemClass, navIdleClass]"
+            >
+              <BaseIcon :path="mdiLock" size="16" v-bind="navIconClass" />
+              主办方登录
+            </RouterLink>
           </div>
         </nav>
 
@@ -130,30 +148,43 @@ function logout() {
             v-for="item in navItems"
             :key="item.to"
             :to="item.to"
-            class="rounded-md px-3 py-2 text-sm"
-            :class="
-              isActive(item)
-                ? 'bg-[#c9a24b]/25 font-semibold text-[#8c6d1f] dark:bg-[#c9a24b]/25 dark:text-[#e4d3a4]'
-                : 'text-[#5d5b54] dark:text-[#c7c7c7]'
-            "
+            :class="[navItemClassMobile, isActive(item) ? navActiveClass : navIdleClass]"
             @click="mobileOpen = false"
           >
             {{ item.label }}
           </RouterLink>
         </div>
-        <div class="flex gap-2 border-t border-[#e5e3df] pt-3 dark:border-[#3d3d3d]">
+        <div class="flex flex-col gap-1 border-t border-[#e5e3df] pt-2 dark:border-[#3d3d3d]">
           <template v-if="auth.isAdmin">
-            <BaseButton :to="'/admin'" :icon="mdiViewDashboard" label="主办方后台" color="goldSoft" small />
-            <BaseButton :icon="mdiLogout" label="退出" color="whiteDark" small @click="logout" />
+            <RouterLink
+              to="/admin"
+              :class="[
+                navItemClassMobile,
+                route.path.startsWith('/admin') ? navActiveClass : navIdleClass,
+              ]"
+              @click="mobileOpen = false"
+            >
+              <BaseIcon :path="mdiViewDashboard" size="16" v-bind="navIconClass" />
+              主办方后台
+            </RouterLink>
+            <button
+              type="button"
+              :class="[navItemClassMobile, navIdleClass]"
+              @click="logoutFromMobile"
+            >
+              <BaseIcon :path="mdiLogout" size="16" v-bind="navIconClass" />
+              退出
+            </button>
           </template>
-          <BaseButton
+          <RouterLink
             v-else
             :to="{ name: 'login', query: { next: route.fullPath } }"
-            :icon="mdiLock"
-            label="主办方登录"
-            color="goldSoft"
-            small
-          />
+            :class="[navItemClassMobile, navIdleClass]"
+            @click="mobileOpen = false"
+          >
+            <BaseIcon :path="mdiLock" size="16" v-bind="navIconClass" />
+            主办方登录
+          </RouterLink>
         </div>
       </nav>
     </header>

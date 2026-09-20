@@ -7,6 +7,30 @@
 
 @theme {
   --transition-position: right, left, top, bottom, margin, padding;
+
+  /*
+    小组代表色（A/B/C/D）在深色模式下的取值：
+    比浅色档更深、更贴合深色背景（页面 #121212 / 卡片 #1e1e1e / 内嵌块 #2a2a2a），
+    只调整深色档，浅色档沿用原来的粉彩色。
+    - -dark       行/卡片填充
+    - -dark-hover 悬停填充（略微提亮）
+    - -accent     左侧描边、标签强调
+  */
+  --color-group-a-dark: #312b4d;
+  --color-group-a-dark-hover: #3b345c;
+  --color-group-a-accent: #5c5382;
+
+  --color-group-b-dark: #23392c;
+  --color-group-b-dark-hover: #2c4636;
+  --color-group-b-accent: #4f6b58;
+
+  --color-group-c-dark: #22344a;
+  --color-group-c-dark-hover: #2b4059;
+  --color-group-c-accent: #4a6485;
+
+  --color-group-d-dark: #3b2d21;
+  --color-group-d-dark-hover: #48382a;
+  --color-group-d-accent: #7a5c46;
 }
 
 @import './_checkbox-radio-switch.css';

@@ -2,6 +2,7 @@
 import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useTournamentStore } from '@/stores/tournament'
+import { groupChipClass } from '@/lib/groupColors'
 import PlayerBadge from '@/components/PlayerBadge.vue'
 import { mdiMagnify } from '@mdi/js'
 import BaseIcon from '@/components/BaseIcon.vue'
@@ -36,21 +37,11 @@ function statsOf(player) {
   return store.getStandings(player.groupId).find((r) => r.playerId === player.id) || null
 }
 
-function groupChipClass(groupId) {
-  const map = {
-    A: 'rounded-full bg-[#e6e0f5] px-2 py-0.5 text-sm font-semibold text-[#37352f] dark:bg-[#7469a6] dark:text-[#cfc8e0]',
-    B: 'rounded-full bg-[#d9f3e1] px-2 py-0.5 text-sm font-semibold text-[#37352f] dark:bg-[#6b7f72] dark:text-[#c8dccf]',
-    C: 'rounded-full bg-[#dcecfa] px-2 py-0.5 text-sm font-semibold text-[#37352f] dark:bg-[#6b7890] dark:text-[#c8d6e6]',
-    D: 'rounded-full bg-[#ffe8d4] px-2 py-0.5 text-sm font-semibold text-[#37352f] dark:bg-[#8c7363] dark:text-[#e6d8ca]',
-  }
-  return map[groupId] || ''
-}
-
 function tierClass(tier) {
   const map = {
-    1: 'rounded-full bg-[#e6e0f5] px-2 py-0.5 text-sm font-semibold text-[#391c57] dark:bg-[#7469a6] dark:text-[#d8cce6]',
-    2: 'rounded-full bg-[#dcecfa] px-2 py-0.5 text-sm font-semibold text-[#005bab] dark:bg-[#6b7890] dark:text-[#c2d2e2]',
-    3: 'rounded-full bg-[#d9f3e1] px-2 py-0.5 text-sm font-semibold text-[#12902d] dark:bg-[#1d3a2a] dark:text-[#7ec8a0]',
+    1: 'rounded-full bg-[#e6e0f5] px-2 py-0.5 text-sm font-semibold text-[#391c57] dark:bg-[#312b4d] dark:text-[#d8cce6]',
+    2: 'rounded-full bg-[#dcecfa] px-2 py-0.5 text-sm font-semibold text-[#005bab] dark:bg-[#22344a] dark:text-[#c2d2e2]',
+    3: 'rounded-full bg-[#d9f3e1] px-2 py-0.5 text-sm font-semibold text-[#12902d] dark:bg-[#23392c] dark:text-[#7ec8a0]',
     4: 'rounded-full bg-[#f0eeec] px-2 py-0.5 text-sm font-semibold text-[#5d5b54] dark:bg-[#3d3d3d] dark:text-[#c7c7c7]',
   }
   return map[tier] || ''

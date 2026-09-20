@@ -55,7 +55,7 @@ async function submit() {
       <div class="mb-6 text-center">
         <GolfLogo :size="56" class="mx-auto mb-3" />
         <h1 class="text-xl font-bold">{{ siteName }}</h1>
-        <p class="mt-1 text-sm text-[#5d5b54] dark:text-[#a0a0a0]">主办方登录 · 主办方专用</p>
+        <p class="mt-1 text-sm text-[#5d5b54] dark:text-[#a0a0a0]">主办方登录</p>
       </div>
 
       <form

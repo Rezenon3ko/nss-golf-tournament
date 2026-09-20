@@ -213,9 +213,9 @@ const published = computed(() => store.players.some((p) => p.groupId))
 
 function tierClass(tier) {
   const map = {
-    1: 'rounded-full bg-[#e6e0f5] px-2 py-0.5 text-sm font-semibold text-[#391c57] dark:bg-[#7469a6] dark:text-[#d8cce6]',
-    2: 'rounded-full bg-[#dcecfa] px-2 py-0.5 text-sm font-semibold text-[#005bab] dark:bg-[#6b7890] dark:text-[#c2d2e2]',
-    3: 'rounded-full bg-[#d9f3e1] px-2 py-0.5 text-sm font-semibold text-[#12902d] dark:bg-[#1d3a2a] dark:text-[#7ec8a0]',
+    1: 'rounded-full bg-[#e6e0f5] px-2 py-0.5 text-sm font-semibold text-[#391c57] dark:bg-[#312b4d] dark:text-[#d8cce6]',
+    2: 'rounded-full bg-[#dcecfa] px-2 py-0.5 text-sm font-semibold text-[#005bab] dark:bg-[#22344a] dark:text-[#c2d2e2]',
+    3: 'rounded-full bg-[#d9f3e1] px-2 py-0.5 text-sm font-semibold text-[#12902d] dark:bg-[#23392c] dark:text-[#7ec8a0]',
     4: 'rounded-full bg-[#f0eeec] px-2 py-0.5 text-sm font-semibold text-[#5d5b54] dark:bg-[#3d3d3d] dark:text-[#c7c7c7]',
   }
   return map[tier] || ''
