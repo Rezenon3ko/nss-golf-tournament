@@ -41,6 +41,9 @@ npm test   # 同步引擎 + 计分/排名/淘汰赛规则的单测（node --test
 npm run lint
 ```
 
+> 依赖变动后如果 `npm run dev` 报 `node_modules/... ENOENT`（找不到某个包的文件），
+> 是 Vite 的依赖预构建缓存过期了：用 `npm run dev:force` 重启，或删掉 `node_modules/.vite` 再启动。
+
 测试覆盖：云同步（版本冲突、写入失败重试、读不到云端时的降级、老库兼容）、
 计分截断（先得 2/3 局即封盘）、排名 tie-break（积分 → 相互战绩 → 净胜局 → 净胜杆 → 抽签）、
 淘汰赛晋级/轮空/半区作废/递补亚军、DDL 倒计时与逾期判定。

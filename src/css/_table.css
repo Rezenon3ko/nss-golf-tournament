@@ -33,7 +33,10 @@
 
   tbody tr,
   tbody tr:nth-child(odd) {
-    @apply lg:hover:bg-[#eee6f8] lg:dark:hover:bg-[#3d3d3d]/70;
+    /* 表格行悬浮统一用淡金色（与 notion.css 的 .hover-gold 一致），
+       原来这里是 Admin One 的紫色 #eee6f8，与站内金色主色不一致。
+       保留在 base 层：分组色、出线行等按行覆盖的 hover 工具类仍能盖住它。 */
+    @apply lg:hover:bg-[rgba(201,162,75,0.14)] lg:dark:hover:bg-[rgba(200,180,130,0.12)];
   }
 
   td:before {
