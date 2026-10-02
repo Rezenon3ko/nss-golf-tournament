@@ -4,6 +4,7 @@ import {
   mdiGolf,
   mdiCalendarClock,
   mdiFolderImage,
+  mdiChartBoxOutline,
   mdiExport,
   mdiEye,
   mdiLogout,
@@ -36,8 +37,13 @@ export const menuAsideMain = [
     icon: mdiFolderImage,
   },
   {
+    to: '/admin/stats',
+    label: '数据统计',
+    icon: mdiChartBoxOutline,
+  },
+  {
     to: '/admin/export',
-    label: '导出',
+    label: '数据导出',
     icon: mdiExport,
   },
 ]

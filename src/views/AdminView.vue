@@ -8,6 +8,7 @@ import {
   mdiGolf,
   mdiCalendarClock,
   mdiFolderImage,
+  mdiChartBoxOutline,
   mdiExport,
   mdiAlertCircle,
   mdiClipboardCheck,
@@ -25,6 +26,12 @@ const cards = [
   { to: '/admin/matches', icon: mdiGolf, title: '赛果录入', desc: '录入 BO3 / BO5 成绩与截图' },
   { to: '/admin/ddl', icon: mdiCalendarClock, title: 'DDL 与逾期', desc: '设置截止时间、逾期判负' },
   { to: '/admin/evidence', icon: mdiFolderImage, title: '证据与日志', desc: '截图留档、操作追溯' },
+  {
+    to: '/admin/stats',
+    icon: mdiChartBoxOutline,
+    title: '数据统计',
+    desc: 'SD 胜场榜、PB 突破榜',
+  },
   { to: '/admin/export', icon: mdiExport, title: '数据导出', desc: 'CSV / JSON / 群通知文案' },
 ]
 

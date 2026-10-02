@@ -18,6 +18,7 @@ const AdminPlayersView = () => import('@/views/AdminPlayersView.vue')
 const AdminMatchesView = () => import('@/views/AdminMatchesView.vue')
 const AdminDdlView = () => import('@/views/AdminDdlView.vue')
 const AdminEvidenceView = () => import('@/views/AdminEvidenceView.vue')
+const AdminStatsView = () => import('@/views/AdminStatsView.vue')
 const AdminExportView = () => import('@/views/AdminExportView.vue')
 const ErrorView = () => import('@/views/ErrorView.vue')
 
@@ -41,6 +42,7 @@ const adminLoaders = [
   AdminMatchesView,
   AdminDdlView,
   AdminEvidenceView,
+  AdminStatsView,
   AdminExportView,
 ]
 
@@ -148,6 +150,12 @@ const routes = [
         name: 'admin-evidence',
         component: AdminEvidenceView,
         meta: { title: '证据与日志' },
+      },
+      {
+        path: 'stats',
+        name: 'admin-stats',
+        component: AdminStatsView,
+        meta: { title: '数据统计' },
       },
       {
         path: 'export',

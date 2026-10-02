@@ -236,6 +236,11 @@ function resultForPlayer(match, playerId) {
   return base
 }
 
+// 该场是否已有结论（完赛 / 判负 / 轮空）—— 淘汰赛轮次推进与首页展示共用这一口径
+function isMatchDecided(match) {
+  return match.status === 'complete' || match.status === 'forfeit' || match.status === 'walkover'
+}
+
 // ---------- 小组积分与排名 ----------
 
 function buildStandingsRow(player, matches) {
@@ -1523,6 +1528,17 @@ export const useTournamentStore = defineStore('tournament', () => {
     return 'setup'
   })
 
+  // 淘汰赛当前轮次：第一个尚未全部结束的轮次（八强 → 半决赛 → 决赛）。
+  // 不能直接用 stage === 'knockout' 当作八强，否则半决赛、决赛期间首页会一直显示八强。
+  const currentKnockoutStage = computed(() => {
+    for (const knockoutStage of ['qf', 'sf', 'final']) {
+      const round = matches.value.filter((m) => m.stage === knockoutStage)
+      if (!round.length) continue
+      if (!round.every(isMatchDecided)) return knockoutStage
+    }
+    return null
+  })
+
   const knockoutMatches = computed(() => {
     const seeds = knockoutSeedMatches(stateView())
     return seeds.map((seed) => {
@@ -1625,6 +1641,7 @@ export const useTournamentStore = defineStore('tournament', () => {
     groupComplete,
     allGroupsComplete,
     stage,
+    currentKnockoutStage,
     knockoutMatches,
     overdueMatches,
     latestResults,

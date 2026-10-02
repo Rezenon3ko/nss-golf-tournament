@@ -330,6 +330,57 @@ test('淘汰赛逐轮晋级并决出冠军与亚军', async () => {
   assert.equal(store.stage, 'finished')
 })
 
+test('当前轮次随淘汰赛推进：八强 → 半决赛 → 决赛 → 结束', async () => {
+  const ids = ['A', 'B', 'C', 'D']
+  const players = ids.flatMap((g) => [1, 2, 3, 4].map((n) => player(`${g.toLowerCase()}${n}`, g)))
+  const matches = ids.flatMap((g) => {
+    const group = g.toLowerCase()
+    return completeGroup(g, [`${group}1`, `${group}2`, `${group}3`, `${group}4`])
+  })
+  const store = await seedStore({ players, matches })
+  prepareKnockout(store)
+
+  assert.equal(store.currentKnockoutStage, 'qf', '小组赛结束后当前轮次是八强')
+
+  saveKo(store, ko(store, 'qf', 1))
+  saveKo(store, ko(store, 'qf', 2))
+  saveKo(store, ko(store, 'qf', 3))
+  assert.equal(store.currentKnockoutStage, 'qf', '八强还剩一场，仍是八强')
+
+  // 最后一场判双方负：同样算该轮结束，并让对手侧直接晋级
+  store.forfeitMatch(ko(store, 'qf', 4).id, 'both')
+  assert.equal(store.currentKnockoutStage, 'sf', '八强全部有结论 → 半决赛')
+
+  // 此时半决赛 1 待打、半决赛 2 已因对手双方负而轮空：仍应停留在半决赛
+  assert.equal(ko(store, 'sf', 1).status, 'pending')
+  assert.equal(store.currentKnockoutStage, 'sf', '只有一场半决赛有结论时不应跳到决赛')
+
+  saveKo(store, ko(store, 'sf', 1))
+  assert.equal(store.currentKnockoutStage, 'final', '半决赛全部结束 → 决赛')
+
+  saveKo(store, ko(store, 'final', 1))
+  assert.equal(store.currentKnockoutStage, null, '决赛结束 → 没有待打轮次')
+  assert.equal(store.stage, 'finished')
+})
+
+test('判负 / 轮空也计入轮次结束（不会卡在已裁决的轮次）', async () => {
+  const ids = ['A', 'B', 'C', 'D']
+  const players = ids.flatMap((g) => [1, 2, 3, 4].map((n) => player(`${g.toLowerCase()}${n}`, g)))
+  const matches = ids.flatMap((g) => {
+    const group = g.toLowerCase()
+    return completeGroup(g, [`${group}1`, `${group}2`, `${group}3`, `${group}4`])
+  })
+  const store = await seedStore({ players, matches })
+  prepareKnockout(store)
+
+  // 四场八强全部判负（甲负）
+  for (const order of [1, 2, 3, 4]) {
+    store.forfeitMatch(ko(store, 'qf', order).id, 'A')
+  }
+  assert.equal(store.currentKnockoutStage, 'sf', '判负的八强场次同样意味着该轮结束')
+  assert.ok(ko(store, 'sf', 1).playerAId, '半决赛对阵已由判负结果推导出')
+})
+
 test('双方负让对手直接晋级下一轮（本场轮空）', async () => {
   const ids = ['A', 'B', 'C', 'D']
   const players = ids.flatMap((g) => [1, 2, 3, 4].map((n) => player(`${g.toLowerCase()}${n}`, g)))

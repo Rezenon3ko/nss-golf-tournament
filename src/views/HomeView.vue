@@ -18,13 +18,9 @@ const stageIndex = computed(() => {
   if (store.stage === 'setup') return -1
   if (store.stage === 'finished') return 4
   if (store.stage === 'group') return 0
-  const knock = store.knockoutMatches
-  const done = (n) => n.status === 'complete' || n.status === 'forfeit' || n.status === 'walkover'
-  const finalDone = knock.some((n) => n.stage === 'final' && done(n))
-  if (finalDone) return 3
-  const sfDone = knock.some((n) => n.stage === 'sf' && done(n))
-  if (sfDone) return 2
-  return 1
+  // 淘汰赛按「当前轮次」高亮：八强 1 / 半决赛 2 / 决赛 3
+  const index = ['qf', 'sf', 'final'].indexOf(store.currentKnockoutStage)
+  return index === -1 ? 3 : index + 1
 })
 
 const currentDdl = computed(() => {
@@ -43,7 +39,7 @@ const currentDdl = computed(() => {
     const item = store.ddlRounds.find((d) => d.stage === 'group' && d.round === 3)
     return { label: '小组赛第3轮', ddl: item?.ddl, pending: 0 }
   }
-  const stage = store.stage === 'knockout' ? 'qf' : store.stage
+  const stage = store.currentKnockoutStage || 'final'
   const item = store.ddlRounds.find((d) => d.stage === stage)
   const pending = store.matches.filter((m) => m.stage === stage && m.status === 'pending').length
   return { label: stageNames[stage], ddl: item?.ddl || null, pending }
