@@ -33,15 +33,3 @@ export function downloadText(filename, text, mime = 'text/plain') {
   document.body.removeChild(a)
   URL.revokeObjectURL(url)
 }
-
-export function toCsv(rows) {
-  if (!rows.length) return ''
-  const headers = Object.keys(rows[0])
-  const escape = (v) => {
-    const s = v === null || v === undefined ? '' : String(v)
-    return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s
-  }
-  return [headers.join(','), ...rows.map((r) => headers.map((h) => escape(r[h])).join(','))].join(
-    '\n',
-  )
-}

@@ -30,9 +30,14 @@ const cards = [
     to: '/admin/stats',
     icon: mdiChartBoxOutline,
     title: '数据统计',
-    desc: 'SD 胜场榜、PB 突破榜',
+    desc: 'SD 之王、PB 之星',
   },
-  { to: '/admin/export', icon: mdiExport, title: '数据导出', desc: 'CSV / JSON / 群通知文案' },
+  {
+    to: '/admin/export',
+    icon: mdiExport,
+    title: '数据导出',
+    desc: '群聊分享 / 对阵文本 / JSON',
+  },
 ]
 
 const todos = computed(() => {

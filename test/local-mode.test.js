@@ -26,7 +26,7 @@ function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms))
 }
 
-test('未配置 Supabase 时：纯本地模式，不报错也不提示同步', async () => {
+test('未配置 Supabase 时：纯本地模式从空白开始，不报错也不提示同步', async () => {
   backend.reset()
   localStorage.clear()
   setActivePinia(createPinia())
@@ -38,7 +38,19 @@ test('未配置 Supabase 时：纯本地模式，不报错也不提示同步', a
   assert.equal(store.sync.mode, 'local')
   assert.equal(store.sync.degraded, false, '未配置云端不应显示「本地模式」告警')
   assert.equal(store.sync.status, 'idle')
-  assert.equal(store.players.length, 16, '无缓存时载入种子数据')
+  // 全新环境不再内置示例选手，名单由主办方自己维护
+  assert.equal(store.players.length, 0, '全新环境名单为空')
+  assert.equal(store.matches.length, 0)
+  // DDL 轮次结构仍然预置（规则固定），但日期留空待主办方设置
+  assert.equal(store.ddlRounds.length, 6)
+  assert.ok(
+    store.ddlRounds.every((round) => round.ddl === null),
+    'DDL 日期不预置',
+  )
+  assert.deepEqual(
+    store.ddlRounds.map((round) => round.key),
+    ['group1', 'group2', 'group3', 'qf', 'sf', 'final'],
+  )
 
   store.addPlayer({ name: '本地新增', tier: 1 })
   await sleep(400)
@@ -49,7 +61,7 @@ test('未配置 Supabase 时：纯本地模式，不报错也不提示同步', a
   assert.equal(cached.__pending, false)
 })
 
-test('本地模式：有缓存时优先使用缓存而不是种子数据', async () => {
+test('本地模式：有缓存时优先使用缓存而不是空白状态', async () => {
   backend.reset()
   localStorage.clear()
   localStorage.setItem(

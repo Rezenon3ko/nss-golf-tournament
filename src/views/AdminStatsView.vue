@@ -51,7 +51,7 @@ function entrySummary(entry) {
         <div class="mb-4 flex flex-wrap items-center justify-between gap-2">
           <h2 class="flex items-center gap-2 text-lg font-bold">
             <BaseIcon :path="mdiCardsPlayingOutline" size="20" class="text-[#8c6d1f]" />
-            突然死亡（SD）之王
+            SD 之王
           </h2>
           <p class="text-sm text-[#5d5b54] dark:text-[#a0a0a0]">
             共 {{ sd.totalSd }} 局进入 SD
@@ -171,13 +171,13 @@ function entrySummary(entry) {
       </div>
     </section>
 
-    <!-- PB 突破榜 -->
+    <!-- PB 之星 -->
     <section class="mb-6">
       <div class="notion-card p-5">
         <div class="mb-4 flex flex-wrap items-center justify-between gap-2">
           <h2 class="flex items-center gap-2 text-lg font-bold">
             <BaseIcon :path="mdiTrendingUp" size="20" class="text-[#8c6d1f]" />
-            PB 突破榜
+            PB 之星
           </h2>
           <p class="text-sm text-[#5d5b54] dark:text-[#a0a0a0]">
             {{ pb.rows.length }} 人共突破 {{ pb.totalBreaks }} 次 · 已填报名 PB

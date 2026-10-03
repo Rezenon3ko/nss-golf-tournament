@@ -80,7 +80,7 @@ export function buildSdStats({ matches = [], players = [] } = {}) {
 }
 
 /**
- * PB 突破榜：统计每局成绩严格优于报名 PB 的次数。
+ * PB 之星：统计每局成绩严格优于报名 PB 的次数。
  * @returns {{ rows: Array, missingPb: Array, totalBreaks: number }}
  *   rows 按突破次数 → 最大突破幅度 → 姓名排序
  */

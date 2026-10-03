@@ -86,72 +86,34 @@ function emptySets(count) {
   return Array.from({ length: count }, () => ({ a: null, b: null, sdWinner: null }))
 }
 
-// ---------- 种子数据 ----------
+// ---------- 空赛事结构 ----------
+// 全新环境（云端还没有数据、本机也没有缓存）从空白开始：
+// 名单、赛程、赛果都为空，由主办方自行添加；这里只预置 DDL 轮次的结构
+// （轮次是规则固定的，具体日期由主办方在「DDL 与逾期」里设置）。
+// 不再内置任何示例选手或示例日期，避免把演示数据当成真实赛事数据。
 
-const SEED_PLAYERS = [
-  { id: 'p1', name: 'summer', bestScore: 36 },
-  { id: 'p2', name: 'smallwater', bestScore: 37 },
-  { id: 'p3', name: 'MidOne', bestScore: 38 },
-  { id: 'p4', name: 'zee', bestScore: 39 },
-  { id: 'p5', name: 'xxigua', bestScore: 41 },
-  { id: 'p6', name: 'Showhand', bestScore: 42 },
-  { id: 'p7', name: 'lglrwjx', bestScore: 42 },
-  { id: 'p8', name: 'CG', bestScore: 43 },
-  { id: 'p9', name: 'Duncan1314', bestScore: 45 },
-  { id: 'p10', name: 'n3ko', bestScore: 45 },
-  { id: 'p11', name: 'gakki', bestScore: 46 },
-  { id: 'p12', name: 'SunnyMudTo', bestScore: 46 },
-  { id: 'p13', name: 'shinamikan', bestScore: 49 },
-  { id: 'p14', name: 'bx-th', bestScore: 50 },
-  { id: 'p15', name: 'gcy', bestScore: 51 },
-  { id: 'p16', name: 'lzy', bestScore: 52 },
+const DDL_ROUNDS = [
+  { key: 'group1', label: '小组赛第1轮', stage: 'group', round: 1 },
+  { key: 'group2', label: '小组赛第2轮', stage: 'group', round: 2 },
+  { key: 'group3', label: '小组赛第3轮', stage: 'group', round: 3 },
+  { key: 'qf', label: '八强', stage: 'qf', round: null },
+  { key: 'sf', label: '半决赛', stage: 'sf', round: null },
+  { key: 'final', label: '决赛', stage: 'final', round: null },
 ]
 
-const SEED_TIERS = {
-  p1: 1,
-  p2: 1,
-  p3: 1,
-  p4: 1,
-  p5: 2,
-  p6: 2,
-  p7: 2,
-  p8: 2,
-  p9: 3,
-  p10: 3,
-  p11: 3,
-  p12: 3,
-  p13: 4,
-  p14: 4,
-  p15: 4,
-  p16: 4,
+function buildDdlRounds() {
+  return DDL_ROUNDS.map((round) => ({ ...round, ddl: null }))
 }
 
-function buildSeedDdl() {
-  const mk = (key, label, stage, round, ddl) => ({ key, label, stage, round, ddl })
-  return [
-    mk('group1', '小组赛第1轮', 'group', 1, '2026-08-30T23:59'),
-    mk('group2', '小组赛第2轮', 'group', 2, '2026-09-06T23:59'),
-    mk('group3', '小组赛第3轮', 'group', 3, '2026-09-13T23:59'),
-    mk('qf', '八强', 'qf', null, '2026-09-20T23:59'),
-    mk('sf', '半决赛', 'sf', null, '2026-09-27T23:59'),
-    mk('final', '决赛', 'final', null, '2026-10-04T23:59'),
-  ]
-}
-
-function buildSeed() {
-  const players = SEED_PLAYERS.map((p) => ({
-    ...p,
-    tier: SEED_TIERS[p.id],
-    groupId: null,
-  }))
+function buildEmptyState() {
   return {
-    players,
+    players: [],
     draft: null,
     matches: [],
-    ddlRounds: buildSeedDdl(),
+    ddlRounds: buildDdlRounds(),
     tiebreakResolutions: {},
     evidence: [],
-    logs: [{ id: 'lg-1', time: now(), by: '系统', message: '初始状态：等待抽签分组' }],
+    logs: [{ id: 'lg-1', time: now(), by: '系统', message: '初始状态：等待主办方添加选手' }],
     championId: null,
     drawHistory: [],
   }
@@ -1058,17 +1020,18 @@ export const useTournamentStore = defineStore('tournament', () => {
     }
   }
 
-  function seedState() {
-    const seed = buildSeed()
-    players.value = seed.players
-    draft.value = seed.draft
-    matches.value = seed.matches
-    ddlRounds.value = seed.ddlRounds
-    tiebreakResolutions.value = seed.tiebreakResolutions
-    evidence.value = seed.evidence
-    logs.value = seed.logs
-    championId.value = seed.championId
-    drawHistory.value = seed.drawHistory || []
+  // 全新环境：置为空白赛事（保留 DDL 轮次结构，日期留空由主办方设置）
+  function initEmptyState() {
+    const empty = buildEmptyState()
+    players.value = empty.players
+    draft.value = empty.draft
+    matches.value = empty.matches
+    ddlRounds.value = empty.ddlRounds
+    tiebreakResolutions.value = empty.tiebreakResolutions
+    evidence.value = empty.evidence
+    logs.value = empty.logs
+    championId.value = empty.championId
+    drawHistory.value = empty.drawHistory || []
   }
 
   async function init() {
@@ -1106,7 +1069,7 @@ export const useTournamentStore = defineStore('tournament', () => {
           // 云端建好表但还没有数据：先保留本地/种子数据，
           // 首次写入等主办方登录后由 setCloudWriteEnabled 触发（游客无写权限）
           sync.revision = 0
-          if (!cached.found) seedState()
+          if (!cached.found) initEmptyState()
           sync.pendingChanges = true
         }
         ready.value = true
@@ -1119,7 +1082,7 @@ export const useTournamentStore = defineStore('tournament', () => {
         sync.degraded = true
         sync.status = 'local-only'
         sync.message = '未能连接云端，当前修改只保存在本机'
-        if (!cached.found) seedState()
+        if (!cached.found) initEmptyState()
         // 缓存里已有未同步改动时，重连后同样交给主办方选择
         if (cached.pending) sync.pendingChanges = true
         ready.value = true
@@ -1128,7 +1091,7 @@ export const useTournamentStore = defineStore('tournament', () => {
     }
     sync.mode = 'local'
     if (!loadLocal().found) {
-      seedState()
+      initEmptyState()
       persistLocal()
     }
     ready.value = true
