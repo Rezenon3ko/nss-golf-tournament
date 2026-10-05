@@ -14,6 +14,7 @@ import {
 } from '@mdi/js'
 import BaseIcon from '@/components/BaseIcon.vue'
 import GolfLogo from '@/components/GolfLogo.vue'
+import SeasonSwitcher from '@/components/SeasonSwitcher.vue'
 import { useDarkModeStore } from '@/stores/darkMode'
 
 const route = useRoute()
@@ -79,6 +80,9 @@ function logoutFromMobile() {
             {{ item.label }}
           </RouterLink>
           <div class="flex items-center gap-1">
+            <div class="hidden xl:block">
+              <SeasonSwitcher />
+            </div>
             <button
               type="button"
               class="inline-flex h-9 w-9 items-center justify-center rounded-md bg-[#c9a24b]/25 text-[#8c6d1f] hover:bg-[#c9a24b]/40 dark:bg-[#c9a24b]/25 dark:text-[#e4d3a4] dark:hover:bg-[#c9a24b]/40"
@@ -143,6 +147,7 @@ function logoutFromMobile() {
         v-if="mobileOpen"
         class="border-t border-[#e5e3df] bg-white px-4 pb-4 md:hidden dark:border-[#3d3d3d] dark:bg-[#1e1e1e]"
       >
+        <SeasonSwitcher class="border-b border-[#e5e3df] py-3 dark:border-[#3d3d3d]" />
         <div class="flex flex-col gap-1 py-2">
           <RouterLink
             v-for="item in navItems"

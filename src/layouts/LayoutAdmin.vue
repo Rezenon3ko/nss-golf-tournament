@@ -9,6 +9,7 @@ import { useTournamentStore } from '@/stores/tournament.js'
 import { siteName } from '@/config.js'
 import BaseIcon from '@/components/BaseIcon.vue'
 import GolfLogo from '@/components/GolfLogo.vue'
+import SeasonSwitcher from '@/components/SeasonSwitcher.vue'
 import {
   mdiMenu,
   mdiClose,
@@ -65,6 +66,9 @@ function logout() {
           </span>
         </div>
         <div class="flex items-center gap-1">
+          <div class="mr-1 hidden sm:block">
+            <SeasonSwitcher />
+          </div>
           <button
             type="button"
             class="inline-flex h-9 w-9 items-center justify-center rounded-md bg-[#c9a24b]/25 text-[#8c6d1f] hover:bg-[#c9a24b]/40 dark:bg-[#c9a24b]/25 dark:text-[#e4d3a4] dark:hover:bg-[#c9a24b]/40"

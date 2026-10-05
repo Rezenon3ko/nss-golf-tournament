@@ -9,7 +9,7 @@ import {
   mdiCalendarClock,
   mdiFolderImage,
   mdiChartBoxOutline,
-  mdiExport,
+  mdiCalendar,
   mdiAlertCircle,
   mdiClipboardCheck,
 } from '@mdi/js'
@@ -17,6 +17,12 @@ import {
 const store = useTournamentStore()
 
 const cards = [
+  {
+    to: '/admin/seasons',
+    icon: mdiCalendar,
+    title: '赛季管理',
+    desc: '新建 / 复制上届 / 当前赛季 / 归档',
+  },
   {
     to: '/admin/players',
     icon: mdiAccountGroup,
@@ -29,14 +35,8 @@ const cards = [
   {
     to: '/admin/stats',
     icon: mdiChartBoxOutline,
-    title: '数据统计',
-    desc: 'SD 之王、PB 之星',
-  },
-  {
-    to: '/admin/export',
-    icon: mdiExport,
-    title: '数据导出',
-    desc: '群聊分享 / 对阵文本 / JSON',
+    title: '数据统计与导出',
+    desc: 'SD 之王 / PB 之星 / 群聊分享 / JSON',
   },
 ]
 

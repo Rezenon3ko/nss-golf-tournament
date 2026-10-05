@@ -5,7 +5,7 @@ import {
   mdiCalendarClock,
   mdiFolderImage,
   mdiChartBoxOutline,
-  mdiExport,
+  mdiCalendar,
   mdiEye,
   mdiLogout,
 } from '@mdi/js'
@@ -15,6 +15,11 @@ export const menuAsideMain = [
     to: '/admin',
     icon: mdiViewDashboard,
     label: '后台首页',
+  },
+  {
+    to: '/admin/seasons',
+    icon: mdiCalendar,
+    label: '赛季管理',
   },
   {
     to: '/admin/players',
@@ -38,13 +43,8 @@ export const menuAsideMain = [
   },
   {
     to: '/admin/stats',
-    label: '数据统计',
+    label: '数据统计与导出',
     icon: mdiChartBoxOutline,
-  },
-  {
-    to: '/admin/export',
-    label: '数据导出',
-    icon: mdiExport,
   },
 ]
 

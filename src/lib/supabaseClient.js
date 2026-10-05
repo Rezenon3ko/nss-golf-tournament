@@ -47,6 +47,7 @@ export function createSupabaseClient(url, key) {
   return {
     auth,
     from: (relation) => rest.from(relation),
+    rpc: (fn, params) => rest.rpc(fn, params),
     storage,
   }
 }

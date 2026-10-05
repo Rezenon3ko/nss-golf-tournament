@@ -11,6 +11,7 @@ const store = useTournamentStore()
 const auth = useAuthStore()
 const feedback = useFeedbackStore()
 const sync = store.sync
+const mirror = store.mirror
 
 const isAdmin = computed(() => auth.isAdmin)
 const toast = ref('')
@@ -53,6 +54,13 @@ const failed = computed(() => sync.status === 'error')
 const degraded = computed(() => sync.degraded)
 // 数据库还没执行新版 schema.sql：仍能写入，但没有版本校验
 const legacyWrite = computed(() => sync.mode === 'cloud' && !sync.supportsRevision && isAdmin.value)
+// 多表双写（Phase 1）异常：文档已同步，但新表没跟上，需要提示主办方
+const mirrorIssue = computed(
+  () =>
+    isAdmin.value &&
+    mirror.model === 'multi' &&
+    (mirror.status === 'error' || mirror.status === 'disabled'),
+)
 
 const visible = computed(
   () =>
@@ -60,6 +68,7 @@ const visible = computed(
     degraded.value ||
     failed.value ||
     legacyWrite.value ||
+    mirrorIssue.value ||
     (isAdmin.value && showSaving.value),
 )
 
@@ -117,7 +126,7 @@ function reloadPage() {
       :class="
         conflict || legacyWrite
           ? 'border-[#f0d9a0] bg-[#fef7d6] text-[#793400] dark:border-[#5c4a1e] dark:bg-[#2b2415] dark:text-[#e6d5a8]'
-          : failed || degraded
+          : failed || degraded || mirrorIssue
             ? 'border-[#f3c2c2] bg-[#fdecec] text-[#a12222] dark:border-[#5c2b2b] dark:bg-[#3d2020] dark:text-[#f0b4b4]'
             : 'border-[#e5e3df] bg-white text-[#5d5b54] dark:border-[#3d3d3d] dark:bg-[#1e1e1e] dark:text-[#c7c7c7]'
       "
@@ -196,6 +205,25 @@ function reloadPage() {
           当前为覆盖式写入，多设备同时编辑可能互相覆盖。请在 Supabase SQL Editor 重新执行
           <code class="font-mono">supabase/schema.sql</code> 以启用版本校验。
         </p>
+      </template>
+
+      <!-- 多表双写异常：文档已同步，但新表没跟上 -->
+      <template v-else-if="mirrorIssue">
+        <p class="mb-1 flex items-center gap-2 font-bold">
+          <BaseIcon :path="mdiAlertCircle" size="18" />
+          多表同步未完成
+        </p>
+        <p class="mb-3 leading-relaxed">
+          {{ mirror.message || '多表同步失败，稍后自动重试。' }}
+        </p>
+        <BaseButton
+          v-if="isAdmin"
+          label="立即重试"
+          color="whiteDark"
+          small
+          :disabled="busy"
+          @click="run(() => store.retryMirror())"
+        />
       </template>
 
       <p v-else class="flex items-center gap-2">

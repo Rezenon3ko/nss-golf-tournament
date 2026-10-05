@@ -41,6 +41,17 @@ export default defineConfig([
     },
   },
 
+  {
+    // 数据库迁移 / 校验脚本在 Node 环境执行
+    name: 'scripts/files-to-lint',
+    files: ['scripts/**/*.{js,mjs}'],
+    languageOptions: {
+      globals: {
+        ...globals.node,
+      },
+    },
+  },
+
   js.configs.recommended,
   ...pluginVue.configs['flat/essential'],
   skipFormatting,

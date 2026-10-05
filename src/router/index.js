@@ -19,7 +19,8 @@ const AdminMatchesView = () => import('@/views/AdminMatchesView.vue')
 const AdminDdlView = () => import('@/views/AdminDdlView.vue')
 const AdminEvidenceView = () => import('@/views/AdminEvidenceView.vue')
 const AdminStatsView = () => import('@/views/AdminStatsView.vue')
-const AdminExportView = () => import('@/views/AdminExportView.vue')
+const SeasonsView = () => import('@/views/SeasonsView.vue')
+const AdminSeasonsView = () => import('@/views/AdminSeasonsView.vue')
 const ErrorView = () => import('@/views/ErrorView.vue')
 
 // 首屏渲染完成后空闲时预取的页面：懒加载省了首屏体积，但会让「首次进入某页」
@@ -34,6 +35,7 @@ const publicLoaders = [
   PlayersView,
   PlayerProfileView,
   RulesView,
+  SeasonsView,
 ]
 const adminLoaders = [
   LayoutAdmin,
@@ -43,7 +45,7 @@ const adminLoaders = [
   AdminDdlView,
   AdminEvidenceView,
   AdminStatsView,
-  AdminExportView,
+  AdminSeasonsView,
 ]
 
 export function prefetchRoutesWhenIdle(scope = 'public') {
@@ -114,6 +116,12 @@ const routes = [
         component: RulesView,
         meta: { title: '规则' },
       },
+      {
+        path: 'seasons',
+        name: 'seasons',
+        component: SeasonsView,
+        meta: { title: '历届赛事' },
+      },
     ],
   },
   {
@@ -155,13 +163,18 @@ const routes = [
         path: 'stats',
         name: 'admin-stats',
         component: AdminStatsView,
-        meta: { title: '数据统计' },
+        meta: { title: '数据统计与导出' },
       },
       {
+        // 原「数据导出」页已合并进数据统计页，保留跳转避免旧收藏失效
         path: 'export',
-        name: 'admin-export',
-        component: AdminExportView,
-        meta: { title: '数据导出' },
+        redirect: { name: 'admin-stats' },
+      },
+      {
+        path: 'seasons',
+        name: 'admin-seasons',
+        component: AdminSeasonsView,
+        meta: { title: '赛季管理' },
       },
     ],
   },

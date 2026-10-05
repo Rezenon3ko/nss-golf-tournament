@@ -1,7 +1,24 @@
 import { defineStore } from 'pinia'
 import { computed, reactive, ref } from 'vue'
-import { TOURNAMENT_STORAGE_KEY, USE_SUPABASE } from '@/config'
+import {
+  DATA_MODEL,
+  SUPABASE_ANON_KEY,
+  SUPABASE_URL,
+  TOURNAMENT_STORAGE_KEY,
+  USE_SUPABASE,
+} from '@/config'
 import { getSupabase, isSupabaseConfigured } from '@/lib/supabase'
+import { createRepository, createSeasonRepository } from '@/lib/repository'
+import { createMirrorController } from '@/lib/mirror'
+import {
+  fetchCurrentSeason,
+  fetchSeasonBundle,
+  fetchSeasonPlayers,
+  fetchSeasons,
+} from '@/lib/seasonData'
+import { rowsToSnapshot } from '@/lib/seasonSnapshot'
+import { createRealtimeWatcher } from '@/lib/realtime'
+import { applyRealtimeChanges } from '@/lib/realtimeMerge'
 import {
   SYNC_ROW_KEY,
   WRITE_DEBOUNCE_MS,
@@ -666,6 +683,426 @@ export const useTournamentStore = defineStore('tournament', () => {
   // 只有主办方登录后才允许写云端（RLS 需要登录态，游客写入必然是 401）
   const cloudWriteEnabled = ref(false)
 
+  // ---------- 多表模式（Phase 2，VITE_DATA_MODEL=multi 时启用） ----------
+  // 数据以 Supabase 多表为唯一真相：读取走各表，写入走事务函数（RPC）；
+  // 旧单文档只作为「回滚备份」异步补写，失败不影响主流程，也不会弹冲突。
+  const mirror = reactive({
+    model: DATA_MODEL,
+    enabled: false,
+    // off：未启用该模式 | disabled：启用了但没找到赛季 / 表不存在
+    // idle：已同步 | syncing：同步中 | error：失败待重试
+    status: DATA_MODEL === 'multi' ? 'disabled' : 'off',
+    message: '',
+    seasonId: null,
+    // off | connecting | subscribed | error：实时订阅状态
+    realtime: 'off',
+  })
+  let mirrorController = null
+  let mirrorInFlight = false
+  let mirrorRetryTimer = null
+  let mirrorRetryAttempt = 0
+  // 是否已成功从多表读取并挂好仓储；未就绪时回退单文档模式
+  let multiModelReady = false
+  let realtimeWatcher = null
+  let realtimeRefetchPending = false
+
+  function mirrorActive() {
+    return DATA_MODEL === 'multi' && multiModelReady && mirror.enabled && !!mirrorController
+  }
+
+  function mirrorStateView() {
+    return {
+      players: players.value,
+      matches: matches.value,
+      ddlRounds: ddlRounds.value,
+      tiebreakResolutions: tiebreakResolutions.value,
+      evidence: evidence.value,
+      championId: championId.value,
+      runnerUpId: runnerUpId.value,
+      draft: draft.value,
+      logs: logs.value,
+      drawHistory: drawHistory.value,
+    }
+  }
+
+  function classifyMirrorError(error) {
+    const message = String(error?.message || '')
+    const code = String(error?.code || '')
+    if (code === 'PT409') return '多表数据版本不一致，需要重新跑一次迁移脚本'
+    if (code === 'PT404') return '多表里没有当前赛季，请先执行迁移脚本'
+    if (code === '42501' || /row-level security|permission denied/i.test(message)) {
+      return '当前账号没有多表写入权限'
+    }
+    return '多表同步失败，稍后自动重试'
+  }
+
+  function readSelectedSeasonId() {
+    if (typeof window === 'undefined') return null
+    try {
+      return window.localStorage.getItem('ghostfish.currentSeason') || null
+    } catch {
+      return null
+    }
+  }
+
+  function writeSelectedSeasonId(seasonId) {
+    if (typeof window === 'undefined') return
+    try {
+      window.localStorage.setItem('ghostfish.currentSeason', seasonId)
+    } catch {
+      // 忽略：选择只在下次打开时用于定位赛季
+    }
+  }
+
+  // 多表读取：定位赛季 → 拉整季数据 → 组装成 store 快照 → 挂载镜像控制器
+  async function initMultiModel() {
+    const supabase = await getSupabase()
+    if (!supabase) throw new Error('Supabase 未初始化')
+
+    const season = await fetchCurrentSeason(supabase, readSelectedSeasonId())
+    if (!season) throw new Error('还没有任何赛季')
+    const bundle = await fetchSeasonBundle(supabase, season.id)
+    applySnapshot({ ...rowsToSnapshot(bundle), adminAvatar: adminAvatar.value ?? null })
+    writeSelectedSeasonId(season.id)
+
+    mirrorController = createMirrorController({
+      repository: createRepository(supabase, season.id),
+      storage: typeof window !== 'undefined' ? window.localStorage : null,
+      baselineKey: `ghostfish.mirror.${season.id}.v1`,
+    })
+    // 读取即基线：刚读到的就是各表当前状态，避免把远端数据当成待推送的差异
+    mirrorController.setBaseline(mirrorStateView())
+    mirror.seasonId = season.id
+    currentSeasonId.value = season.id
+    mirror.enabled = true
+    mirror.status = 'idle'
+    mirror.message = ''
+    multiModelReady = true
+
+    sync.mode = 'cloud'
+    sync.degraded = false
+    sync.status = 'idle'
+    sync.message = ''
+    sync.revision = Number(season.revision ?? 0)
+    sync.pendingChanges = false
+    sync.lastSyncedAt = Date.now()
+    persistLocal()
+    void refreshAdminAvatar()
+    void startRealtime()
+  }
+
+  // 主办方头像：登录后能读到自己的那一行（RLS 限制），匿名时静默跳过
+  async function refreshAdminAvatar() {
+    try {
+      const supabase = await getSupabase()
+      if (!supabase) return
+      const { data, error } = await supabase.from('admin_profiles').select('avatar_url').limit(1)
+      if (error) return
+      const url = data?.[0]?.avatar_url ?? null
+      if (url !== adminAvatar.value) {
+        adminAvatar.value = url
+        persistLocal()
+      }
+    } catch {
+      // 忽略：匿名访问读不到是正常现象
+    }
+  }
+
+  // ---------- 实时订阅（观众端增量更新） ----------
+  function handleRealtimeStatus(info) {
+    if (info.status === 'subscribed') {
+      mirror.realtime = 'subscribed'
+      if (info.resubscribed) {
+        // 断线期间可能漏掉事件：做一次全量补偿
+        if (sync.pendingChanges) realtimeRefetchPending = true
+        else void refetchSeason()
+      }
+    } else if (info.status === 'error') {
+      mirror.realtime = 'error'
+    } else {
+      mirror.realtime = 'off'
+    }
+  }
+
+  function applyRealtimeBatch(changes) {
+    if (!mirrorActive()) return
+    const merged = applyRealtimeChanges(
+      {
+        players: players.value,
+        matches: matches.value,
+        ddlRounds: ddlRounds.value,
+        evidence: evidence.value,
+      },
+      changes,
+    )
+    if (!merged.changed) return
+
+    if (merged.season) {
+      championId.value = merged.season.champion_player_id ?? null
+      const final = matches.value.find((match) => match.stage === 'final')
+      if (final) {
+        if (merged.season.runner_up_player_id) final.runnerUpId = merged.season.runner_up_player_id
+        else delete final.runnerUpId
+      }
+    }
+    if (merged.tiebreakRefetch) void refetchTiebreaks()
+
+    // 没有本机待同步改动时，把读取到的最新状态当作基线，避免回声再推回去
+    if (!sync.pendingChanges && mirrorController) {
+      mirrorController.setBaseline(mirrorStateView())
+      persistLocal()
+    }
+  }
+
+  async function refetchTiebreaks() {
+    try {
+      const supabase = await getSupabase()
+      if (!supabase) return
+      const { data, error } = await supabase
+        .from('tiebreak_resolutions')
+        .select('*')
+        .eq('season_id', mirror.seasonId)
+      if (error) throw error
+
+      const next = {}
+      for (const groupId of GROUPS) {
+        const order = (data || [])
+          .filter((row) => row.group_id === groupId)
+          .sort((a, b) => (a.position ?? 0) - (b.position ?? 0))
+          .map((row) => row.player_id)
+        if (order.length) next[groupId] = order
+      }
+      tiebreakResolutions.value = next
+      if (!sync.pendingChanges && mirrorController) {
+        mirrorController.setBaseline(mirrorStateView())
+      }
+    } catch (err) {
+      console.warn('抽签解决记录刷新失败：', err?.message || err)
+    }
+  }
+
+  async function refetchSeason() {
+    if (!mirrorActive()) return
+    try {
+      const supabase = await getSupabase()
+      if (!supabase) return
+      const bundle = await fetchSeasonBundle(supabase, mirror.seasonId)
+      applySnapshot({ ...rowsToSnapshot(bundle), adminAvatar: adminAvatar.value ?? null })
+      persistLocal()
+      mirrorController.setBaseline(mirrorStateView())
+    } catch (err) {
+      console.warn('赛季数据全量刷新失败：', err?.message || err)
+    }
+  }
+
+  async function startRealtime() {
+    if (typeof window === 'undefined' || !isSupabaseConfigured()) return
+    try {
+      if (realtimeWatcher) await realtimeWatcher.close()
+      mirror.realtime = 'connecting'
+      realtimeWatcher = await createRealtimeWatcher({
+        url: SUPABASE_URL,
+        apiKey: SUPABASE_ANON_KEY,
+        seasonId: mirror.seasonId,
+        onChanges: applyRealtimeBatch,
+        onStatus: handleRealtimeStatus,
+      })
+    } catch (err) {
+      console.warn('实时订阅失败：', err?.message || err)
+      mirror.realtime = 'error'
+    }
+  }
+
+  // 旧文档只作回滚备份：多表写入成功后异步补写，失败不影响主流程。
+  // 这里不做版本校验（备份允许覆盖），revision / 时间戳由数据库触发器盖章，
+  // 旧版客户端仍能因此检测到「别处改了数据」。
+  async function writeDocBackup() {
+    if (!isSupabaseConfigured()) return
+    try {
+      const supabase = await getSupabase()
+      if (!supabase) return
+      const { error } = await supabase
+        .from('tournament_state')
+        .upsert({ key: SYNC_ROW_KEY, value: snapshot() }, { onConflict: 'key' })
+      if (error) throw error
+    } catch (err) {
+      console.warn('旧文档备份写入失败（不影响多表模式）：', err?.message || err)
+    }
+  }
+
+  // 发布分组 / 重置赛事属于结构级操作，由对应的整体 RPC 处理
+  function mirrorWholesale(kind) {
+    if (mirrorActive()) mirrorController.setWholesale(kind)
+  }
+
+  async function flushMulti() {
+    if (!mirrorActive() || mirrorInFlight) return
+    if (!cloudWriteEnabled.value) return
+
+    const state = mirrorStateView()
+    if (!mirrorController.pending(state) && !sync.pendingChanges) {
+      mirror.status = 'idle'
+      mirror.message = ''
+      return
+    }
+
+    mirrorInFlight = true
+    sync.status = 'saving'
+    mirror.status = 'syncing'
+    mirror.message = ''
+    try {
+      await mirrorController.sync(state)
+      mirrorRetryAttempt = 0
+      mirror.status = 'idle'
+      mirror.message = ''
+      sync.pendingChanges = false
+      sync.status = 'idle'
+      sync.lastSyncedAt = Date.now()
+      persistLocal()
+      void writeDocBackup()
+      if (realtimeRefetchPending) {
+        realtimeRefetchPending = false
+        void refetchSeason()
+      }
+    } catch (err) {
+      console.warn('多表同步失败：', err?.message || err)
+      mirror.status = 'error'
+      mirror.message = classifyMirrorError(err)
+      sync.status = 'idle'
+      sync.pendingChanges = true
+      clearTimeout(mirrorRetryTimer)
+      mirrorRetryAttempt += 1
+      mirrorRetryTimer = setTimeout(() => {
+        void flushMulti()
+      }, nextRetryDelay(mirrorRetryAttempt))
+    } finally {
+      mirrorInFlight = false
+    }
+  }
+
+  // 手动重试：多表未就绪时先重新走一遍「读取 → 挂载」
+  async function retryMirror() {
+    if (DATA_MODEL !== 'multi') return false
+    if (!mirrorActive()) {
+      try {
+        await initMultiModel()
+      } catch (err) {
+        mirror.enabled = false
+        mirror.status = 'disabled'
+        mirror.message = `多表读取失败：${err?.message || '未知原因'}`
+        return false
+      }
+    }
+    await flushMulti()
+    return mirror.status !== 'error'
+  }
+
+  // ---------- 赛季管理（多表模式） ----------
+  const seasons = ref([])
+  const currentSeasonId = ref(null)
+
+  function translateSeasonError(error) {
+    const code = String(error?.code || '')
+    const message = String(error?.message || '')
+    if (code === 'PT409') return message || '操作冲突：slug 已被占用，或赛季还有关联数据'
+    if (code === 'PT400') return message || '参数不合法'
+    if (code === '42501' || /row-level security|permission denied/i.test(message)) {
+      return '当前账号没有赛季管理权限'
+    }
+    return message || '操作失败，请稍后重试'
+  }
+
+  async function loadSeasons() {
+    if (DATA_MODEL !== 'multi' || !isSupabaseConfigured()) return []
+    try {
+      const supabase = await getSupabase()
+      if (!supabase) return []
+      seasons.value = await fetchSeasons(supabase)
+      return seasons.value
+    } catch (err) {
+      console.warn('赛季列表读取失败：', err?.message || err)
+      return []
+    }
+  }
+
+  async function loadSeasonPlayers(seasonIds) {
+    if (DATA_MODEL !== 'multi' || !isSupabaseConfigured()) return []
+    try {
+      const supabase = await getSupabase()
+      if (!supabase) return []
+      return await fetchSeasonPlayers(supabase, seasonIds)
+    } catch (err) {
+      console.warn('赛季名单读取失败：', err?.message || err)
+      return []
+    }
+  }
+
+  // 切换赛季：写本机选择 → 重新读取 → 重订阅（有未同步改动时拒绝，避免丢改动）
+  async function switchSeason(seasonId) {
+    if (DATA_MODEL !== 'multi') return { ok: false, message: '当前不是多表模式' }
+    if (!seasonId || seasonId === mirror.seasonId) return { ok: true }
+    if (sync.pendingChanges) {
+      return { ok: false, message: '还有未同步的改动，请稍后再切换赛季' }
+    }
+    writeSelectedSeasonId(seasonId)
+    try {
+      await initMultiModel()
+      await loadSeasons()
+      return { ok: true }
+    } catch (err) {
+      console.warn('切换赛季失败：', err?.message || err)
+      return { ok: false, message: `切换赛季失败：${err?.message || '未知原因'}` }
+    }
+  }
+
+  async function createSeason(payload) {
+    try {
+      const supabase = await getSupabase()
+      if (!supabase) return { ok: false, message: '未配置云端' }
+      const season = await createSeasonRepository(supabase).create(payload)
+      await loadSeasons()
+      return { ok: true, season }
+    } catch (err) {
+      return { ok: false, message: translateSeasonError(err) }
+    }
+  }
+
+  async function updateSeason(seasonId, patch) {
+    try {
+      const supabase = await getSupabase()
+      if (!supabase) return { ok: false, message: '未配置云端' }
+      const season = await createSeasonRepository(supabase).update(seasonId, patch)
+      await loadSeasons()
+      return { ok: true, season }
+    } catch (err) {
+      return { ok: false, message: translateSeasonError(err) }
+    }
+  }
+
+  async function setCurrentSeason(seasonId) {
+    try {
+      const supabase = await getSupabase()
+      if (!supabase) return { ok: false, message: '未配置云端' }
+      const season = await createSeasonRepository(supabase).setCurrent(seasonId)
+      await loadSeasons()
+      return { ok: true, season }
+    } catch (err) {
+      return { ok: false, message: translateSeasonError(err) }
+    }
+  }
+
+  async function archiveSeason(seasonId, archived = true) {
+    try {
+      const supabase = await getSupabase()
+      if (!supabase) return { ok: false, message: '未配置云端' }
+      const season = await createSeasonRepository(supabase).archive(seasonId, archived)
+      await loadSeasons()
+      return { ok: true, season }
+    } catch (err) {
+      return { ok: false, message: translateSeasonError(err) }
+    }
+  }
+
   let flushTimer = null
   let retryTimer = null
   let retryAttempt = 0
@@ -718,6 +1155,12 @@ export const useTournamentStore = defineStore('tournament', () => {
   // 每次修改都会调用：本地缓存立即排队，云端写入防抖合并
   function persist() {
     localQueued = true
+    if (mirrorActive()) {
+      // 多表模式：RPC 直写（flushMulti），旧文档只作备份
+      sync.pendingChanges = true
+      scheduleFlush()
+      return
+    }
     if (sync.degraded) {
       // 读不到云端时不写云端，只把改动留在本机，等待主办方决定
       sync.pendingChanges = true
@@ -741,6 +1184,10 @@ export const useTournamentStore = defineStore('tournament', () => {
     if (localQueued) {
       localQueued = false
       persistLocal()
+    }
+    if (mirrorActive()) {
+      void flushMulti()
+      return
     }
     if (cloudQueued && !inFlight) void flushCloud()
   }
@@ -893,6 +1340,14 @@ export const useTournamentStore = defineStore('tournament', () => {
   // 主办方登录状态变化时调用；首次登录会把待同步的改动推上去
   function setCloudWriteEnabled(enabled) {
     cloudWriteEnabled.value = !!enabled
+    if (mirrorActive()) {
+      if (enabled) {
+        void refreshAdminAvatar()
+        if (sync.pendingChanges) flushQueued()
+        else void flushMulti()
+      }
+      return
+    }
     if (enabled && sync.mode === 'cloud' && sync.pendingChanges && sync.status !== 'conflict') {
       cloudQueued = true
       flushQueued()
@@ -1035,6 +1490,23 @@ export const useTournamentStore = defineStore('tournament', () => {
   }
 
   async function init() {
+    if (USE_SUPABASE && DATA_MODEL === 'multi') {
+      // Phase 2：多表读取为主；失败回退单文档模式并在提示条说明
+      const cached = loadLocal()
+      if (cached.found) ready.value = true
+      try {
+        await initMultiModel()
+        ready.value = true
+        return
+      } catch (err) {
+        console.warn('多表读取失败：', err?.message || err, '→ 回退单文档模式')
+        mirror.enabled = false
+        multiModelReady = false
+        mirror.status = 'disabled'
+        mirror.message = `多表读取失败，已回退单文档模式：${err?.message || '未知原因'}`
+      }
+    }
+
     if (USE_SUPABASE) {
       // 先用本机缓存把界面渲染出来（重复访问几乎瞬时），云端数据随后到达再更新。
       // 同时提前进入 cloud 记账模式：这样「启动窗口内的编辑」会被标记为待同步，
@@ -1233,6 +1705,7 @@ export const useTournamentStore = defineStore('tournament', () => {
     tiebreakResolutions.value = {}
     championId.value = null
     addLog('确认发布分组，生成小组赛赛程（24 场）')
+    mirrorWholesale('publish')
     persist()
     return true
   }
@@ -1267,6 +1740,7 @@ export const useTournamentStore = defineStore('tournament', () => {
       p.groupId = null
     }
     addLog('重置赛事（保留选手名单）')
+    mirrorWholesale('reset')
     persist()
   }
 
@@ -1576,8 +2050,19 @@ export const useTournamentStore = defineStore('tournament', () => {
     init,
     persist,
     sync,
+    mirror,
+    seasons,
+    currentSeasonId,
+    loadSeasons,
+    loadSeasonPlayers,
+    switchSeason,
+    createSeason,
+    updateSeason,
+    setCurrentSeason,
+    archiveSeason,
     setCloudWriteEnabled,
     retrySync,
+    retryMirror,
     reconnect,
     useRemoteVersion,
     useLocalVersion,
