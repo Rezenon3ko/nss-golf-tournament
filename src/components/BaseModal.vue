@@ -120,7 +120,7 @@ onBeforeUnmount(() => {
       >
         <h3 :id="titleId" class="text-lg font-bold">{{ title }}</h3>
         <button
-          class="inline-flex h-9 w-9 items-center justify-center rounded-full hover:bg-[#f0eeec] dark:hover:bg-[#2a2a2a]"
+          class="inline-flex h-9 w-9 items-center justify-center rounded-md hover:bg-[#f0eeec] dark:hover:bg-[#2a2a2a]"
           type="button"
           aria-label="关闭"
           @click="close"

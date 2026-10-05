@@ -405,7 +405,7 @@ function tierClass(tier) {
                 <label class="mb-1 block text-sm text-[#a4a097]">{{ t }}档</label>
                 <select
                   :value="slotPlayerId(g, t - 1)"
-                  class="w-full rounded-sm border border-[#c8c4be] px-3 py-2 pr-8 text-sm dark:border-[#454545] dark:bg-[#333333]"
+                  class="w-full rounded-md border border-[#c8c4be] px-3 py-2 pr-8 text-sm dark:border-[#454545] dark:bg-[#333333]"
                   @change="onSlotChange(g, t - 1, $event)"
                 >
                   <option value="">未选择</option>
@@ -563,7 +563,7 @@ function tierClass(tier) {
           <input
             v-model="form.name"
             type="text"
-            class="w-full rounded-sm border border-[#c8c4be] px-3 py-2 pr-8 dark:border-[#454545] dark:bg-[#333333]"
+            class="w-full rounded-md border border-[#c8c4be] px-3 py-2 pr-8 dark:border-[#454545] dark:bg-[#333333]"
             placeholder="选手昵称"
           />
         </div>
@@ -574,7 +574,7 @@ function tierClass(tier) {
               v-model.number="form.bestScore"
               type="number"
               min="1"
-              class="w-full rounded-sm border border-[#c8c4be] px-3 py-2 pr-8 dark:border-[#454545] dark:bg-[#333333]"
+              class="w-full rounded-md border border-[#c8c4be] px-3 py-2 pr-8 dark:border-[#454545] dark:bg-[#333333]"
               placeholder="杆数"
             />
           </div>
@@ -582,7 +582,7 @@ function tierClass(tier) {
             <label class="mb-1 block text-sm font-bold">档位</label>
             <select
               v-model.number="form.tier"
-              class="w-full rounded-sm border border-[#c8c4be] px-3 py-2 pr-8 dark:border-[#454545] dark:bg-[#333333]"
+              class="w-full rounded-md border border-[#c8c4be] px-3 py-2 pr-8 dark:border-[#454545] dark:bg-[#333333]"
             >
               <option :value="1">1档（最强）</option>
               <option :value="2">2档</option>

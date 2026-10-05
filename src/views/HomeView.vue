@@ -81,7 +81,7 @@ const champion = computed(() => store.playerById(store.championId))
           <span
             v-for="(name, key) in stageNames"
             :key="key"
-            class="rounded-full border px-3 py-1 text-sm font-semibold"
+            class="rounded-md border px-3 py-1 text-sm font-semibold"
             :class="
               stageOrder.indexOf(key) === stageIndex
                 ? 'border-[#8c6d1f] bg-linear-to-br from-[#f0d78c] via-[#c9a24b] to-[#8c6d1f] text-[#241a08]'

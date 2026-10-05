@@ -68,7 +68,7 @@ async function submit() {
             v-model="password"
             :type="showPassword ? 'text' : 'password'"
             placeholder="请输入口令"
-            class="w-full rounded-lg border border-[#c8c4be] py-2.5 pr-10 pl-10 dark:border-[#454545] dark:bg-[#333333]"
+            class="w-full rounded-md border border-[#c8c4be] py-2.5 pr-10 pl-10 dark:border-[#454545] dark:bg-[#333333]"
             autocomplete="current-password"
           />
           <button

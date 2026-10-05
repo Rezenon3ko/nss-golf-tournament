@@ -75,7 +75,7 @@ function onEntrySaved() {
           v-for="f in statusFilters"
           :key="f.value"
           type="button"
-          class="rounded-full px-3 py-1 text-sm"
+          class="rounded-md px-3 py-1 text-sm"
           :class="
             statusFilter === f.value
               ? 'notion-pill-active font-semibold'

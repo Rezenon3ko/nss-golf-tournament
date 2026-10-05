@@ -117,7 +117,7 @@ function onSaved() {
     <div class="mb-4 flex flex-wrap gap-2">
       <select
         v-model="stageFilter"
-        class="rounded-sm border border-[#c8c4be] px-3 py-2 pr-8 text-sm dark:border-[#454545] dark:bg-[#333333]"
+        class="rounded-md border border-[#c8c4be] px-3 py-2 pr-8 text-sm dark:border-[#454545] dark:bg-[#333333]"
       >
         <option v-for="opt in stageOptions" :key="opt.value" :value="opt.value">
           {{ opt.label }}
@@ -126,14 +126,14 @@ function onSaved() {
       <select
         v-if="stageFilter === 'group' || stageFilter === 'all'"
         v-model="groupFilter"
-        class="rounded-sm border border-[#c8c4be] px-3 py-2 pr-8 text-sm dark:border-[#454545] dark:bg-[#333333]"
+        class="rounded-md border border-[#c8c4be] px-3 py-2 pr-8 text-sm dark:border-[#454545] dark:bg-[#333333]"
       >
         <option value="all">全部小组</option>
         <option v-for="g in ['A', 'B', 'C', 'D']" :key="g" :value="g">{{ g }}组</option>
       </select>
       <select
         v-model="statusFilter"
-        class="rounded-sm border border-[#c8c4be] px-3 py-2 pr-8 text-sm dark:border-[#454545] dark:bg-[#333333]"
+        class="rounded-md border border-[#c8c4be] px-3 py-2 pr-8 text-sm dark:border-[#454545] dark:bg-[#333333]"
       >
         <option v-for="opt in statusOptions" :key="opt.value" :value="opt.value">
           {{ opt.label }}

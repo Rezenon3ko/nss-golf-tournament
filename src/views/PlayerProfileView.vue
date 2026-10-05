@@ -86,7 +86,7 @@ function stageLabel(match) {
           v-for="t in tabs"
           :key="t.value"
           type="button"
-          class="rounded-full px-4 py-1.5 text-sm"
+          class="rounded-md px-4 py-1.5 text-sm"
           :class="
             tab === t.value
               ? 'notion-pill-active font-semibold'

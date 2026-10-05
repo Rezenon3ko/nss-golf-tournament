@@ -19,6 +19,11 @@ const props = defineProps({
   small: Boolean,
   disabled: Boolean,
   roundedFull: Boolean,
+  // 圆角：默认 md（6px，与输入框/下拉框一致）；需要更小时传 'sm'
+  rounded: {
+    type: String,
+    default: 'md',
+  },
 })
 
 const is = computed(() => {
@@ -54,7 +59,7 @@ const componentClass = computed(() => {
     'focus:ring-3',
     'border',
     props.disabled ? 'cursor-not-allowed' : 'cursor-pointer',
-    props.roundedFull ? 'rounded-full' : 'rounded-sm',
+    props.roundedFull ? 'rounded-full' : props.rounded === 'md' ? 'rounded-md' : 'rounded-sm',
     getButtonColor(props.color, !props.disabled),
   ]
 

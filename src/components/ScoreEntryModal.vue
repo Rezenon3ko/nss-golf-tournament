@@ -204,7 +204,7 @@ function save() {
                 v-model.number="set.a"
                 type="number"
                 placeholder="如 -14"
-                class="w-24 rounded-sm border border-[#c8c4be] px-2 py-1.5 dark:border-[#454545] dark:bg-[#333333]"
+                class="w-24 rounded-md border border-[#c8c4be] px-2 py-1.5 dark:border-[#454545] dark:bg-[#333333]"
               />
             </td>
             <td :data-label="`${playerB?.name || '乙'} 相对标准杆`" class="py-2 pr-2">
@@ -212,14 +212,14 @@ function save() {
                 v-model.number="set.b"
                 type="number"
                 placeholder="如 -12"
-                class="w-24 rounded-sm border border-[#c8c4be] px-2 py-1.5 dark:border-[#454545] dark:bg-[#333333]"
+                class="w-24 rounded-md border border-[#c8c4be] px-2 py-1.5 dark:border-[#454545] dark:bg-[#333333]"
               />
             </td>
             <td data-label="平局 SD 胜者" class="py-2">
               <select
                 v-model="set.sdWinner"
                 :disabled="!(set.a != null && set.b != null && set.a === set.b)"
-                class="w-32 rounded-sm border border-[#c8c4be] px-2 py-1.5 pr-7 disabled:cursor-not-allowed disabled:opacity-50 dark:border-[#454545] dark:bg-[#333333]"
+                class="w-32 rounded-md border border-[#c8c4be] px-2 py-1.5 pr-7 disabled:cursor-not-allowed disabled:opacity-50 dark:border-[#454545] dark:bg-[#333333]"
               >
                 <option :value="null">无（非平局）</option>
                 <option :value="match.playerAId">{{ playerA?.name }}</option>
@@ -245,7 +245,7 @@ function save() {
           v-model="newLink"
           type="url"
           placeholder="https://...（截图或录屏链接）"
-          class="flex-1 rounded-sm border border-[#c8c4be] px-3 py-2 dark:border-[#454545] dark:bg-[#333333]"
+          class="flex-1 rounded-md border border-[#c8c4be] px-3 py-2 dark:border-[#454545] dark:bg-[#333333]"
         />
         <BaseButton label="添加" color="whiteDark" small @click="addLink" />
       </div>
@@ -274,7 +274,7 @@ function save() {
           <label class="mb-1 block text-xs font-semibold">掉线发生局</label>
           <select
             v-model.number="form.disconnect.setIndex"
-            class="w-full rounded-sm border border-[#c8c4be] px-2 py-1.5 pr-8 dark:border-[#454545] dark:bg-[#333333]"
+            class="w-full rounded-md border border-[#c8c4be] px-2 py-1.5 pr-8 dark:border-[#454545] dark:bg-[#333333]"
           >
             <option v-for="(set, i) in form.sets" :key="i" :value="i">第 {{ i + 1 }} 局</option>
           </select>
@@ -286,7 +286,7 @@ function save() {
             type="number"
             min="0"
             max="9"
-            class="w-full rounded-sm border border-[#c8c4be] px-2 py-1.5 pr-8 dark:border-[#454545] dark:bg-[#333333]"
+            class="w-full rounded-md border border-[#c8c4be] px-2 py-1.5 pr-8 dark:border-[#454545] dark:bg-[#333333]"
           />
         </div>
       </div>
@@ -296,14 +296,14 @@ function save() {
       <textarea
         v-model="form.disconnect.note"
         placeholder="掉线情况说明"
-        class="mb-2 w-full rounded-sm border border-[#c8c4be] px-3 py-2 text-sm dark:border-[#454545] dark:bg-[#333333]"
+        class="mb-2 w-full rounded-md border border-[#c8c4be] px-3 py-2 text-sm dark:border-[#454545] dark:bg-[#333333]"
       ></textarea>
       <div class="flex gap-2">
         <input
           v-model="newDisconnectLink"
           type="url"
           placeholder="掉线截图/录屏链接"
-          class="flex-1 rounded-sm border border-[#c8c4be] px-3 py-2 dark:border-[#454545] dark:bg-[#333333]"
+          class="flex-1 rounded-md border border-[#c8c4be] px-3 py-2 dark:border-[#454545] dark:bg-[#333333]"
         />
         <BaseButton label="添加" color="whiteDark" small @click="addDisconnectLink" />
       </div>

@@ -18,7 +18,7 @@ const emit = defineEmits(['update:modelValue'])
       v-for="g in GROUPS"
       :key="g"
       type="button"
-      class="rounded-full px-4 py-1.5 text-sm font-semibold transition-colors"
+      class="rounded-md px-4 py-1.5 text-sm font-semibold transition-colors"
       :class="
         modelValue === g
           ? groupChipClass(g)

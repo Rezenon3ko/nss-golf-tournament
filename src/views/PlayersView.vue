@@ -66,7 +66,7 @@ function tierClass(tier) {
             v-model="search"
             type="search"
             placeholder="搜索选手 ID"
-            class="w-56 rounded-full border border-[#c8c4be] py-2 pr-3 pl-9 text-sm dark:border-[#454545] dark:bg-[#1e1e1e]"
+            class="w-56 rounded-md border border-[#c8c4be] py-2 pr-3 pl-9 text-sm dark:border-[#454545] dark:bg-[#1e1e1e]"
           />
         </div>
         <div class="flex flex-wrap gap-1">
@@ -74,7 +74,7 @@ function tierClass(tier) {
             v-for="t in tiers"
             :key="t.value"
             type="button"
-            class="rounded-full px-3 py-1.5 text-sm"
+            class="rounded-md px-3 py-1.5 text-sm"
             :class="
               tierFilter === t.value
                 ? 'notion-pill-active font-semibold'

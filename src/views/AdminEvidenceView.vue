@@ -85,7 +85,7 @@ async function remove(id) {
         v-for="(label, value) in { all: '全部', ...typeLabels }"
         :key="value"
         type="button"
-        class="rounded-full px-3 py-1.5 text-sm"
+        class="rounded-md px-3 py-1.5 text-sm"
         :class="
           typeFilter === value
             ? 'notion-pill-active font-semibold'
@@ -179,7 +179,7 @@ async function remove(id) {
           <label class="mb-1 block text-sm font-bold">关联比赛</label>
           <select
             v-model="form.matchId"
-            class="w-full rounded-sm border border-[#c8c4be] px-3 py-2 pr-8 dark:border-[#454545] dark:bg-[#333333]"
+            class="w-full rounded-md border border-[#c8c4be] px-3 py-2 pr-8 dark:border-[#454545] dark:bg-[#333333]"
           >
             <option value="">不关联</option>
             <option v-for="m in store.matches" :key="m.id" :value="m.id">
@@ -192,7 +192,7 @@ async function remove(id) {
             <label class="mb-1 block text-sm font-bold">类型</label>
             <select
               v-model="form.type"
-              class="w-full rounded-sm border border-[#c8c4be] px-3 py-2 pr-8 dark:border-[#454545] dark:bg-[#333333]"
+              class="w-full rounded-md border border-[#c8c4be] px-3 py-2 pr-8 dark:border-[#454545] dark:bg-[#333333]"
             >
               <option value="result">赛果截图</option>
               <option value="disconnect">掉线证据</option>
@@ -204,7 +204,7 @@ async function remove(id) {
             <input
               v-model="form.name"
               type="text"
-              class="w-full rounded-sm border border-[#c8c4be] px-3 py-2 pr-8 dark:border-[#454545] dark:bg-[#333333]"
+              class="w-full rounded-md border border-[#c8c4be] px-3 py-2 pr-8 dark:border-[#454545] dark:bg-[#333333]"
               placeholder="选填"
             />
           </div>
@@ -214,7 +214,7 @@ async function remove(id) {
           <input
             v-model="form.url"
             type="url"
-            class="w-full rounded-sm border border-[#c8c4be] px-3 py-2 pr-8 dark:border-[#454545] dark:bg-[#333333]"
+            class="w-full rounded-md border border-[#c8c4be] px-3 py-2 pr-8 dark:border-[#454545] dark:bg-[#333333]"
             placeholder="https://...（图片 / 录屏链接）"
           />
         </div>

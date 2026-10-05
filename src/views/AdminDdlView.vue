@@ -109,7 +109,7 @@ async function copyNotice() {
                 <input
                   v-model="localDdl[d.key]"
                   type="datetime-local"
-                  class="rounded-sm border border-[#c8c4be] px-3 py-2 dark:border-[#454545] dark:bg-[#333333]"
+                  class="rounded-md border border-[#c8c4be] px-3 py-2 dark:border-[#454545] dark:bg-[#333333]"
                 />
               </td>
               <td class="px-4 py-3 text-right">
@@ -128,7 +128,7 @@ async function copyNotice() {
           <input
             v-model="localDdl[d.key]"
             type="datetime-local"
-            class="w-full rounded-sm border border-[#c8c4be] px-3 py-2 dark:border-[#454545] dark:bg-[#333333]"
+            class="w-full rounded-md border border-[#c8c4be] px-3 py-2 dark:border-[#454545] dark:bg-[#333333]"
           />
         </div>
       </div>
