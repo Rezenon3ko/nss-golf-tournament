@@ -689,9 +689,11 @@ export const useTournamentStore = defineStore('tournament', () => {
   const mirror = reactive({
     model: DATA_MODEL,
     enabled: false,
-    // off：未启用该模式 | disabled：启用了但没找到赛季 / 表不存在
-    // idle：已同步 | syncing：同步中 | error：失败待重试
-    status: DATA_MODEL === 'multi' ? 'disabled' : 'off',
+    // off：未启用该模式 | connecting：正在读取多表（初始化中）
+    // disabled：启用了但没找到赛季 / 表不存在 | idle：已同步
+    // syncing：同步中 | error：失败待重试
+    // 注意：初始化期间不能用 disabled，否则刷新瞬间会误报「多表同步未完成」
+    status: DATA_MODEL === 'multi' ? 'connecting' : 'off',
     message: '',
     seasonId: null,
     // off | connecting | subscribed | error：实时订阅状态
@@ -756,6 +758,8 @@ export const useTournamentStore = defineStore('tournament', () => {
 
   // 多表读取：定位赛季 → 拉整季数据 → 组装成 store 快照 → 挂载镜像控制器
   async function initMultiModel() {
+    mirror.status = 'connecting'
+    mirror.message = ''
     const supabase = await getSupabase()
     if (!supabase) throw new Error('Supabase 未初始化')
 
@@ -1565,6 +1569,11 @@ export const useTournamentStore = defineStore('tournament', () => {
     if (!loadLocal().found) {
       initEmptyState()
       persistLocal()
+    }
+    if (DATA_MODEL === 'multi') {
+      // 本地模式没有多表可读：明确说明，而不是一直停在 connecting
+      mirror.status = 'disabled'
+      mirror.message = '未启用多表同步：当前是本地模式'
     }
     ready.value = true
   }
