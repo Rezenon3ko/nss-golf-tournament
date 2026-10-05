@@ -156,7 +156,9 @@ async function toggleArchive(season) {
           <BaseIcon :path="mdiPlus" size="18" class="text-[#8c6d1f]" />
           新建赛季
         </p>
-        <div class="grid gap-3 sm:grid-cols-3">
+        <div
+          class="grid items-end gap-3 sm:grid-cols-2 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)_auto]"
+        >
           <label class="text-sm">
             <span class="mb-1 block text-[#5d5b54] dark:text-[#a0a0a0]">名称</span>
             <input
@@ -187,23 +189,21 @@ async function toggleArchive(season) {
               </option>
             </select>
           </label>
+          <div>
+            <BaseButton
+              :icon="mdiPlus"
+              label="创建赛季"
+              color="gold"
+              :disabled="creating"
+              @click="create"
+            />
+          </div>
         </div>
-        <div class="mt-3">
-          <BaseButton
-            :icon="mdiPlus"
-            label="创建赛季"
-            color="gold"
-            :disabled="creating"
-            @click="create"
-          />
-          <span class="ml-3 text-xs text-[#a4a097] dark:text-[#8a8a8a]">
-            复制只带名单与 DDL 结构，不含赛果；新建赛季不会自动切为当前赛季
-          </span>
-        </div>
-        <p class="mt-2 text-xs leading-relaxed text-[#a4a097] dark:text-[#8a8a8a]">
-          slug 是数据库里区分赛季的短标识（只允许小写字母、数字与
-          <code class="font-mono">-</code>），迁移脚本与后台用它定位赛季，不展示给观众；
-          留空会按名称或「season-年-月」自动生成。
+        <p class="mt-3 text-xs leading-relaxed text-[#a4a097] dark:text-[#8a8a8a]">
+          复制只带名单与 DDL 结构，不含赛果；新建赛季不会自动切为当前赛季；slug
+          是数据库里区分赛季的短标识（只允许小写字母、数字与
+          <code class="font-mono">-</code
+          >），迁移脚本与后台用它定位赛季，不展示给观众；留空会按名称或「season-年-月」自动生成。
         </p>
       </div>
 

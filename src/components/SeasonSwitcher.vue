@@ -47,7 +47,7 @@ async function onChange(event) {
 </script>
 
 <template>
-  <div v-if="enabled && seasons.length" class="flex items-center gap-1.5">
+  <div v-if="enabled && seasons.length" class="flex items-center gap-1">
     <BaseIcon :path="mdiCalendar" size="18" class="shrink-0 text-[#8c6d1f] dark:text-[#d8c48a]" />
     <div class="relative">
       <select
