@@ -3,7 +3,7 @@ import { computed, onMounted, ref } from 'vue'
 import { useTournamentStore } from '@/stores/tournament'
 import { useFeedbackStore } from '@/stores/feedback'
 import BaseIcon from '@/components/BaseIcon.vue'
-import { mdiCalendar } from '@mdi/js'
+import { mdiCalendar, mdiChevronDown } from '@mdi/js'
 
 const store = useTournamentStore()
 const feedback = useFeedbackStore()
@@ -22,6 +22,11 @@ function optionLabel(season) {
   if (season.is_current) return `${season.name}（当前）`
   return season.name
 }
+
+const currentLabel = computed(() => {
+  const season = seasons.value.find((item) => item.id === currentId.value)
+  return season ? optionLabel(season) : ''
+})
 
 async function onChange(event) {
   const seasonId = event.target.value
@@ -44,16 +49,23 @@ async function onChange(event) {
 <template>
   <div v-if="enabled && seasons.length" class="flex items-center gap-1.5">
     <BaseIcon :path="mdiCalendar" size="18" class="shrink-0 text-[#8c6d1f] dark:text-[#d8c48a]" />
-    <select
-      :value="currentId"
-      :disabled="busy"
-      class="max-w-40 rounded-md border border-[#e5e3df] bg-[#f6f5f4] px-2 py-1.5 text-sm text-[#37352f] focus:outline-hidden disabled:opacity-60 dark:border-[#3d3d3d] dark:bg-[#2a2a2a] dark:text-[#e6e6e6]"
-      title="切换赛季"
-      @change="onChange"
-    >
-      <option v-for="season in seasons" :key="season.id" :value="season.id">
-        {{ optionLabel(season) }}
-      </option>
-    </select>
+    <div class="relative">
+      <select
+        :value="currentId"
+        :disabled="busy"
+        :title="`切换赛季：${currentLabel}`"
+        class="max-w-[16rem] truncate rounded-md border border-[#e5e3df] bg-[#f6f5f4] py-1.5 pr-8 pl-2 text-sm text-[#37352f] focus:outline-hidden disabled:opacity-60 dark:border-[#3d3d3d] dark:bg-[#2a2a2a] dark:text-[#e6e6e6]"
+        @change="onChange"
+      >
+        <option v-for="season in seasons" :key="season.id" :value="season.id">
+          {{ optionLabel(season) }}
+        </option>
+      </select>
+      <BaseIcon
+        :path="mdiChevronDown"
+        size="16"
+        class="pointer-events-none absolute top-1/2 right-2 -translate-y-1/2 text-[#787671] dark:text-[#a0a0a0]"
+      />
+    </div>
   </div>
 </template>

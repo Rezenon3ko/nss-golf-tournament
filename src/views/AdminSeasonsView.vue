@@ -32,21 +32,25 @@ function slugify(value) {
     .slice(0, 40)
 }
 
+// 名称里没有可用字符（例如纯中文）时，用年月生成一个可读的默认标识
+function suggestSlug() {
+  const fromName = slugify(form.name)
+  if (fromName) return fromName
+  const now = new Date()
+  return `season-${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
+}
+
 onMounted(() => {
   if (enabled.value) void store.loadSeasons()
 })
 
 async function create() {
   const name = form.name.trim()
-  const slug = slugify(form.slug || form.name)
   if (!name) {
     feedback.warn('请填写赛季名称')
     return
   }
-  if (!/^[a-z0-9][a-z0-9-]{0,39}$/.test(slug)) {
-    feedback.warn('slug 只能用 a-z、0-9、-，且以字母或数字开头')
-    return
-  }
+  const slug = slugify(form.slug) || suggestSlug()
 
   creating.value = true
   try {
@@ -73,14 +77,15 @@ async function saveEdit() {
   if (!patch) return
   const name = patch.name.trim()
   const slug = slugify(patch.slug)
-  if (!name || !/^[a-z0-9][a-z0-9-]{0,39}$/.test(slug)) {
-    feedback.warn('名称或 slug 不合法')
+  if (!name) {
+    feedback.warn('赛季名称不能为空')
     return
   }
 
   busy.value = patch.id
   try {
-    const result = await store.updateSeason(patch.id, { name, slug })
+    // slug 留空表示不改（数据库里保持原标识）
+    const result = await store.updateSeason(patch.id, slug ? { name, slug } : { name })
     if (!result.ok) {
       feedback.error(result.message)
       return
@@ -162,13 +167,11 @@ async function toggleArchive(season) {
             />
           </label>
           <label class="text-sm">
-            <span class="mb-1 block text-[#5d5b54] dark:text-[#a0a0a0]"
-              >slug（小写字母/数字/-）</span
-            >
+            <span class="mb-1 block text-[#5d5b54] dark:text-[#a0a0a0]">标识 slug（可留空）</span>
             <input
               v-model="form.slug"
               type="text"
-              placeholder="2026-fall"
+              placeholder="留空自动生成，如 2026-fall"
               class="w-full rounded-md border border-[#e5e3df] bg-white px-3 py-2 font-mono text-[#37352f] focus:outline-hidden dark:border-[#3d3d3d] dark:bg-[#2a2a2a] dark:text-[#e6e6e6]"
             />
           </label>
@@ -197,6 +200,11 @@ async function toggleArchive(season) {
             复制只带名单与 DDL 结构，不含赛果；新建赛季不会自动切为当前赛季
           </span>
         </div>
+        <p class="mt-2 text-xs leading-relaxed text-[#a4a097] dark:text-[#8a8a8a]">
+          slug 是数据库里区分赛季的短标识（只允许小写字母、数字与
+          <code class="font-mono">-</code>），迁移脚本与后台用它定位赛季，不展示给观众；
+          留空会按名称或「season-年-月」自动生成。
+        </p>
       </div>
 
       <div class="notion-card p-5">
@@ -225,6 +233,7 @@ async function toggleArchive(season) {
                 <input
                   v-model="editing.slug"
                   type="text"
+                  placeholder="留空不改"
                   class="w-36 rounded-md border border-[#e5e3df] bg-white px-2 py-1.5 font-mono text-sm dark:border-[#3d3d3d] dark:bg-[#2a2a2a]"
                 />
                 <BaseButton

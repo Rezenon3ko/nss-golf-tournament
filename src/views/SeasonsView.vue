@@ -126,7 +126,6 @@ onMounted(async () => {
             <span v-if="createdText(season)" class="font-mono text-xs">{{
               createdText(season)
             }}</span>
-            <span class="font-mono text-xs">{{ season.slug }}</span>
           </p>
         </div>
         <BaseButton

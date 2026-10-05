@@ -66,7 +66,7 @@ function logout() {
           </span>
         </div>
         <div class="flex items-center gap-1">
-          <div class="mr-1 hidden sm:block">
+          <div class="mr-1 hidden lg:block">
             <SeasonSwitcher />
           </div>
           <button
