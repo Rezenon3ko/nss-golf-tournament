@@ -8,7 +8,6 @@ import {
   mdiArchiveOutline,
   mdiArchiveArrowUpOutline,
   mdiCalendar,
-  mdiCheckCircle,
   mdiPencilOutline,
   mdiPlus,
 } from '@mdi/js'
@@ -255,7 +254,6 @@ async function toggleArchive(season) {
                     v-if="season.is_current"
                     class="inline-flex items-center gap-1 rounded-full bg-[#c9a24b]/25 px-2 py-0.5 text-xs font-medium text-[#8c6d1f] dark:text-[#e4d3a4]"
                   >
-                    <BaseIcon :path="mdiCheckCircle" size="13" w="w-3.5" h="h-3.5" />
                     当前
                   </span>
                   <span

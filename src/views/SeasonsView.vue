@@ -5,7 +5,7 @@ import { useTournamentStore } from '@/stores/tournament'
 import { useFeedbackStore } from '@/stores/feedback'
 import BaseButton from '@/components/BaseButton.vue'
 import BaseIcon from '@/components/BaseIcon.vue'
-import { mdiArchiveOutline, mdiCalendar, mdiCheckCircle, mdiTrophyOutline } from '@mdi/js'
+import { mdiArchiveOutline, mdiCalendar, mdiTrophyOutline } from '@mdi/js'
 
 const store = useTournamentStore()
 const feedback = useFeedbackStore()
@@ -105,7 +105,6 @@ onMounted(async () => {
               v-if="season.is_current"
               class="inline-flex items-center gap-1 rounded-full bg-[#c9a24b]/25 px-2 py-0.5 text-xs font-medium text-[#8c6d1f] dark:text-[#e4d3a4]"
             >
-              <BaseIcon :path="mdiCheckCircle" size="14" w="w-4" h="h-4" />
               当前赛季
             </span>
             <span
