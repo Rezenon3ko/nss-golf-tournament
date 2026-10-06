@@ -3,7 +3,7 @@ import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { useTournamentStore } from '@/stores/tournament'
 import { useFeedbackStore } from '@/stores/feedback'
 import BaseIcon from '@/components/BaseIcon.vue'
-import { mdiCalendar, mdiCheck, mdiChevronDown } from '@mdi/js'
+import { mdiCalendar, mdiChevronDown } from '@mdi/js'
 
 const store = useTournamentStore()
 const feedback = useFeedbackStore()
@@ -97,27 +97,26 @@ async function pick(season) {
     <ul
       v-if="open"
       role="listbox"
-      class="absolute right-0 z-50 mt-1 max-h-72 w-max min-w-full overflow-y-auto rounded-md border border-[#e5e3df] bg-white py-1 shadow-[rgba(15,15,15,0.16)_0px_16px_48px_-8px] dark:border-[#3d3d3d] dark:bg-[#1e1e1e]"
+      class="absolute right-0 z-50 mt-1 max-h-72 w-full overflow-y-auto rounded-md border border-[#e5e3df] bg-white py-1 shadow-[rgba(15,15,15,0.16)_0px_16px_48px_-8px] dark:border-[#3d3d3d] dark:bg-[#1e1e1e]"
     >
       <li v-for="season in seasons" :key="season.id">
         <button
           type="button"
           role="option"
           :aria-selected="season.id === currentId"
-          class="flex w-full cursor-pointer items-center gap-2 px-3 py-2 text-left text-sm hover:bg-[#f0eeec] dark:hover:bg-[#333333]"
+          class="flex w-full cursor-pointer items-center gap-2 px-2 py-2 text-left text-sm"
           :class="
             season.id === currentId
-              ? 'font-semibold text-[#8c6d1f] dark:text-[#e4d3a4]'
-              : 'text-[#37352f] dark:text-[#e6e6e6]'
+              ? 'bg-[#c9a24b]/15 font-semibold text-[#8c6d1f] dark:bg-[#c9a24b]/20 dark:text-[#e4d3a4]'
+              : 'text-[#37352f] hover:bg-[#f0eeec] dark:text-[#e6e6e6] dark:hover:bg-[#333333]'
           "
           @click="pick(season)"
         >
-          <BaseIcon v-if="season.id === currentId" :path="mdiCheck" size="14" class="shrink-0" />
-          <span class="truncate">{{ season.name }}</span>
-          <span v-if="season.is_archived" class="ml-auto pl-2 text-xs text-[#a4a097]">已归档</span>
+          <span class="min-w-0 flex-1 truncate">{{ season.name }}</span>
+          <span v-if="season.is_archived" class="shrink-0 text-xs text-[#a4a097]">已归档</span>
           <span
             v-else-if="season.is_current"
-            class="ml-auto pl-2 text-xs text-[#8c6d1f] dark:text-[#e4d3a4]"
+            class="shrink-0 text-xs text-[#8c6d1f] dark:text-[#e4d3a4]"
             >当前</span
           >
         </button>
