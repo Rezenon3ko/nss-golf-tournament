@@ -238,6 +238,7 @@ function tierClass(tier) {
             label="添加选手"
             color="purple"
             class="w-full sm:w-auto"
+            :disabled="store.readOnly"
             @click="openAdd"
           />
           <BaseButton
@@ -245,7 +246,7 @@ function tierClass(tier) {
             label="随机抽签"
             color="warning"
             class="w-full sm:w-auto"
-            :disabled="store.players.length !== 16"
+            :disabled="store.readOnly || store.players.length !== 16"
             @click="doDraw"
           />
           <BaseButton
@@ -253,6 +254,7 @@ function tierClass(tier) {
             label="重置赛事"
             color="danger"
             class="w-full sm:w-auto"
+            :disabled="store.readOnly"
             @click="doReset"
           />
         </div>
@@ -262,7 +264,7 @@ function tierClass(tier) {
           label="确认发布分组"
           color="purple"
           class="w-full sm:w-auto"
-          :disabled="!valid"
+          :disabled="store.readOnly || !valid"
           @click="doPublish"
         />
       </div>
@@ -392,7 +394,13 @@ function tierClass(tier) {
         <div class="notion-card p-5">
           <div class="mb-1 flex items-center justify-between">
             <h2 class="font-bold">手动分组</h2>
-            <BaseButton label="清空手动选择" color="whiteDark" small @click="doClearDraft" />
+            <BaseButton
+              label="清空手动选择"
+              color="whiteDark"
+              small
+              :disabled="store.readOnly"
+              @click="doClearDraft"
+            />
           </div>
           <p class="mb-3 text-sm text-[#a4a097]">
             默认全部为「未选择」；为每个小组的 1-4
@@ -594,7 +602,7 @@ function tierClass(tier) {
       </div>
       <template #footer>
         <BaseButton label="取消" color="whiteDark" @click="showEditor = false" />
-        <BaseButton label="保存" color="purple" @click="savePlayer" />
+        <BaseButton label="保存" color="purple" :disabled="store.readOnly" @click="savePlayer" />
       </template>
     </BaseModal>
   </div>

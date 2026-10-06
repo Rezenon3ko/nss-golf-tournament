@@ -114,5 +114,8 @@ export function createSeasonRepository(client) {
     archive(seasonId, archived = true) {
       return call('archive_season', { p_season_id: seasonId, p_archived: archived })
     },
+    remove(seasonId) {
+      return call('delete_season', { p_season_id: seasonId })
+    },
   }
 }

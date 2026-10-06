@@ -15,6 +15,7 @@ import {
   mdiClose,
   mdiLogout,
   mdiEye,
+  mdiLockAlert,
   mdiWhiteBalanceSunny,
   mdiWeatherNight,
 } from '@mdi/js'
@@ -163,6 +164,22 @@ function logout() {
 
     <!-- 内容 -->
     <div class="pt-14 lg:pl-60">
+      <!-- 归档赛季只读提示：写入会被拦下，先取消归档才能编辑 -->
+      <div
+        v-if="tournamentStore.readOnly"
+        class="flex flex-wrap items-center gap-2 border-b border-[#f0d9a0] bg-[#fef7d6] px-4 py-2 text-sm text-[#793400] lg:px-6 dark:border-[#5c4a1e] dark:bg-[#2b2415] dark:text-[#e6d5a8]"
+      >
+        <BaseIcon :path="mdiLockAlert" size="18" class="shrink-0" />
+        <span
+          >「{{ tournamentStore.currentSeasonName }}」已归档，当前为<strong>只读</strong>状态</span
+        >
+        <RouterLink
+          to="/admin/seasons"
+          class="font-semibold underline underline-offset-2 hover:text-[#5c2b00] dark:hover:text-[#f3e6c0]"
+        >
+          去赛季管理取消归档
+        </RouterLink>
+      </div>
       <RouterView />
     </div>
 

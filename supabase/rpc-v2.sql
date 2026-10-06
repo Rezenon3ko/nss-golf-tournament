@@ -28,8 +28,13 @@ grant usage on schema private to authenticated, service_role;
 -- 0. 内部辅助函数
 -- ---------------------------------------------------------------------------
 
--- 锁住赛季并校验存在（同一赛季的写操作由此串行）
-create or replace function private.assert_season_locked(p_season_id text)
+-- 锁住赛季并校验存在（同一赛季的写操作由此串行）；
+-- 默认拒绝写入已归档赛季（只读锁定），赛季管理自身的操作传 p_allow_archived => true
+drop function if exists private.assert_season_locked(text);
+create or replace function private.assert_season_locked(
+  p_season_id text,
+  p_allow_archived boolean default false
+)
 returns void
 language plpgsql
 security invoker
@@ -37,14 +42,20 @@ set search_path = ''
 as $$
 declare
   v_id text;
+  v_archived boolean;
 begin
-  select s.id into v_id
+  select s.id, s.is_archived into v_id, v_archived
   from public.seasons s
   where s.id = p_season_id
   for update;
 
   if v_id is null then
     raise exception '赛季不存在：%', coalesce(p_season_id, '(空)') using errcode = 'PT404';
+  end if;
+
+  if v_archived and not coalesce(p_allow_archived, false) then
+    raise exception '该赛季已归档，处于只读状态；如需编辑请先在赛季管理里取消归档'
+      using errcode = 'PT423';
   end if;
 end;
 $$;
@@ -282,7 +293,8 @@ declare
   v_name text;
   v_row public.seasons;
 begin
-  perform private.assert_season_locked(p_season_id);
+  -- 改名 / 改 slug 属于赛季管理本身，允许作用于已归档赛季
+  perform private.assert_season_locked(p_season_id, true);
 
   if p_name is not null then
     v_name := btrim(p_name);
@@ -324,7 +336,7 @@ as $$
 declare
   v_row public.seasons;
 begin
-  perform private.assert_season_locked(p_season_id);
+  perform private.assert_season_locked(p_season_id, true);
 
   update public.seasons s
   set is_current = false
@@ -352,7 +364,7 @@ as $$
 declare
   v_row public.seasons;
 begin
-  perform private.assert_season_locked(p_season_id);
+  perform private.assert_season_locked(p_season_id, true);
 
   update public.seasons s
   set
@@ -362,6 +374,38 @@ begin
   returning * into v_row;
 
   return to_jsonb(v_row);
+end;
+$$;
+
+-- 删除赛季：仅允许「非当前、非归档」的赛季（未启用的建错了的赛季）；
+-- 下属名单 / 赛程 / 赛果 / 日志等按外键级联删除，不可恢复。
+create or replace function public.delete_season(p_season_id text)
+returns jsonb
+language plpgsql
+security invoker
+set search_path = ''
+as $$
+declare
+  v_season public.seasons;
+begin
+  select s.* into v_season
+  from public.seasons s
+  where s.id = p_season_id
+  for update;
+
+  if v_season.id is null then
+    raise exception '赛季不存在：%', coalesce(p_season_id, '(空)') using errcode = 'PT404';
+  end if;
+  if v_season.is_current then
+    raise exception '当前赛季不能删除，请先切换到其他赛季' using errcode = 'PT409';
+  end if;
+  if v_season.is_archived then
+    raise exception '已归档的赛季不能直接删除，请先取消归档' using errcode = 'PT409';
+  end if;
+
+  delete from public.seasons s where s.id = p_season_id;
+
+  return jsonb_build_object('deleted', p_season_id, 'name', v_season.name);
 end;
 $$;
 
@@ -955,7 +999,7 @@ begin
     where n.nspname = 'public'
       and p.proname in (
         'create_season', 'update_season', 'set_current_season', 'archive_season',
-        'save_draft_groups', 'upsert_player', 'delete_player', 'set_ddl',
+        'delete_season', 'save_draft_groups', 'upsert_player', 'delete_player', 'set_ddl',
         'publish_groups', 'apply_match_changeset', 'apply_evidence',
         'reset_season', 'set_admin_avatar',
         'append_logs', 'append_draw', 'save_tiebreaks'

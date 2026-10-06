@@ -165,4 +165,7 @@ test('repository：赛季管理（新建 / 改名 / 设为当前 / 归档）', a
 
   await repository.archive('s-1', false)
   assert.deepEqual(client.calls[3], ['archive_season', { p_season_id: 's-1', p_archived: false }])
+
+  await repository.remove('s-1')
+  assert.deepEqual(client.calls[4], ['delete_season', { p_season_id: 's-1' }])
 })

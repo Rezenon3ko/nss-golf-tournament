@@ -196,7 +196,13 @@ function onSaved() {
               <td class="px-4 py-3">
                 <div class="flex items-center justify-end gap-1 whitespace-nowrap">
                   <BaseButton label="查看" color="whiteDark" small @click="detailMatch = match" />
-                  <BaseButton label="录入/编辑" color="purple" small @click="entryMatch = match" />
+                  <BaseButton
+                    label="录入/编辑"
+                    color="purple"
+                    small
+                    :disabled="store.readOnly"
+                    @click="entryMatch = match"
+                  />
                   <template v-if="match.status === 'pending'">
                     <BaseButton
                       :label="`${store.playerName(match.playerAId)}负`"
@@ -281,7 +287,13 @@ function onSaved() {
               class="justify-self-end"
               @click="detailMatch = match"
             />
-            <BaseButton label="录入/编辑" color="purple" small @click="entryMatch = match" />
+            <BaseButton
+              label="录入/编辑"
+              color="purple"
+              small
+              :disabled="store.readOnly"
+              @click="entryMatch = match"
+            />
             <BaseButton
               v-if="match.status === 'pending'"
               label="延期"

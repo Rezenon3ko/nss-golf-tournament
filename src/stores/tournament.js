@@ -9,6 +9,7 @@ import {
 } from '@/config'
 import { getSupabase, isSupabaseConfigured } from '@/lib/supabase'
 import { createRepository, createSeasonRepository } from '@/lib/repository'
+import { useFeedbackStore } from '@/stores/feedback'
 import { createMirrorController } from '@/lib/mirror'
 import {
   fetchCurrentSeason,
@@ -731,6 +732,7 @@ export const useTournamentStore = defineStore('tournament', () => {
     const message = String(error?.message || '')
     const code = String(error?.code || '')
     if (code === 'PT409') return '多表数据版本不一致，需要重新跑一次迁移脚本'
+    if (code === 'PT423') return '当前赛季已归档，处于只读状态；如需编辑请先取消归档'
     if (code === 'PT404') return '多表里没有当前赛季，请先执行迁移脚本'
     if (code === '42501' || /row-level security|permission denied/i.test(message)) {
       return '当前账号没有多表写入权限'
@@ -1008,11 +1010,20 @@ export const useTournamentStore = defineStore('tournament', () => {
   // 当前赛季的完整行（含名称），供首页副标题等展示；重命名后随列表刷新
   const currentSeason = ref(null)
   const currentSeasonName = computed(() => String(currentSeason.value?.name || ''))
+  // 归档赛季只读：多表模式下当前赛季已归档时，所有写入在动作入口就被拦下
+  const readOnly = computed(() => DATA_MODEL === 'multi' && !!currentSeason.value?.is_archived)
+
+  function guardReadOnly() {
+    if (!readOnly.value) return false
+    useFeedbackStore().warn('当前赛季已归档，处于只读状态；如需编辑请先在「赛季管理」里取消归档')
+    return true
+  }
 
   function translateSeasonError(error) {
     const code = String(error?.code || '')
     const message = String(error?.message || '')
     if (code === 'PT409') return message || '操作冲突：slug 已被占用，或赛季还有关联数据'
+    if (code === 'PT423') return message || '该赛季已归档，处于只读状态'
     if (code === 'PT400') return message || '参数不合法'
     if (code === '42501' || /row-level security|permission denied/i.test(message)) {
       return '当前账号没有赛季管理权限'
@@ -1108,6 +1119,27 @@ export const useTournamentStore = defineStore('tournament', () => {
       const season = await createSeasonRepository(supabase).archive(seasonId, archived)
       await loadSeasons()
       return { ok: true, season }
+    } catch (err) {
+      return { ok: false, message: translateSeasonError(err) }
+    }
+  }
+
+  async function deleteSeason(seasonId) {
+    try {
+      const supabase = await getSupabase()
+      if (!supabase) return { ok: false, message: '未配置云端' }
+      const wasViewing = seasonId === mirror.seasonId
+      const result = await createSeasonRepository(supabase).remove(seasonId)
+      await loadSeasons()
+      // 删掉的正是当前正在看的赛季：切回默认赛季（本机选择失效后自动回落到当前赛季）
+      if (wasViewing) {
+        try {
+          await initMultiModel()
+        } catch (err) {
+          console.warn('删除赛季后重新加载失败：', err?.message || err)
+        }
+      }
+      return { ok: true, result }
     } catch (err) {
       return { ok: false, message: translateSeasonError(err) }
     }
@@ -1591,6 +1623,7 @@ export const useTournamentStore = defineStore('tournament', () => {
   // ---------- 选手与分组 ----------
 
   function addPlayer(payload) {
+    if (guardReadOnly()) return null
     const player = {
       id: uid('p'),
       name: String(payload.name || '').trim(),
@@ -1606,6 +1639,7 @@ export const useTournamentStore = defineStore('tournament', () => {
   }
 
   function updatePlayer(id, payload) {
+    if (guardReadOnly()) return
     const player = players.value.find((p) => p.id === id)
     if (!player) return
     const oldName = player.name
@@ -1618,6 +1652,7 @@ export const useTournamentStore = defineStore('tournament', () => {
   }
 
   function removePlayer(id) {
+    if (guardReadOnly()) return false
     const hasMatches = matches.value.some((m) => m.playerAId === id || m.playerBId === id)
     if (hasMatches) return false
     const player = players.value.find((p) => p.id === id)
@@ -1628,6 +1663,7 @@ export const useTournamentStore = defineStore('tournament', () => {
   }
 
   function drawGroups() {
+    if (guardReadOnly()) return
     const byTier = {}
     for (const tier of TIERS) {
       byTier[tier] = shuffle(players.value.filter((p) => p.tier === tier).map((p) => p.id))
@@ -1667,6 +1703,7 @@ export const useTournamentStore = defineStore('tournament', () => {
 
   // 手动分组：为某组的某个档位槽位选择/清空选手（自动保证跨组唯一）
   function setDraftGroup(groupId, tierIndex, playerId) {
+    if (guardReadOnly()) return
     if (!draft.value) {
       draft.value = { A: [], B: [], C: [], D: [] }
     }
@@ -1684,12 +1721,14 @@ export const useTournamentStore = defineStore('tournament', () => {
   }
 
   function clearDraft() {
+    if (guardReadOnly()) return
     draft.value = null
     addLog('清空手动分组选择')
     persist()
   }
 
   function publishGroups() {
+    if (guardReadOnly()) return false
     if (!constraintValid()) return false
     for (const [g, ids] of Object.entries(draft.value)) {
       for (const id of ids.filter(Boolean)) {
@@ -1746,6 +1785,7 @@ export const useTournamentStore = defineStore('tournament', () => {
   }
 
   function resetTournament() {
+    if (guardReadOnly()) return
     matches.value = []
     draft.value = null
     tiebreakResolutions.value = {}
@@ -1762,6 +1802,7 @@ export const useTournamentStore = defineStore('tournament', () => {
   // ---------- DDL ----------
 
   function setDdl(key, value) {
+    if (guardReadOnly()) return
     const item = ddlRounds.value.find((d) => d.key === key)
     if (!item) return
     item.ddl = value || null
@@ -1781,6 +1822,7 @@ export const useTournamentStore = defineStore('tournament', () => {
   // ---------- 赛果 ----------
 
   function saveMatch(id, payload) {
+    if (guardReadOnly()) return { ok: false, message: '当前赛季已归档，处于只读状态' }
     const match = matches.value.find((m) => m.id === id)
     if (!match) return null
     // 对阵双方尚未确定（如半决赛对手待定）时不允许录入，避免错误晋级
@@ -1841,6 +1883,7 @@ export const useTournamentStore = defineStore('tournament', () => {
   }
 
   function forfeitMatch(id, decision) {
+    if (guardReadOnly()) return { ok: false, message: '当前赛季已归档，处于只读状态' }
     const match = matches.value.find((m) => m.id === id)
     if (!match) return { ok: false, message: '未找到该场比赛' }
     if (!canJudgeForfeit(match, decision)) {
@@ -1887,6 +1930,7 @@ export const useTournamentStore = defineStore('tournament', () => {
   }
 
   function resolveTiebreak(groupId) {
+    if (guardReadOnly()) return
     const rows = getStandingsFor(stateView(), groupId)
     const unresolved = rows.filter((r) => r.needsDraw)
     if (!unresolved.length) return
@@ -1901,6 +1945,7 @@ export const useTournamentStore = defineStore('tournament', () => {
   // ---------- 证据 ----------
 
   function addEvidence(payload) {
+    if (guardReadOnly()) return null
     const item = {
       id: uid('ev'),
       matchId: payload.matchId || null,
@@ -1917,6 +1962,7 @@ export const useTournamentStore = defineStore('tournament', () => {
   }
 
   function removeEvidence(id) {
+    if (guardReadOnly()) return
     const item = evidence.value.find((e) => e.id === id)
     evidence.value = evidence.value.filter((e) => e.id !== id)
     if (item) addLog(`删除证据：${item.name}`)
@@ -2069,6 +2115,7 @@ export const useTournamentStore = defineStore('tournament', () => {
     seasons,
     currentSeasonId,
     currentSeasonName,
+    readOnly,
     loadSeasons,
     loadSeasonPlayers,
     switchSeason,
@@ -2076,6 +2123,7 @@ export const useTournamentStore = defineStore('tournament', () => {
     updateSeason,
     setCurrentSeason,
     archiveSeason,
+    deleteSeason,
     setCloudWriteEnabled,
     retrySync,
     retryMirror,

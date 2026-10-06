@@ -113,7 +113,13 @@ async function copyNotice() {
                 />
               </td>
               <td class="px-4 py-3 text-right">
-                <BaseButton label="保存" color="purple" small @click="saveDdl(d.key)" />
+                <BaseButton
+                  label="保存"
+                  color="purple"
+                  small
+                  :disabled="store.readOnly"
+                  @click="saveDdl(d.key)"
+                />
               </td>
             </tr>
           </tbody>
@@ -123,7 +129,13 @@ async function copyNotice() {
         <div v-for="d in store.ddlRounds" :key="d.key" class="p-4">
           <div class="mb-2 flex items-center justify-between gap-2">
             <span class="font-semibold">{{ d.label }}</span>
-            <BaseButton label="保存" color="purple" small @click="saveDdl(d.key)" />
+            <BaseButton
+              label="保存"
+              color="purple"
+              small
+              :disabled="store.readOnly"
+              @click="saveDdl(d.key)"
+            />
           </div>
           <input
             v-model="localDdl[d.key]"

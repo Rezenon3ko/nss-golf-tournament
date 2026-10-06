@@ -77,7 +77,13 @@ async function remove(id) {
           赛果截图 / 掉线证据统一留档 · 操作日志可追溯
         </p>
       </div>
-      <BaseButton :icon="mdiPlus" label="添加证据" color="purple" @click="showAdd = true" />
+      <BaseButton
+        :icon="mdiPlus"
+        label="添加证据"
+        color="purple"
+        :disabled="store.readOnly"
+        @click="showAdd = true"
+      />
     </div>
 
     <div class="mb-4 flex flex-wrap gap-2">
@@ -221,7 +227,7 @@ async function remove(id) {
       </div>
       <template #footer>
         <BaseButton label="取消" color="whiteDark" @click="showAdd = false" />
-        <BaseButton label="保存" color="purple" @click="save" />
+        <BaseButton label="保存" color="purple" :disabled="store.readOnly" @click="save" />
       </template>
     </BaseModal>
   </div>

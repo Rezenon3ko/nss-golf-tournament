@@ -10,6 +10,7 @@ import {
   mdiCalendar,
   mdiPencilOutline,
   mdiPlus,
+  mdiTrashCanOutline,
 } from '@mdi/js'
 
 const store = useTournamentStore()
@@ -129,6 +130,29 @@ async function toggleArchive(season) {
       return
     }
     feedback.success(archiving ? '已归档' : '已取消归档')
+  } finally {
+    busy.value = ''
+  }
+}
+
+// 删除赛季：仅「非当前、非归档」的赛季（建错/弃用的空赛季），级联删除且不可恢复
+async function removeSeason(season) {
+  const ok = await feedback.confirm({
+    title: '删除赛季',
+    message: `将永久删除「${season.name}」及其全部名单、赛程、赛果、证据与日志，无法恢复。确认删除？`,
+    confirmLabel: '永久删除',
+    danger: true,
+  })
+  if (!ok) return
+
+  busy.value = season.id
+  try {
+    const result = await store.deleteSeason(season.id)
+    if (!result.ok) {
+      feedback.error(result.message)
+      return
+    }
+    feedback.success(`已删除赛季「${season.name}」`)
   } finally {
     busy.value = ''
   }
@@ -291,6 +315,15 @@ async function toggleArchive(season) {
                   small
                   :disabled="busy === season.id"
                   @click="toggleArchive(season)"
+                />
+                <BaseButton
+                  v-if="!season.is_current && !season.is_archived"
+                  :icon="mdiTrashCanOutline"
+                  label="删除"
+                  color="danger"
+                  small
+                  :disabled="busy === season.id"
+                  @click="removeSeason(season)"
                 />
               </div>
             </template>
