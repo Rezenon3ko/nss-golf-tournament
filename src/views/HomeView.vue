@@ -14,6 +14,9 @@ const auth = useAuthStore()
 const stageOrder = ['group', 'qf', 'sf', 'final']
 const stageNames = { group: '小组赛', qf: '八强', sf: '半决赛', final: '决赛' }
 
+// 副标题取当前赛季名称（赛季管理里重命名后这里会跟着变）
+const seasonName = computed(() => store.currentSeasonName || '')
+
 const stageIndex = computed(() => {
   if (store.stage === 'setup') return -1
   if (store.stage === 'finished') return 4
@@ -69,14 +72,12 @@ const champion = computed(() => store.playerById(store.championId))
           <span class="inline-block h-2 w-2 rounded-full bg-[#b8860b]"></span>
           NSS · 16 人 · 小组赛 + 淘汰赛
         </p>
-        <h1 class="mb-4 text-3xl font-semibold tracking-tight md:text-4xl">
-          鬼吃鱼高尔夫锦标赛
-          <span
-            class="bg-linear-to-br from-[#f0d78c] via-[#c9a24b] to-[#8c6d1f] bg-clip-text text-transparent"
-          >
-            2026
-          </span>
-        </h1>
+        <div class="mb-4">
+          <h1 class="text-3xl font-semibold tracking-tight md:text-4xl">NSS高尔夫锦标赛</h1>
+          <p v-if="seasonName" class="mt-1 text-lg font-semibold tracking-wide md:text-xl">
+            <span class="text-gold-gradient">{{ seasonName }}</span>
+          </p>
+        </div>
         <div class="flex flex-wrap items-center justify-center gap-2">
           <span
             v-for="(name, key) in stageNames"

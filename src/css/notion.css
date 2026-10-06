@@ -232,3 +232,12 @@
 .dark .notion-divider {
   border-top-color: #454545;
 }
+
+/* 金色渐变文字（英雄卡年份等）：把渐变收进一个类，
+   让标题能保持单行内联写法（不插入空格） */
+.text-gold-gradient {
+  background-image: linear-gradient(to bottom right, #f0d78c, #c9a24b 50%, #8c6d1f);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}

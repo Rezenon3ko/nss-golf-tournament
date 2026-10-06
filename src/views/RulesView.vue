@@ -98,7 +98,7 @@ const sections = [
     <div class="mb-5">
       <h1 class="text-2xl font-bold">比赛规则</h1>
       <p class="text-sm text-[#5d5b54] dark:text-[#a0a0a0]">
-        依据《NSS_鬼吃鱼高尔夫锦标赛比赛规则》整理，正式条款以 PDF 原文为准。
+        依据《NSS高尔夫锦标赛比赛规则》整理，正式条款以 PDF 原文为准。
       </p>
     </div>
 

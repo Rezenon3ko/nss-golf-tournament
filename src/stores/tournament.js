@@ -778,6 +778,7 @@ export const useTournamentStore = defineStore('tournament', () => {
     mirrorController.setBaseline(mirrorStateView())
     mirror.seasonId = season.id
     currentSeasonId.value = season.id
+    currentSeason.value = season
     mirror.enabled = true
     mirror.status = 'idle'
     mirror.message = ''
@@ -1004,6 +1005,9 @@ export const useTournamentStore = defineStore('tournament', () => {
   // ---------- 赛季管理（多表模式） ----------
   const seasons = ref([])
   const currentSeasonId = ref(null)
+  // 当前赛季的完整行（含名称），供首页副标题等展示；重命名后随列表刷新
+  const currentSeason = ref(null)
+  const currentSeasonName = computed(() => String(currentSeason.value?.name || ''))
 
   function translateSeasonError(error) {
     const code = String(error?.code || '')
@@ -1022,6 +1026,8 @@ export const useTournamentStore = defineStore('tournament', () => {
       const supabase = await getSupabase()
       if (!supabase) return []
       seasons.value = await fetchSeasons(supabase)
+      const fresh = seasons.value.find((item) => item.id === currentSeasonId.value)
+      if (fresh) currentSeason.value = fresh
       return seasons.value
     } catch (err) {
       console.warn('赛季列表读取失败：', err?.message || err)
@@ -2062,6 +2068,7 @@ export const useTournamentStore = defineStore('tournament', () => {
     mirror,
     seasons,
     currentSeasonId,
+    currentSeasonName,
     loadSeasons,
     loadSeasonPlayers,
     switchSeason,
