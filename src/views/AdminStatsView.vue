@@ -396,27 +396,27 @@ function entrySummary(entry) {
     <section class="mt-6">
       <div class="notion-card p-5">
         <p class="mb-3 font-bold">数据与分享</p>
-        <div class="flex flex-col gap-2">
+        <div class="grid gap-2 sm:grid-cols-3">
           <BaseButton
             :icon="mdiShareVariant"
-            label="复制最终比赛结果（群聊分享）"
-            color="gold"
+            label="复制最终比赛结果"
+            color="purple"
             @click="shareFinalResult"
           />
           <BaseButton
             :icon="mdiClipboardText"
-            label="复制对阵文本（群聊分享）"
+            label="复制对阵文本"
             color="purple"
             @click="copyBracket"
           />
           <BaseButton
             :icon="mdiCodeJson"
             label="导出全部数据 JSON"
-            color="whiteDark"
+            color="purple"
             @click="downloadJson"
           />
-          <p v-if="copied" class="text-sm text-[#8c6d1f] dark:text-[#e4d3a4]">{{ copied }}</p>
         </div>
+        <p v-if="copied" class="mt-2 text-sm text-[#8c6d1f] dark:text-[#e4d3a4]">{{ copied }}</p>
       </div>
 
       <div class="notion-card mt-4 p-5 text-sm">
