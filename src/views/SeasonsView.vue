@@ -105,14 +105,14 @@ onMounted(async () => {
               v-if="season.is_current"
               class="inline-flex items-center gap-1 rounded-full bg-[#c9a24b]/25 px-2 py-0.5 text-xs font-medium text-[#8c6d1f] dark:text-[#e4d3a4]"
             >
-              <BaseIcon :path="mdiCheckCircle" size="14" />
+              <BaseIcon :path="mdiCheckCircle" size="14" w="w-4" h="h-4" />
               当前赛季
             </span>
             <span
               v-else-if="season.is_archived"
               class="inline-flex items-center gap-1 rounded-full bg-[#f0eeec] px-2 py-0.5 text-xs text-[#5d5b54] dark:bg-[#333333] dark:text-[#a0a0a0]"
             >
-              <BaseIcon :path="mdiArchiveOutline" size="14" />
+              <BaseIcon :path="mdiArchiveOutline" size="14" w="w-4" h="h-4" />
               已归档
             </span>
           </p>

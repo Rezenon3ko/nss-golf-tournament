@@ -255,14 +255,14 @@ async function toggleArchive(season) {
                     v-if="season.is_current"
                     class="inline-flex items-center gap-1 rounded-full bg-[#c9a24b]/25 px-2 py-0.5 text-xs font-medium text-[#8c6d1f] dark:text-[#e4d3a4]"
                   >
-                    <BaseIcon :path="mdiCheckCircle" size="13" />
+                    <BaseIcon :path="mdiCheckCircle" size="13" w="w-3.5" h="h-3.5" />
                     当前
                   </span>
                   <span
                     v-if="season.is_archived"
                     class="inline-flex items-center gap-1 rounded-full bg-[#f0eeec] px-2 py-0.5 text-xs text-[#5d5b54] dark:bg-[#333333] dark:text-[#a0a0a0]"
                   >
-                    <BaseIcon :path="mdiArchiveOutline" size="13" />
+                    <BaseIcon :path="mdiArchiveOutline" size="13" w="w-3.5" h="h-3.5" />
                     已归档
                   </span>
                 </p>
