@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 
-export const darkModeKey = 'darkMode'
+const darkModeKey = 'darkMode'
 
 export const useDarkModeStore = defineStore('darkMode', () => {
   const isEnabled = ref(false)

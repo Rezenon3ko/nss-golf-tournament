@@ -52,7 +52,7 @@ function showToast(text) {
 const conflict = computed(() => sync.status === 'conflict')
 const failed = computed(() => sync.status === 'error')
 const degraded = computed(() => sync.degraded)
-// 数据库还没执行新版 schema.sql：仍能写入，但没有版本校验
+// 数据库还没执行新版 schema-v2.sql：仍能写入，但没有版本校验
 const legacyWrite = computed(() => sync.mode === 'cloud' && !sync.supportsRevision && isAdmin.value)
 // 多表双写（Phase 1）异常：文档已同步，但新表没跟上，需要提示主办方
 const mirrorIssue = computed(
@@ -203,7 +203,7 @@ function reloadPage() {
         </p>
         <p class="leading-relaxed">
           当前为覆盖式写入，多设备同时编辑可能互相覆盖。请在 Supabase SQL Editor 重新执行
-          <code class="font-mono">supabase/schema.sql</code> 以启用版本校验。
+          <code class="font-mono">supabase/schema-v2.sql</code> 以启用版本校验。
         </p>
       </template>
 

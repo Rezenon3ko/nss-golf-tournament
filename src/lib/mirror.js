@@ -10,7 +10,7 @@
  * - 删除类操作（选手 / 证据）容忍 PT404：重试时对象可能已经不在了。
  */
 
-export function normalizeMirrorState(state = {}) {
+function normalizeMirrorState(state = {}) {
   return {
     players: state.players || [],
     matches: state.matches || [],
@@ -23,6 +23,15 @@ export function normalizeMirrorState(state = {}) {
     logs: state.logs || [],
     drawHistory: state.drawHistory || [],
   }
+}
+
+/**
+ * 基线快照：深拷贝一份状态。
+ * store 里的状态是原地修改的（数组 push / 对象字段赋值），如果基线直接持有这些引用，
+ * 它会跟着一起变，差异计算永远为空——改动只会留在本机缓存和备份文档里。
+ */
+function snapshotState(state = {}) {
+  return normalizeMirrorState(JSON.parse(JSON.stringify(normalizeMirrorState(state))))
 }
 
 function same(a, b) {
@@ -195,7 +204,7 @@ export function createMirrorController({
     },
 
     setBaseline(state) {
-      baseline = normalizeMirrorState(state)
+      baseline = snapshotState(state)
       persistBaseline()
     },
 
@@ -213,7 +222,8 @@ export function createMirrorController({
     },
 
     async sync(state) {
-      const next = normalizeMirrorState(state)
+      // 用深拷贝做这一轮的基准：同步期间状态被继续修改也不影响本轮差异
+      const next = snapshotState(state)
       const activeWholesale = wholesale
       const diff = diffSeasonState(ensureBaseline(), next, {
         skipMatches: activeWholesale !== null,

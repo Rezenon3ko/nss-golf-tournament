@@ -1,10 +1,11 @@
 -- ============================================================================
--- NSS高尔夫锦标赛 · 多表结构（v2）
+-- NSS高尔夫锦标赛 · 数据库结构（唯一需要执行的建表脚本）
 --
--- 与 schema.sql 的关系
---   本文件只做「新增」：不修改、不删除现有 public.tournament_state，
---   旧版前端仍按单行 JSON 文档读写，作为迁移期的回滚点。
---   执行顺序：先执行 schema.sql（已建过的项目无需重复），再执行本文件。
+-- 内容
+--   多表结构（seasons / players / matches …）+ RLS + Realtime 发布，
+--   以及原 schema.sql 的保留部分：单文档表 public.tournament_state 与头像
+--   Storage bucket `avatars`（见第 10 节）。schema.sql 已退役，不要再执行。
+--   执行顺序：本文件 → rpc-v2.sql（事务函数）。
 --
 -- 环境      Supabase（PostgreSQL 15+）
 -- 执行方式  Dashboard → SQL Editor，整段执行
@@ -125,7 +126,7 @@ alter table public.seasons
 --    overdue / locked 是展示态，由前端按 DDL 与对阵推导，不落库。
 -- ---------------------------------------------------------------------------
 create table if not exists public.matches (
-  id text primary key,
+  id text not null,
   season_id text not null references public.seasons (id) on delete cascade,
   stage text not null,
   group_id text,
@@ -144,8 +145,28 @@ create table if not exists public.matches (
   log jsonb not null default '[]'::jsonb,
   version bigint not null default 0,
   created_at timestamptz not null default now(),
-  updated_at timestamptz not null default now()
+  updated_at timestamptz not null default now(),
+  primary key (season_id, id)
 );
+
+-- 旧库升级：主键由 (id) 改为 (season_id, id)。
+-- id 是前端生成的短标识（gm-A-1-1 / ko-qf-1），跨赛季会重复，必须按赛季隔离。
+-- 先摘掉 evidence 的单列外键（它依赖 matches 的 (id) 唯一索引，不先删会挡住改主键）
+alter table if exists public.evidence drop constraint if exists evidence_match_id_fkey;
+
+do $$
+begin
+  if exists (
+    select 1
+    from pg_catalog.pg_constraint c
+    where c.conrelid = 'public.matches'::regclass
+      and c.contype = 'p'
+      and pg_catalog.pg_get_constraintdef(c.oid) = 'PRIMARY KEY (id)'
+  ) then
+    alter table public.matches drop constraint matches_pkey;
+    alter table public.matches add constraint matches_pkey primary key (season_id, id);
+  end if;
+end $$;
 
 create index if not exists matches_season_bracket_idx
   on public.matches (season_id, stage, bracket_order);
@@ -231,14 +252,16 @@ create index if not exists draws_season_at_idx on public.draws (season_id, at de
 
 -- ---------------------------------------------------------------------------
 -- 5. 证据 / 全局日志 / 主办方资料
---    evidence 公开读（公开的比赛详情弹窗会展示截图链接）；
---    logs 仅登录可见（目前只有后台「证据与日志」页在用）；
+--    evidence 已下线，仅保留表与历史数据；
+--    logs 仅登录可见（后台「日志记录」页在用）；
 --    admin_profiles 存主办方头像，替代旧文档里的 adminAvatar。
 -- ---------------------------------------------------------------------------
 create table if not exists public.evidence (
   id text primary key,
   season_id text not null references public.seasons (id) on delete cascade,
-  match_id text references public.matches (id) on delete set null,
+  -- 证据库已下线：match_id 仅作历史字段保留，不再建外键
+  --（matches 主键为 (season_id, id)，单列外键无法引用）
+  match_id text,
   type text not null default 'other',
   name text not null default '未命名证据',
   url text not null,
@@ -476,6 +499,133 @@ from auth.users u
 where u.email = 'admin@nss.local'
 on conflict (uid) do nothing;
 
+-- ---------------------------------------------------------------------------
+-- 10. 旧单文档表与头像 Storage（原 schema.sql 的保留部分）
+--     tournament_state：VITE_DATA_MODEL 未设置（或 = doc）时是正式数据表；
+--       多表模式下作为回滚备份，同时是迁移 / 对账（--verify）的旧快照来源，不要删除。
+--     avatars bucket：头像对象存储（公开读、登录可写），赛事数据里只保留 URL。
+--     两段都幂等，可重复执行。
+-- ---------------------------------------------------------------------------
+create table if not exists public.tournament_state (
+  key text primary key,
+  value jsonb not null
+);
+
+-- 乐观锁与审计字段：revision 供「读取 → 校验 → 写入」使用，既有行取默认值 0。
+alter table public.tournament_state
+  add column if not exists revision bigint not null default 0;
+alter table public.tournament_state
+  add column if not exists updated_at timestamptz not null default now();
+alter table public.tournament_state
+  add column if not exists updated_by uuid;
+
+-- 写入契约（由触发器盖章，不采信客户端提交的 revision / 时间）：
+--   UPDATE ... WHERE key = 'main' AND revision = :base；触发器把 revision 覆写为
+--   old.revision + 1；影响行数为 0 即「基线版本不匹配」或「没有匹配的写策略」。
+--   任何来源的写入都会推进 revision，旧客户端的覆盖式写入同样会被识别为冲突。
+create or replace function public.touch_tournament_state()
+returns trigger
+language plpgsql
+security invoker
+set search_path = ''
+as $$
+begin
+  new.revision := old.revision + 1;
+  new.updated_at := pg_catalog.now();
+  new.updated_by := (select auth.uid());
+  return new;
+end;
+$$;
+
+drop trigger if exists trg_tournament_state_touch on public.tournament_state;
+create trigger trg_tournament_state_touch
+  before update on public.tournament_state
+  for each row
+  execute function public.touch_tournament_state();
+
+-- 首次插入：revision 抬到至少 1，与前端首次写入提交的 revision = 1 保持一致。
+-- 不使用 greatest()：该函数加 schema 限定后在部分 PostgreSQL 版本不保证可解析。
+create or replace function public.init_tournament_state()
+returns trigger
+language plpgsql
+security invoker
+set search_path = ''
+as $$
+begin
+  if new.revision is null or new.revision < 1 then
+    new.revision := 1;
+  end if;
+  new.updated_at := pg_catalog.now();
+  new.updated_by := (select auth.uid());
+  return new;
+end;
+$$;
+
+drop trigger if exists trg_tournament_state_init on public.tournament_state;
+create trigger trg_tournament_state_init
+  before insert on public.tournament_state
+  for each row
+  execute function public.init_tournament_state();
+
+grant select on public.tournament_state to anon;
+grant all on public.tournament_state to authenticated;
+grant all on public.tournament_state to service_role;
+
+alter table public.tournament_state enable row level security;
+
+drop policy if exists public_read_tournament_state on public.tournament_state;
+create policy "public_read_tournament_state"
+  on public.tournament_state
+  for select
+  using (true);
+
+-- 写入仅限登录用户（前提：保持关闭公开注册）。如需收紧到白名单，可改成
+-- to authenticated using (public.is_admin()) with check (public.is_admin())。
+drop policy if exists admin_write_tournament_state on public.tournament_state;
+create policy "admin_write_tournament_state"
+  on public.tournament_state
+  for all
+  to authenticated
+  using (true)
+  with check (true);
+
+-- 头像 bucket：256×256 JPEG 约 15 KB，base64 后约 20 KB；存 Storage 后赛事数据只留 URL。
+-- 路径形如 <player-id>-<时间戳>.jpg：换头像即换 URL，可安全使用长缓存。
+insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+values ('avatars', 'avatars', true, 524288, array['image/jpeg', 'image/png', 'image/webp'])
+on conflict (id) do update
+  set public = excluded.public,
+      file_size_limit = excluded.file_size_limit,
+      allowed_mime_types = excluded.allowed_mime_types;
+
+drop policy if exists "avatars_public_read" on storage.objects;
+create policy "avatars_public_read"
+  on storage.objects
+  for select
+  using (bucket_id = 'avatars');
+
+drop policy if exists "avatars_admin_insert" on storage.objects;
+create policy "avatars_admin_insert"
+  on storage.objects
+  for insert
+  to authenticated
+  with check (bucket_id = 'avatars');
+
+drop policy if exists "avatars_admin_update" on storage.objects;
+create policy "avatars_admin_update"
+  on storage.objects
+  for update
+  to authenticated
+  using (bucket_id = 'avatars')
+  with check (bucket_id = 'avatars');
+
+drop policy if exists "avatars_admin_delete" on storage.objects;
+create policy "avatars_admin_delete"
+  on storage.objects
+  for delete
+  to authenticated
+  using (bucket_id = 'avatars');
+
 -- ============================================================================
 -- 附：部署与验收
 --
@@ -491,8 +641,9 @@ on conflict (uid) do nothing;
 --    node scripts/migrate-to-tables.mjs --verify --slug 2026
 --
 -- 3. 回滚
---    新表与旧表互不影响：如需放弃，删除本文件创建的 10 张表即可；
---    旧版前端始终只读写 public.tournament_state。
+--    多表与旧文档互不影响：多表数据如需放弃，删除第 1–6 节创建的 10 张表即可；
+--    public.tournament_state 与头像 bucket 不要删——单文档模式、头像、回滚备份
+--    与 --verify 对账都还依赖它们。
 --
 -- 4. 收紧项（后续阶段可选项）
 --    a. 事务函数改为 security definer 时，务必 revoke execute from public 后按需授权；

@@ -4,41 +4,19 @@
    ============================================================ */
 
 :root {
-  --notion-primary: #5645d4;
-  --notion-primary-pressed: #4534b3;
-  --notion-primary-deep: #3a2a99;
-  --notion-navy: #0a1530;
-  --notion-navy-mid: #1a2a52;
-  --notion-link: #0075de;
-  --notion-link-pressed: #005bab;
-  --notion-orange: #dd5b00;
-  --notion-pink: #ff64c8;
-  --notion-purple: #7b3ff2;
-  --notion-teal: #2a9d99;
-  --notion-green: #1aae39;
-  --notion-yellow: #f5d75e;
   --notion-ink: #1a1a1a;
   --notion-charcoal: #37352f;
   --notion-slate: #5d5b54;
-  --notion-steel: #787671;
-  --notion-stone: #a4a097;
-  --notion-muted: #bbb8b1;
   --notion-canvas: #ffffff;
   --notion-surface: #f6f5f4;
-  --notion-surface-soft: #fafaf9;
   --notion-hairline: #e5e3df;
   --notion-hairline-soft: #ede9e4;
-  --notion-hairline-strong: #c8c4be;
-  --notion-error: #e03131;
   --notion-tint-peach: #ffe8d4;
-  --notion-tint-rose: #fde0ec;
   --notion-tint-mint: #d9f3e1;
   --notion-tint-lavender: #e6e0f5;
   --notion-tint-sky: #dcecfa;
   --notion-tint-yellow: #fef7d6;
   --notion-tint-yellow-bold: #f9e79f;
-  --notion-tint-cream: #f8f5e8;
-  --notion-tint-gray: #f0eeec;
 }
 
 /* ---------- 机身：白色画布（浅色）/ 原版暗紫渐变（深色） ---------- */
@@ -105,20 +83,8 @@
   background: var(--notion-tint-peach);
   color: var(--notion-charcoal);
 }
-.notion-tint-rose {
-  background: var(--notion-tint-rose);
-  color: var(--notion-charcoal);
-}
 .notion-tint-yellow {
   background: var(--notion-tint-yellow);
-  color: var(--notion-charcoal);
-}
-.notion-tint-cream {
-  background: var(--notion-tint-cream);
-  color: var(--notion-charcoal);
-}
-.notion-tint-gray {
-  background: var(--notion-tint-gray);
   color: var(--notion-charcoal);
 }
 
@@ -146,10 +112,7 @@
   border: 1px solid #3d3d3d;
   border-left: 3px solid var(--color-group-d-accent);
 }
-.dark .notion-tint-rose,
-.dark .notion-tint-yellow,
-.dark .notion-tint-cream,
-.dark .notion-tint-gray {
+.dark .notion-tint-yellow {
   background: #333333;
   color: #d0d0d0;
   border: 1px solid #454545;
@@ -165,6 +128,20 @@
 
 .dark .notion-banner-yellow {
   background: #3a2f1a;
+  color: #e6d7a8;
+  border-color: #454545;
+}
+
+/* 淡金横幅：首页夺冠卡（金色主题的浅色底，弱化版） */
+.notion-banner-gold {
+  background: #fbf3dd;
+  color: var(--notion-charcoal);
+  border: 1px solid #ecdcae;
+  border-radius: 12px;
+}
+
+.dark .notion-banner-gold {
+  background: #2b2415;
   color: #e6d7a8;
   border-color: #454545;
 }
@@ -224,15 +201,6 @@
   background-color: rgba(200, 180, 130, 0.12);
 }
 
-/* 分割虚线：Notion 文档式 */
-.notion-divider {
-  border-top: 1px dashed var(--notion-hairline-strong);
-}
-
-.dark .notion-divider {
-  border-top-color: #454545;
-}
-
 /* 金色渐变文字（英雄卡年份等）：把渐变收进一个类，
    让标题能保持单行内联写法（不插入空格） */
 .text-gold-gradient {
@@ -240,4 +208,17 @@
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
+}
+
+/* 银灰渐变文字（亚军）：浅色底（淡金 / 黄）上用更深的银灰保证可读性，
+   深色底再换回亮银。 */
+.text-silver-gradient {
+  background-image: linear-gradient(to right, #7f8a99, #566070 50%, #3f4753);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.dark .text-silver-gradient {
+  background-image: linear-gradient(to right, #94a3b8, #e2e8f0 50%, #64748b);
 }

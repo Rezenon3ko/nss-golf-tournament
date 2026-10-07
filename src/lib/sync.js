@@ -8,8 +8,8 @@ export const SYNC_ROW_KEY = 'main'
 // 防抖：连续操作（如批量改 DDL、连续判负）合并成一次写入
 export const WRITE_DEBOUNCE_MS = 300
 
-export const RETRY_BASE_MS = 1000
-export const RETRY_MAX_MS = 30000
+const RETRY_BASE_MS = 1000
+const RETRY_MAX_MS = 30000
 
 // 第 attempt 次失败后等待多久再试（1 → 1s，2 → 2s，… 上限 30s）
 export function nextRetryDelay(attempt, base = RETRY_BASE_MS, max = RETRY_MAX_MS) {
@@ -25,7 +25,7 @@ function codeOf(error) {
   return String(error?.code || '')
 }
 
-// 老库未执行新版 schema.sql（缺 revision 列）时，降级为覆盖式写入
+// 老库未执行新版 schema-v2.sql（缺 revision 列）时，降级为覆盖式写入
 export function isMissingRevisionColumn(error) {
   if (!error) return false
   return codeOf(error) === '42703' || /column .*revision.* does not exist/i.test(messageOf(error))

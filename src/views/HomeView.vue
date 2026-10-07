@@ -118,9 +118,11 @@ const champion = computed(() => store.playerById(store.championId))
       />
     </div>
 
-    <div v-if="store.championId && champion" class="notion-banner-yellow mb-6 p-6 text-center">
+    <div v-if="store.championId && champion" class="notion-banner-gold mb-6 p-6 text-center">
       <BaseIcon :path="mdiTrophy" size="40" class="mx-auto mb-2 text-[#b45309]" />
-      <p class="mb-1 text-sm font-semibold text-[#7c5200] dark:text-[#d8c48a]">🏆 2026 冠军</p>
+      <p class="mb-1 text-sm font-semibold text-[#7c5200] dark:text-[#d8c48a]">
+        🏆 {{ seasonName ? `${seasonName} 冠军` : '冠军' }}
+      </p>
       <p
         class="bg-linear-to-r from-[#f7e7b0] via-[#c9a24b] to-[#8c6d1f] bg-clip-text text-3xl font-black text-transparent"
       >
@@ -128,9 +130,7 @@ const champion = computed(() => store.playerById(store.championId))
       </p>
       <template v-if="store.runnerUpId">
         <p class="mt-3 text-sm font-semibold text-[#7c5200]/80 dark:text-[#d8c48a]/80">🥈 亚军</p>
-        <p
-          class="bg-linear-to-r from-[#94a3b8] via-[#e2e8f0] to-[#64748b] bg-clip-text text-2xl font-bold text-transparent"
-        >
+        <p class="text-silver-gradient text-2xl font-bold">
           {{ store.playerName(store.runnerUpId) }}
         </p>
       </template>

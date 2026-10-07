@@ -1,6 +1,6 @@
 # NSS高尔夫锦标赛赛况记录网站
 
-基于《NSS高尔夫锦标赛比赛规则》的 16 人高尔夫锦标赛赛况记录网站：从抽签分组、小组赛积分、淘汰赛对阵，到赛果与证据管理，一站完成。主办方口令登录后可编辑，选手与游客只读。
+基于《NSS高尔夫锦标赛比赛规则》的 16 人高尔夫锦标赛赛况记录网站：从抽签分组、小组赛积分、淘汰赛对阵，到赛果记录与操作日志，一站完成。主办方口令登录后可编辑，选手与游客只读。
 
 ## 功能
 
@@ -17,9 +17,9 @@
 **管理端（主办方）**
 
 - 选手与分组：名单管理、加密级随机抽签（crypto.getRandomValues）并留可验证记录、约束校验
-- 赛果录入：BO3/BO5、相对标准杆记分、平局 SD 胜者、掉线合并登记、截图链接
+- 赛果录入：BO3/BO5、相对标准杆记分、平局 SD 胜者与自动晋级
 - DDL 与逾期：每周日 23:59 预设，逾期判负（A负 / B负 / 双方负 / 延期）、群通知文案
-- 证据与日志：赛果截图、掉线证据留档，操作日志可追溯
+- 日志记录：主办方关键操作留痕，全程可追溯（赛果在群聊分享，网站不收集证据）
 - 数据统计与导出：SD 之王、PB 之星（与报名时填的历史最佳对比）、群聊分享文案（最终结果 /
   对阵文本）与全部数据 JSON
 - 赛季管理：新建 / 复制上届名单与 DDL / 设为当前 / 归档（归档后只读）/ 删除未启用的赛季（多表模式）
@@ -62,23 +62,22 @@ CI：GitHub Actions 在 push / PR 时执行 `lint` + `test` + `build`（见 `.gi
 
 ## Supabase 配置
 
-项目有两套数据模型，SQL 脚本按需要执行（都能重复执行）：
+数据库脚本（都能重复执行）：
 
 | 脚本 | 作用 | 什么时候需要 |
 |---|---|---|
-| `supabase/schema.sql` | `tournament_state` 单文档表 + RLS + 头像 Storage bucket `avatars` | **始终需要**（单文档模式、头像、回滚备份都靠它） |
-| `supabase/schema-v2.sql` | 多表结构（seasons / players / matches …）+ RLS + Realtime 发布 | 使用多表模式时 |
+| `supabase/schema-v2.sql` | 表结构：多表（seasons / players / matches …）+ 单文档表 `tournament_state` + 头像 Storage bucket `avatars` + RLS + Realtime 发布 | **始终需要**（原 `schema.sql` 已退役，功能并入本文件） |
 | `supabase/rpc-v2.sql` | 多表模式的写入函数（赛季管理、录赛果、发布分组等） | 使用多表模式时 |
 
-1. SQL Editor 执行 `supabase/schema.sql`（游客只读、登录用户可写；同时建好头像 bucket）。
-2. 需要多表模式（多届赛事 + 观众端实时更新）时，再执行 `supabase/schema-v2.sql` 与
-   `supabase/rpc-v2.sql`，然后按「[多表模式](#多表模式可选)」一节切换。
+1. SQL Editor 依次执行 `supabase/schema-v2.sql` 与 `supabase/rpc-v2.sql`
+   （建表 + 事务函数；游客只读、登录用户可写，同时建好头像 bucket）。
+2. 按「[多表模式](#多表模式可选)」一节切换数据模型。
 3. **Authentication → Users → Add user** 创建主办方账号（勾选 Auto Confirm User）。
 4. 建议关闭公开注册：Authentication → Providers → Email → Allow new users to sign up 关掉。
 5. 复制 `.env.example` 为 `.env` 填入项目信息（anon key 为公开值，可放心放在前端）。
 
 > 云端首次写入会在主办方登录后自动触发；本地已有数据会同步到云端。
-> 已经建过表的老项目，请重新执行一次 `supabase/schema.sql`（幂等）以补上 `revision` /
+> 已经建过表的老项目，请重新执行一次 `supabase/schema-v2.sql`（幂等）以补上 `revision` /
 > `updated_at` / `updated_by` 三列与两个触发器（写入时盖章版本号与时间，首次插入也有）；
 > 执行 `supabase/rpc-v2.sql`（幂等）则用于升级多表模式的事务函数（例如归档只读、删除赛季）。
 
@@ -111,8 +110,8 @@ Supabase Dashboard → Storage → `avatars` 里对照赛事数据手动删除�
 - **归档 = 只读锁定**：归档赛季的所有写入会被事务函数拒绝（提示需先取消归档），后台顶部会
   常驻只读横幅，编辑类按钮置灰；改名、设为当前、取消归档本身不受限制。
 - **删除赛季**：仅允许删除「非当前、非归档」的赛季（例如建错的空赛季），会级联删除该赛季的
-  名单 / 赛程 / 赛果 / 证据 / 日志且不可恢复，删除前有二次确认。
-- 旧文档备份仍然写入 `tournament_state`，所以 `schema.sql` 在多表模式下也不要删。
+  名单 / 赛程 / 赛果 / 日志且不可恢复，删除前有二次确认。
+- 旧文档备份仍然写入 `tournament_state`（与头像 bucket 一起由 `schema-v2.sql` 创建），不要删除。
 
 ## 数据与重置
 
@@ -163,9 +162,8 @@ src/
 ├── config.js       # 站点配置与环境变量读取
 └── router/         # 路由与权限守卫
 supabase/
-├── schema.sql      # 单文档表 + 头像 Storage（始终需要）
-├── schema-v2.sql   # 多表结构 + RLS + Realtime 发布（多表模式）
-└── rpc-v2.sql      # 事务函数：赛季 / 赛果 / 分组 / 证据等写入（多表模式）
+├── schema-v2.sql   # 表结构：多表 + 单文档表 + 头像 Storage + RLS + Realtime（唯一需要执行的建表脚本）
+└── rpc-v2.sql      # 事务函数：赛季 / 赛果 / 分组等写入（多表模式）
 scripts/
 └── migrate-to-tables.mjs   # 旧文档 → 多表迁移、对账（--dry-run / --apply / --verify）
 ```
@@ -181,7 +179,7 @@ scripts/
 - 单局 9 洞平局进入突然死亡（SD）：新开一局逐洞比较，先领先者胜。
 - 一旦有人先到 2 局（BO3）/ 3 局（BO5），比赛即结束；之后误填的局**不计入**胜负与净胜杆，
   录入界面会标注「不计入」，原始数据仍原样保留。
-- 掉线：已完成洞数保留，重赛剩余洞数合并计算，截图/录屏留档。
+- 掉线：已完成洞数保留，重赛剩余洞数合并计算，截图 / 录屏发送至比赛群。
 
 ## License
 

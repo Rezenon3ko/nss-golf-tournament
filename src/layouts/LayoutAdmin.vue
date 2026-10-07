@@ -59,12 +59,17 @@ function logout() {
           >
             <BaseIcon :path="sidebarOpen ? mdiClose : mdiMenu" size="24" />
           </button>
-          <span class="flex items-center gap-2 font-bold">
+          <!-- 后台首页入口：原来在侧栏，现在收敛到顶栏标题上 -->
+          <RouterLink
+            to="/admin"
+            title="后台首页"
+            class="flex items-center gap-2 rounded-md px-1 py-1 font-bold hover:bg-[#f0eeec] dark:hover:bg-[#3d3d3d]"
+          >
             <GolfLogo :size="32" />
             <span class="text-[#37352f] dark:text-[#e6e6e6]"
               ><span class="hidden sm:inline">{{ siteName }} · </span>主办方后台</span
             >
-          </span>
+          </RouterLink>
         </div>
         <div class="flex items-center gap-1">
           <div class="hidden lg:block">

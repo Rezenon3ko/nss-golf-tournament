@@ -289,6 +289,33 @@ test('小组没全部结束前，八强只显示预计对位', async () => {
   assert.equal(qf2.playerAId, null)
 })
 
+test('淘汰赛 id 确定式命名：ko-阶段-签位，决赛固定 ko-final', async () => {
+  const groups = ['A', 'B', 'C', 'D']
+  const players = groups.flatMap((g) =>
+    [1, 2, 3, 4].map((n) => player(`${g.toLowerCase()}${n}`, g)),
+  )
+  const matches = groups.flatMap((g) => {
+    const group = g.toLowerCase()
+    return completeGroup(g, [`${group}1`, `${group}2`, `${group}3`, `${group}4`])
+  })
+  const store = await seedStore({ players, matches })
+  prepareKnockout(store)
+
+  const ids = store.matches
+    .filter((m) => m.stage !== 'group')
+    .map((m) => m.id)
+    .sort()
+  assert.deepEqual(ids, [
+    'ko-final',
+    'ko-qf-1',
+    'ko-qf-2',
+    'ko-qf-3',
+    'ko-qf-4',
+    'ko-sf-1',
+    'ko-sf-2',
+  ])
+})
+
 test('淘汰赛逐轮晋级并决出冠军与亚军', async () => {
   const ids = ['A', 'B', 'C', 'D']
   const players = ids.flatMap((g) => [1, 2, 3, 4].map((n) => player(`${g.toLowerCase()}${n}`, g)))

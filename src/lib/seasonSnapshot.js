@@ -29,7 +29,7 @@ import {
 
 export { normalizeDdl }
 
-export const DDL_KEY_ORDER = ['group1', 'group2', 'group3', 'qf', 'sf', 'final']
+const DDL_KEY_ORDER = ['group1', 'group2', 'group3', 'qf', 'sf', 'final']
 
 const GROUP_ORDER = ['A', 'B', 'C', 'D']
 const TIER_KEYS = ['1', '2', '3', '4']
@@ -134,8 +134,13 @@ export function rowsToSnapshot(rows = {}, { adminAvatar = null } = {}) {
     .sort((a, b) => String(a.id).localeCompare(String(b.id)))
     .map(rowToEvidence)
 
+  // 操作日志按时间从新到旧（与单文档模式的 unshift 顺序一致），后台「日志记录」页直接渲染
   const logs = [...(rows.logs || [])]
-    .sort((a, b) => String(a.id).localeCompare(String(b.id)))
+    .sort(
+      (a, b) =>
+        new Date(b.at).getTime() - new Date(a.at).getTime() ||
+        String(b.id).localeCompare(String(a.id)),
+    )
     .map(rowToLog)
 
   return clean({

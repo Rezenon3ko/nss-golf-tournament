@@ -208,6 +208,33 @@ test('镜像同步：按差异调用 RPC，成功后推进基线且重复同步�
   assert.equal(repository.calls.length, count, '无差异时不再调用 RPC')
 })
 
+test('镜像基线是深拷贝：原地修改（push / 字段赋值）也能被检测并同步', async () => {
+  const repository = createFakeRepository()
+  const controller = createMirrorController({
+    repository,
+    storage: createFakeStorage(),
+    baselineKey: 'mirror.test',
+  })
+
+  const state = baseState()
+  controller.setBaseline(state)
+  assert.equal(controller.pending(state), false)
+
+  // 模拟 store 的原地修改：日志 unshift、比赛字段赋值、选手改名
+  state.logs.unshift({ id: 'lg-2', time: 1750000001000, by: '主办方', message: '清空手动分组选择' })
+  state.matches[0].status = 'complete'
+  state.players[0].name = '甲改'
+
+  assert.equal(controller.pending(state), true, '原地修改必须被检测到')
+  await controller.sync(state)
+
+  const names = repository.calls.map(([name]) => name)
+  assert.ok(names.includes('applyChangeset'), '比赛改动要推给各表')
+  assert.ok(names.includes('appendLogs'), '新增日志要推给各表')
+  assert.ok(names.includes('upsertPlayer'), '选手改名要推给各表')
+  assert.equal(controller.pending(state), false, '同步后基线已推进')
+})
+
 test('镜像同步：发布分组 / 重置赛事走整体 RPC，跳过逐行赛程差异', async () => {
   const repository = createFakeRepository()
   const controller = createMirrorController({

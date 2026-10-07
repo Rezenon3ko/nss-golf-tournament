@@ -17,7 +17,7 @@ const AdminView = () => import('@/views/AdminView.vue')
 const AdminPlayersView = () => import('@/views/AdminPlayersView.vue')
 const AdminMatchesView = () => import('@/views/AdminMatchesView.vue')
 const AdminDdlView = () => import('@/views/AdminDdlView.vue')
-const AdminEvidenceView = () => import('@/views/AdminEvidenceView.vue')
+const AdminLogsView = () => import('@/views/AdminLogsView.vue')
 const AdminStatsView = () => import('@/views/AdminStatsView.vue')
 const SeasonsView = () => import('@/views/SeasonsView.vue')
 const AdminSeasonsView = () => import('@/views/AdminSeasonsView.vue')
@@ -43,7 +43,7 @@ const adminLoaders = [
   AdminPlayersView,
   AdminMatchesView,
   AdminDdlView,
-  AdminEvidenceView,
+  AdminLogsView,
   AdminStatsView,
   AdminSeasonsView,
 ]
@@ -154,10 +154,15 @@ const routes = [
         meta: { title: 'DDL 与逾期' },
       },
       {
+        path: 'logs',
+        name: 'admin-logs',
+        component: AdminLogsView,
+        meta: { title: '日志记录' },
+      },
+      {
+        // 原「证据与日志」页已改为日志记录，保留跳转避免旧收藏失效
         path: 'evidence',
-        name: 'admin-evidence',
-        component: AdminEvidenceView,
-        meta: { title: '证据与日志' },
+        redirect: { name: 'admin-logs' },
       },
       {
         path: 'stats',

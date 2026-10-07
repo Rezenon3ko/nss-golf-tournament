@@ -151,7 +151,7 @@ async function doPublish() {
 async function doReset() {
   const ok = await feedback.confirm({
     title: '重置赛事',
-    message: '确认重置赛事？将清空全部赛程、赛果与证据（保留选手名单）。此操作不可撤销。',
+    message: '确认重置赛事？将清空全部赛程与赛果（保留选手名单）。此操作不可撤销。',
     confirmLabel: '重置赛事',
     danger: true,
   })

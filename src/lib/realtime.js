@@ -6,7 +6,7 @@
  * 断线由 phoenix 自动重连；重新订阅成功时通过 onStatus 通知调用方做全量补偿。
  */
 
-export const REALTIME_TABLES = [
+const REALTIME_TABLES = [
   'seasons',
   'players',
   'matches',

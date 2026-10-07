@@ -24,7 +24,7 @@ export const backend = {
   readError: null,
   writeError: null,
   missingRevisionColumn: false,
-  // 模拟 schema.sql 里的 before update 触发器：revision 由数据库自己推进
+  // 模拟 schema-v2.sql 里的 before update 触发器：revision 由数据库自己推进
   serverTrigger: false,
   // 模拟 RLS 策略未放行：UPDATE 命中 0 行且不报错（PostgREST 的真实行为）
   rlsBlocksUpdate: false,

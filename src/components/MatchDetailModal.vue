@@ -34,9 +34,6 @@ const stageLabel = computed(() => {
   }
   return store.STAGE_LABELS[props.match.stage] || ''
 })
-
-const relatedEvidence = computed(() => store.evidence.filter((e) => e.matchId === props.match.id))
-
 function setLabel(set) {
   const a = set.a
   const b = set.b
@@ -120,65 +117,6 @@ function setLabel(set) {
         </tbody>
       </table>
     </div>
-
-    <div
-      v-if="match.disconnect"
-      class="notion-tint-yellow mb-4 rounded-xl p-4 text-sm dark:bg-[#2b2415]"
-    >
-      <p class="mb-1 font-bold text-[#793400] dark:text-[#d9bf7e]">掉线登记</p>
-      <p>
-        掉线发生局：第 {{ match.disconnect.setIndex + 1 }} 局 · 已完成洞数：{{
-          match.disconnect.holesCompleted
-        }}
-      </p>
-      <p v-if="match.disconnect.note">{{ match.disconnect.note }}</p>
-      <p v-if="match.disconnect.links?.length" class="mt-1">
-        证据：
-        <a
-          v-for="(link, i) in match.disconnect.links"
-          :key="i"
-          :href="link"
-          target="_blank"
-          rel="noopener"
-          class="text-[#0075de] underline"
-        >
-          {{ link }}
-        </a>
-      </p>
-    </div>
-
-    <h4 class="mb-2 text-sm font-bold text-[#5d5b54] dark:text-[#a0a0a0]">结果截图</h4>
-    <div v-if="match.resultLinks?.length" class="mb-4 flex flex-col gap-1">
-      <a
-        v-for="(link, i) in match.resultLinks"
-        :key="i"
-        :href="link"
-        target="_blank"
-        rel="noopener"
-        class="text-sm text-[#0075de] underline"
-      >
-        {{ link }}
-      </a>
-    </div>
-    <p v-else class="mb-4 text-sm text-[#a4a097]">暂无截图</p>
-
-    <template v-if="relatedEvidence.length">
-      <h4 class="mb-2 text-sm font-bold text-[#5d5b54] dark:text-[#a0a0a0]">赛事证据库</h4>
-      <div class="mb-4 flex flex-col gap-1">
-        <a
-          v-for="ev in relatedEvidence"
-          :key="ev.id"
-          :href="ev.url"
-          target="_blank"
-          rel="noopener"
-          class="text-sm text-[#0075de] underline"
-        >
-          {{ ev.name }}（{{
-            ev.type === 'result' ? '赛果截图' : ev.type === 'disconnect' ? '掉线证据' : '其他'
-          }}）
-        </a>
-      </div>
-    </template>
 
     <template v-if="match.log?.length">
       <h4 class="mb-2 text-sm font-bold text-[#5d5b54] dark:text-[#a0a0a0]">操作记录</h4>

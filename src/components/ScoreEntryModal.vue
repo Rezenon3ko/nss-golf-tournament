@@ -23,14 +23,7 @@ const need = isBO5 ? 3 : 2
 
 const form = reactive({
   sets: props.match.sets.map((s) => ({ a: s.a, b: s.b, sdWinner: s.sdWinner })),
-  resultLinks: [...(props.match.resultLinks || [])],
-  hasDisconnect: !!props.match.disconnect,
-  disconnect: props.match.disconnect
-    ? { ...props.match.disconnect, links: [...(props.match.disconnect.links || [])] }
-    : { setIndex: 0, holesCompleted: 0, note: '', links: [] },
 })
-
-const newLink = ref('')
 
 // 只有该局平分（a === b）才允许选择 SD 胜者；不平分时自动清空
 watch(
@@ -42,7 +35,6 @@ watch(
     }
   },
 )
-const newDisconnectLink = ref('')
 const error = ref('')
 const success = ref('')
 
@@ -72,30 +64,6 @@ const pointsPreview = computed(() => {
   return `${store.playerName(w)} 得 2 分，对手得 1 分`
 })
 
-function addLink() {
-  const value = newLink.value.trim()
-  if (value) {
-    form.resultLinks.push(value)
-    newLink.value = ''
-  }
-}
-
-function removeLink(index) {
-  form.resultLinks.splice(index, 1)
-}
-
-function addDisconnectLink() {
-  const value = newDisconnectLink.value.trim()
-  if (value) {
-    form.disconnect.links.push(value)
-    newDisconnectLink.value = ''
-  }
-}
-
-function removeDisconnectLink(index) {
-  form.disconnect.links.splice(index, 1)
-}
-
 function save() {
   error.value = ''
   success.value = ''
@@ -119,8 +87,6 @@ function save() {
 
   const result = store.saveMatch(props.match.id, {
     sets: form.sets,
-    resultLinks: form.resultLinks,
-    disconnect: form.hasDisconnect ? form.disconnect : null,
   })
 
   if (result && result.ok === false) {
@@ -237,89 +203,6 @@ function save() {
       已由第 {{ ignoredFrom }} 局决出胜负（{{ isBO5 ? '五局三胜' : '三局两胜' }}）， 因此第
       {{ ignoredFrom + 1 }} 局起不计入胜负与净胜杆；数据会原样保留，便于后续修正。
     </p>
-
-    <h4 class="mb-2 text-sm font-bold text-[#5d5b54] dark:text-[#a0a0a0]">结果截图链接</h4>
-    <div class="mb-4">
-      <div class="mb-2 flex flex-wrap gap-2">
-        <input
-          v-model="newLink"
-          type="url"
-          placeholder="https://...（截图或录屏链接）"
-          class="flex-1 rounded-md border border-[#c8c4be] px-3 py-2 dark:border-[#454545] dark:bg-[#333333]"
-        />
-        <BaseButton label="添加" color="whiteDark" small @click="addLink" />
-      </div>
-      <div v-if="form.resultLinks.length" class="flex flex-col gap-1">
-        <div
-          v-for="(link, i) in form.resultLinks"
-          :key="i"
-          class="notion-card-soft flex items-center justify-between gap-2 rounded px-3 py-1.5 text-sm"
-        >
-          <span class="truncate text-[#0075de]">{{ link }}</span>
-          <button type="button" class="text-[#e03131]" @click="removeLink(i)">移除</button>
-        </div>
-      </div>
-    </div>
-
-    <h4 class="mb-2 text-sm font-bold text-[#5d5b54] dark:text-[#a0a0a0]">
-      掉线登记
-      <label class="ms-2 font-normal">
-        <input v-model="form.hasDisconnect" type="checkbox" class="me-1" />
-        本场有掉线情况
-      </label>
-    </h4>
-    <div v-if="form.hasDisconnect" class="notion-tint-yellow mb-4 rounded-xl p-4 dark:bg-[#2b2415]">
-      <div class="mb-2 grid gap-2 sm:grid-cols-2">
-        <div>
-          <label class="mb-1 block text-xs font-semibold">掉线发生局</label>
-          <select
-            v-model.number="form.disconnect.setIndex"
-            class="w-full rounded-md border border-[#c8c4be] px-2 py-1.5 pr-8 dark:border-[#454545] dark:bg-[#333333]"
-          >
-            <option v-for="(set, i) in form.sets" :key="i" :value="i">第 {{ i + 1 }} 局</option>
-          </select>
-        </div>
-        <div>
-          <label class="mb-1 block text-xs font-semibold">已完成洞数（掉线当洞不计）</label>
-          <input
-            v-model.number="form.disconnect.holesCompleted"
-            type="number"
-            min="0"
-            max="9"
-            class="w-full rounded-md border border-[#c8c4be] px-2 py-1.5 pr-8 dark:border-[#454545] dark:bg-[#333333]"
-          />
-        </div>
-      </div>
-      <p class="mb-2 text-xs text-[#793400] dark:text-[#d9bf7e]">
-        剩余需重赛洞数：{{ 9 - (form.disconnect.holesCompleted || 0) }}（结果合并计算）
-      </p>
-      <textarea
-        v-model="form.disconnect.note"
-        placeholder="掉线情况说明"
-        class="mb-2 w-full rounded-md border border-[#c8c4be] px-3 py-2 text-sm dark:border-[#454545] dark:bg-[#333333]"
-      ></textarea>
-      <div class="flex gap-2">
-        <input
-          v-model="newDisconnectLink"
-          type="url"
-          placeholder="掉线截图/录屏链接"
-          class="flex-1 rounded-md border border-[#c8c4be] px-3 py-2 dark:border-[#454545] dark:bg-[#333333]"
-        />
-        <BaseButton label="添加" color="whiteDark" small @click="addDisconnectLink" />
-      </div>
-      <div v-if="form.disconnect.links.length" class="mt-2 flex flex-col gap-1">
-        <div
-          v-for="(link, i) in form.disconnect.links"
-          :key="i"
-          class="notion-card-soft flex items-center justify-between gap-2 px-3 py-1.5 text-sm"
-        >
-          <span class="truncate text-[#0075de]">{{ link }}</span>
-          <button type="button" class="text-[#e03131]" @click="removeDisconnectLink(i)">
-            移除
-          </button>
-        </div>
-      </div>
-    </div>
 
     <div class="mb-4 rounded-xl bg-[#e5f6ea] p-4 text-sm dark:bg-[#142a1e]">
       <p class="font-semibold text-[#1aae39] dark:text-[#7ec8a0]">

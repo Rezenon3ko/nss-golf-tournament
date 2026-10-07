@@ -31,7 +31,6 @@
   --color-group-d-accent: #7a5c46;
 }
 
-@import './_keyframes.css';
 @import './_scrollbars.css';
 @import './_table.css';
 

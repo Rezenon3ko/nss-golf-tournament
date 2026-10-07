@@ -168,6 +168,22 @@ test('读取：整季数据包组装成 store 快照（含递补亚军）', asyn
   assert.equal(snapshot.adminAvatar, 'https://x/admin.jpg')
 })
 
+test('读取：操作日志按时间从新到旧排列', async () => {
+  const tables = sampleTables()
+  tables.logs = [
+    { id: 'lg-1', season_id: 's-2026', at: '2026-08-01T00:00:00Z', message: '旧日志' },
+    { id: 'lg-2', season_id: 's-2026', at: '2026-09-01T00:00:00Z', message: '新日志' },
+  ]
+  const bundle = await fetchSeasonBundle(createFakeClient(tables), 's-2026')
+  const snapshot = rowsToSnapshot(bundle, {})
+
+  assert.deepEqual(
+    snapshot.logs.map((log) => log.message),
+    ['新日志', '旧日志'],
+    '最新的日志排在最前',
+  )
+})
+
 test('读取：没有赛季时返回 null，不抛错', async () => {
   const client = createFakeClient({ seasons: [] })
   assert.equal(await fetchCurrentSeason(client, null), null)

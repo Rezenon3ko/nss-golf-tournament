@@ -68,6 +68,12 @@ function uid(prefix) {
   return `${prefix}-${now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`
 }
 
+// 淘汰赛 id：ko-<阶段>-<签位>（决赛固定 ko-final），与小组赛 gm-<组>-<轮>-<序> 风格一致。
+// matches 主键是 (season_id, id)，同名 id 在不同赛季互不冲突
+function koMatchId(stage, order) {
+  return stage === 'final' ? 'ko-final' : `ko-${stage}-${order}`
+}
+
 // 加密级随机整数 [0, max)：拒绝采样消除模偏差
 function secureRandomInt(max) {
   const limit = Math.floor(0x100000000 / max) * max
@@ -441,7 +447,7 @@ function knockoutSeedMatches(state) {
 function createKnockoutMatch(state, seed, exists) {
   if (exists) return exists
   const match = {
-    id: uid('ko'),
+    id: koMatchId(seed.stage, seed.order),
     stage: seed.stage,
     groupId: null,
     round: null,
@@ -452,8 +458,6 @@ function createKnockoutMatch(state, seed, exists) {
     status: 'pending',
     forfeitBy: null,
     winnerId: null,
-    resultLinks: [],
-    disconnect: null,
     createdAt: now(),
     updatedAt: now(),
     log: [],
@@ -645,6 +649,7 @@ export const useTournamentStore = defineStore('tournament', () => {
   const matches = ref([])
   const ddlRounds = ref([])
   const tiebreakResolutions = ref({})
+  // 证据库已下线：字段仅用于旧快照 / 多表对账兼容，不再新增
   const evidence = ref([])
   const logs = ref([])
   const championId = ref(null)
@@ -702,6 +707,8 @@ export const useTournamentStore = defineStore('tournament', () => {
   })
   let mirrorController = null
   let mirrorInFlight = false
+  // 同步进行中又收到新改动时置位：本轮结束后立刻补推一轮
+  let mirrorRerunQueued = false
   let mirrorRetryTimer = null
   let mirrorRetryAttempt = 0
   // 是否已成功从多表读取并挂好仓储；未就绪时回退单文档模式
@@ -921,19 +928,39 @@ export const useTournamentStore = defineStore('tournament', () => {
   }
 
   // 旧文档只作回滚备份：多表写入成功后异步补写，失败不影响主流程。
+  // 只写「这一轮已经同步进各表的状态」，避免备份文档跑到表前面（对账会不一致）。
   // 这里不做版本校验（备份允许覆盖），revision / 时间戳由数据库触发器盖章，
   // 旧版客户端仍能因此检测到「别处改了数据」。
-  async function writeDocBackup() {
+  async function writeDocBackup(doc) {
     if (!isSupabaseConfigured()) return
     try {
       const supabase = await getSupabase()
       if (!supabase) return
       const { error } = await supabase
         .from('tournament_state')
-        .upsert({ key: SYNC_ROW_KEY, value: snapshot() }, { onConflict: 'key' })
+        .upsert({ key: SYNC_ROW_KEY, value: doc }, { onConflict: 'key' })
       if (error) throw error
     } catch (err) {
       console.warn('旧文档备份写入失败（不影响多表模式）：', err?.message || err)
+    }
+  }
+
+  // 镜像状态 → 备份文档形状（与 snapshot() 一致，去掉多表专用的 runnerUpId 顶层字段）。
+  // 深拷贝：state 里是活引用（store 原地修改），备份文档只能写「同步起点」的内容，
+  // 否则同步期间的新改动会先落进备份文档，对账时表现为「文档比表新」。
+  function docFromMirrorState(state) {
+    const plain = JSON.parse(JSON.stringify(state))
+    return {
+      players: plain.players,
+      draft: plain.draft,
+      matches: plain.matches,
+      ddlRounds: plain.ddlRounds,
+      tiebreakResolutions: plain.tiebreakResolutions,
+      evidence: plain.evidence,
+      logs: plain.logs,
+      championId: plain.championId,
+      drawHistory: plain.drawHistory,
+      adminAvatar: adminAvatar.value ?? null,
     }
   }
 
@@ -943,7 +970,12 @@ export const useTournamentStore = defineStore('tournament', () => {
   }
 
   async function flushMulti() {
-    if (!mirrorActive() || mirrorInFlight) return
+    if (!mirrorActive()) return
+    if (mirrorInFlight) {
+      // 同步进行中又来了新改动：本轮结束后立刻补推，避免改动只写进本机缓存与备份文档
+      mirrorRerunQueued = true
+      return
+    }
     if (!cloudWriteEnabled.value) return
 
     const state = mirrorStateView()
@@ -962,17 +994,24 @@ export const useTournamentStore = defineStore('tournament', () => {
       mirrorRetryAttempt = 0
       mirror.status = 'idle'
       mirror.message = ''
-      sync.pendingChanges = false
       sync.status = 'idle'
       sync.lastSyncedAt = Date.now()
+      if (mirrorController.pending(mirrorStateView())) {
+        // 同步期间状态又变了：保留待同步标记，本轮结束后补推
+        mirrorRerunQueued = true
+        sync.pendingChanges = true
+      } else {
+        sync.pendingChanges = false
+      }
       persistLocal()
-      void writeDocBackup()
+      void writeDocBackup(docFromMirrorState(state))
       if (realtimeRefetchPending) {
         realtimeRefetchPending = false
         void refetchSeason()
       }
     } catch (err) {
       console.warn('多表同步失败：', err?.message || err)
+      mirrorRerunQueued = false
       mirror.status = 'error'
       mirror.message = classifyMirrorError(err)
       sync.status = 'idle'
@@ -984,6 +1023,12 @@ export const useTournamentStore = defineStore('tournament', () => {
       }, nextRetryDelay(mirrorRetryAttempt))
     } finally {
       mirrorInFlight = false
+      if (mirrorRerunQueued) {
+        mirrorRerunQueued = false
+        setTimeout(() => {
+          void flushMulti()
+        }, 0)
+      }
     }
   }
 
@@ -1248,7 +1293,7 @@ export const useTournamentStore = defineStore('tournament', () => {
       .maybeSingle()
     if (error) {
       if (sync.supportsRevision && isMissingRevisionColumn(error)) {
-        console.warn('数据库缺少 revision 列，退回覆盖式写入；建议重新执行 supabase/schema.sql')
+        console.warn('数据库缺少 revision 列，退回覆盖式写入；建议重新执行 supabase/schema-v2.sql')
         sync.supportsRevision = false
         return fetchRemoteRow()
       }
@@ -1290,7 +1335,7 @@ export const useTournamentStore = defineStore('tournament', () => {
 
     if (error) {
       if (isMissingRevisionColumn(error)) {
-        console.warn('数据库缺少 revision 列，退回覆盖式写入；建议重新执行 supabase/schema.sql')
+        console.warn('数据库缺少 revision 列，退回覆盖式写入；建议重新执行 supabase/schema-v2.sql')
         sync.supportsRevision = false
         return writeSnapshot(payload)
       }
@@ -1776,8 +1821,6 @@ export const useTournamentStore = defineStore('tournament', () => {
       status: 'pending',
       forfeitBy: null,
       winnerId: null,
-      resultLinks: [],
-      disconnect: null,
       createdAt: now(),
       updatedAt: now(),
       log: [],
@@ -1835,21 +1878,6 @@ export const useTournamentStore = defineStore('tournament', () => {
       b: toNum(s.b),
       sdWinner: s.sdWinner || null,
     }))
-    if (payload.resultLinks !== undefined) {
-      match.resultLinks = payload.resultLinks.filter(Boolean)
-    }
-    if (payload.disconnect) {
-      const toNumOrNull = (v) => (Number.isFinite(Number(v)) ? Number(v) : null)
-      match.disconnect = {
-        setIndex: toNumOrNull(payload.disconnect.setIndex),
-        holesCompleted: toNumOrNull(payload.disconnect.holesCompleted),
-        note: payload.disconnect.note || '',
-        links: (payload.disconnect.links || []).filter(Boolean),
-      }
-    } else {
-      match.disconnect = null
-    }
-
     const wins = winsOf(match)
     const need = needWins(match.stage)
     if (wins.A >= need || wins.B >= need) {
@@ -1939,33 +1967,6 @@ export const useTournamentStore = defineStore('tournament', () => {
     addLog(`${groupId}组同分选手随机抽签确定排名`)
     // 抽签解决后立即重算晋级对阵，八强名额随即填充
     syncKnockoutInternal()
-    persist()
-  }
-
-  // ---------- 证据 ----------
-
-  function addEvidence(payload) {
-    if (guardReadOnly()) return null
-    const item = {
-      id: uid('ev'),
-      matchId: payload.matchId || null,
-      type: payload.type || 'other',
-      url: String(payload.url || '').trim(),
-      name: String(payload.name || '').trim() || '未命名证据',
-      by: payload.by || '主办方',
-      time: now(),
-    }
-    evidence.value.push(item)
-    addLog(`上传证据：${item.name}`)
-    persist()
-    return item
-  }
-
-  function removeEvidence(id) {
-    if (guardReadOnly()) return
-    const item = evidence.value.find((e) => e.id === id)
-    evidence.value = evidence.value.filter((e) => e.id !== id)
-    if (item) addLog(`删除证据：${item.name}`)
     persist()
   }
 
@@ -2109,7 +2110,6 @@ export const useTournamentStore = defineStore('tournament', () => {
     canJudgeForfeit,
     ready,
     init,
-    persist,
     sync,
     mirror,
     seasons,
@@ -2144,8 +2144,6 @@ export const useTournamentStore = defineStore('tournament', () => {
     saveMatch,
     forfeitMatch,
     resolveTiebreak,
-    addEvidence,
-    removeEvidence,
     exportSnapshot,
     playerName,
     playerById,
@@ -2160,7 +2158,6 @@ export const useTournamentStore = defineStore('tournament', () => {
     getStandings,
     matchScore,
     STAGE_LABELS,
-    STATUS_LABELS,
   }
 })
 

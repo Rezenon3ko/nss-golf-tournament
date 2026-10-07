@@ -33,7 +33,7 @@ export async function fetchSeasons(client) {
   )
 }
 
-export async function fetchSeasonById(client, seasonId) {
+async function fetchSeasonById(client, seasonId) {
   const rows = await read(client.from('seasons').select(SEASON_FIELDS).eq('id', seasonId).limit(1))
   return rows[0] || null
 }

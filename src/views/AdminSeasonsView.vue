@@ -139,7 +139,7 @@ async function toggleArchive(season) {
 async function removeSeason(season) {
   const ok = await feedback.confirm({
     title: '删除赛季',
-    message: `将永久删除「${season.name}」及其全部名单、赛程、赛果、证据与日志，无法恢复。确认删除？`,
+    message: `将永久删除「${season.name}」及其全部名单、赛程、赛果与日志，无法恢复。确认删除？`,
     confirmLabel: '永久删除',
     danger: true,
   })

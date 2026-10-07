@@ -5,7 +5,7 @@ import { ref } from 'vue'
  * DDL 倒计时、逾期高亮、赛程列表的逾期判断都读它，
  * 这样页面放着不动也会自己刷新，而不是等下一次操作或手动刷新。
  */
-export const TICK_MS = 30 * 1000
+const TICK_MS = 30 * 1000
 
 export const nowMs = ref(Date.now())
 

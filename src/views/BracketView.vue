@@ -49,9 +49,7 @@ const champion = computed(() => store.playerById(store.championId))
       </p>
       <template v-if="store.runnerUpId">
         <p class="mt-3 text-sm font-semibold text-yellow-700/80 dark:text-[#d8c48a]/80">🥈 亚军</p>
-        <p
-          class="bg-linear-to-r from-[#94a3b8] via-[#e2e8f0] to-[#64748b] bg-clip-text text-2xl font-bold text-transparent"
-        >
+        <p class="text-silver-gradient text-2xl font-bold">
           {{ store.playerName(store.runnerUpId) }}
         </p>
       </template>

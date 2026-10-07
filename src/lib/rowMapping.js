@@ -15,12 +15,12 @@ export function numOrNull(value) {
   return Number.isFinite(n) ? n : null
 }
 
-export function msToIso(value) {
+function msToIso(value) {
   const ms = numOrNull(value)
   return ms === null ? null : new Date(ms).toISOString()
 }
 
-export function isoToMs(value) {
+function isoToMs(value) {
   if (value === null || value === undefined || value === '') return null
   const ms = new Date(String(value).replace(' ', 'T')).getTime()
   return Number.isFinite(ms) ? ms : null

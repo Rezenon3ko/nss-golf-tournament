@@ -71,13 +71,13 @@ lint、单元测试和构建，红了就说明这次改动有问题，先修再�
 
 v4.2 起写入带版本校验（乐观锁），v4.5 起加上审计列，需要数据库补三列 + 两个触发器：
 
-1. Supabase Dashboard → **SQL Editor** → 重新执行一遍 `supabase/schema.sql`（幂等，不会清数据）。
+1. Supabase Dashboard → **SQL Editor** → 重新执行一遍 `supabase/schema-v2.sql`（幂等，不会清数据）。
 2. 重新打开站点，右下角不再出现「数据库未升级」提示即完成。
 
-（若只想补这一部分，单独执行 `supabase/schema.sql` 里 `revision` / `updated_at` / `updated_by`
+（若只想补这一部分，单独执行 `supabase/schema-v2.sql` 第 10 节里 `revision` / `updated_at` / `updated_by`
 三列，以及 `touch_tournament_state`、`init_tournament_state` 两个函数与对应触发器的语句即可。）
 
-v4.6 起头像改为存放在 Storage（bucket `avatars`），重新执行一遍 `supabase/schema.sql` 即会创建。
+v4.6 起头像改为存放在 Storage（bucket `avatars`），重新执行一遍 `supabase/schema-v2.sql` 即会创建。
 新上传的头像由前端直接存入该 bucket，赛事数据里只保留公开 URL（详见 README「头像存储」）。
 如需清理不再被引用的旧头像（换头像、删选手留下的文件），在 Dashboard → Storage → `avatars`
 里对照赛事数据手动删除即可。
@@ -94,7 +94,12 @@ v4.6 起头像改为存放在 Storage（bucket `avatars`），重新执行一遍
 
 之后版本升级时，如果发布说明里提到多表模式的改动（例如归档只读、删除赛季、事务函数调整），
 重新执行一遍 `supabase/rpc-v2.sql` 即可（所有写入函数都在这个文件里，幂等）。
-`supabase/schema.sql` 不要删除也不用改：头像 Storage 与旧文档回滚备份仍然依赖它。
+原 `supabase/schema.sql` 已退役，内容并入 `supabase/schema-v2.sql`（单文档表 + 头像 bucket）；
+重跑一次 `schema-v2.sql` 即可，不需要再执行 `schema.sql`。
+
+> 比赛 id 规范：`matches` 主键为 `(season_id, id)`（按赛季隔离），淘汰赛 id 为
+> `ko-qf-1` … `ko-final` 确定式命名。旧存量数据的一次性改名脚本已执行并清理，
+> 新库直接由 `schema-v2.sql` 建出正确结构，无需额外操作。
 
 安全提醒：`VITE_` 前缀的环境变量会被打包进前端产物，任何 secret 密钥
 （`service_role` 或 `sb_secret_...`）都不要放进前端的 `VITE_*` 变量，也不要提交到仓库。

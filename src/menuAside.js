@@ -1,9 +1,8 @@
 import {
-  mdiViewDashboard,
   mdiAccountGroup,
   mdiGolf,
   mdiCalendarClock,
-  mdiFolderImage,
+  mdiHistory,
   mdiChartBoxOutline,
   mdiCalendar,
   mdiEye,
@@ -11,11 +10,6 @@ import {
 } from '@mdi/js'
 
 export const menuAsideMain = [
-  {
-    to: '/admin',
-    icon: mdiViewDashboard,
-    label: '后台首页',
-  },
   {
     to: '/admin/seasons',
     icon: mdiCalendar,
@@ -37,9 +31,9 @@ export const menuAsideMain = [
     icon: mdiCalendarClock,
   },
   {
-    to: '/admin/evidence',
-    label: '证据与日志',
-    icon: mdiFolderImage,
+    to: '/admin/logs',
+    label: '日志记录',
+    icon: mdiHistory,
   },
   {
     to: '/admin/stats',
