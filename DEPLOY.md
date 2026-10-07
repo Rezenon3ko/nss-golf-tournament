@@ -82,6 +82,20 @@ v4.6 起头像改为存放在 Storage（bucket `avatars`），重新执行一遍
 如需清理不再被引用的旧头像（换头像、删选手留下的文件），在 Dashboard → Storage → `avatars`
 里对照赛事数据手动删除即可。
 
+### 升级到多表模式（可选，v4.11 起）
+
+多表模式支持「多届赛事 + 观众端实时更新」，默认仍是单文档模式，切换步骤：
+
+1. SQL Editor 依次执行 `supabase/schema-v2.sql` 与 `supabase/rpc-v2.sql`（幂等，不影响现网）；
+2. 本项目目录执行 `node scripts/migrate-to-tables.mjs --apply` 导入当前赛季，
+   再执行 `node scripts/migrate-to-tables.mjs --verify` 对账；
+3. 构建环境变量增加 `VITE_DATA_MODEL=multi`（Cloudflare Pages → Settings → Environment
+   variables），重新部署即可。
+
+之后版本升级时，如果发布说明里提到多表模式的改动（例如归档只读、删除赛季、事务函数调整），
+重新执行一遍 `supabase/rpc-v2.sql` 即可（所有写入函数都在这个文件里，幂等）。
+`supabase/schema.sql` 不要删除也不用改：头像 Storage 与旧文档回滚备份仍然依赖它。
+
 安全提醒：`VITE_` 前缀的环境变量会被打包进前端产物，任何 secret 密钥
 （`service_role` 或 `sb_secret_...`）都不要放进前端的 `VITE_*` 变量，也不要提交到仓库。
 

@@ -1,4 +1,4 @@
-# Nintendo Switch Sports高尔夫锦标赛赛况记录网站
+# NSS高尔夫锦标赛赛况记录网站
 
 基于《NSS高尔夫锦标赛比赛规则》的 16 人高尔夫锦标赛赛况记录网站：从抽签分组、小组赛积分、淘汰赛对阵，到赛果与证据管理，一站完成。主办方口令登录后可编辑，选手与游客只读。
 
@@ -22,7 +22,7 @@
 - 证据与日志：赛果截图、掉线证据留档，操作日志可追溯
 - 数据统计与导出：SD 之王、PB 之星（与报名时填的历史最佳对比）、群聊分享文案（最终结果 /
   对阵文本）与全部数据 JSON
-- 赛季管理：新建 / 复制上届名单与 DDL / 设为当前 / 归档（多表模式）
+- 赛季管理：新建 / 复制上届名单与 DDL / 设为当前 / 归档（归档后只读）/ 删除未启用的赛季（多表模式）
 
 其他：深色模式（首屏不闪白）、真实选手头像（压缩后存入 Supabase Storage，赛事数据里只留 URL）、
 移动端适配、应用内提示与确认弹窗（不阻塞操作，弹窗支持 ESC 关闭与键盘焦点循环）。
@@ -30,9 +30,10 @@
 ## 技术栈
 
 - Vue 3 + Vite + Tailwind CSS 4 + Pinia + vue-router
-- Supabase（Postgres + 登录鉴权 + Storage，RLS 行级安全）
-  - 客户端用 `@supabase/auth-js` + `postgrest-js` + `storage-js` 三个子包自行组装
-    （见 `src/lib/supabase.js`），不引入未使用的 Realtime / Functions
+- Supabase（Postgres + 登录鉴权 + Storage + Realtime，RLS 行级安全）
+  - 客户端按需组装：常驻 `@supabase/auth-js` + `postgrest-js` + `storage-js`
+    （见 `src/lib/supabase.js`）；多表模式再动态加载 `@supabase/realtime-js`（独立 chunk，
+    仅观众端实时订阅时下载），不引入未使用的 Functions
 - 界面基础：[Admin One Tailwind Vue 3](https://justboil.me/tailwind-admin-templates/free-vue-dashboard/)（MIT）
 
 ## 快速开始
@@ -49,7 +50,8 @@ npm run lint
 
 测试覆盖：云同步（版本冲突、写入失败重试、读不到云端时的降级、老库兼容）、
 计分截断（先得 2/3 局即封盘）、排名 tie-break（积分 → 相互战绩 → 净胜局 → 净胜杆 → 抽签）、
-淘汰赛晋级/轮空/半区作废/递补亚军、DDL 倒计时与逾期判定。
+淘汰赛晋级/轮空/半区作废/递补亚军、DDL 倒计时与逾期判定；
+多表部分另覆盖迁移映射与往返对账、镜像差异同步、多表读取、Realtime 事件合并、赛季 RPC 参数。
 
 CI：GitHub Actions 在 push / PR 时执行 `lint` + `test` + `build`（见 `.github/workflows/ci.yml`）。
 
@@ -60,15 +62,25 @@ CI：GitHub Actions 在 push / PR 时执行 `lint` + `test` + `build`（见 `.gi
 
 ## Supabase 配置
 
-1. 在 Supabase Dashboard → **SQL Editor** 执行 `supabase/schema.sql`（建表 + RLS：游客只读、登录用户可写）。
-2. **Authentication → Users → Add user** 创建主办方账号（勾选 Auto Confirm User）。
-3. 建议关闭公开注册：Authentication → Providers → Email → Allow new users to sign up 关掉。
-4. 复制 `.env.example` 为 `.env` 填入项目信息（anon key 为公开值，可放心放在前端）。
+项目有两套数据模型，SQL 脚本按需要执行（都能重复执行）：
+
+| 脚本 | 作用 | 什么时候需要 |
+|---|---|---|
+| `supabase/schema.sql` | `tournament_state` 单文档表 + RLS + 头像 Storage bucket `avatars` | **始终需要**（单文档模式、头像、回滚备份都靠它） |
+| `supabase/schema-v2.sql` | 多表结构（seasons / players / matches …）+ RLS + Realtime 发布 | 使用多表模式时 |
+| `supabase/rpc-v2.sql` | 多表模式的写入函数（赛季管理、录赛果、发布分组等） | 使用多表模式时 |
+
+1. SQL Editor 执行 `supabase/schema.sql`（游客只读、登录用户可写；同时建好头像 bucket）。
+2. 需要多表模式（多届赛事 + 观众端实时更新）时，再执行 `supabase/schema-v2.sql` 与
+   `supabase/rpc-v2.sql`，然后按「[多表模式](#多表模式可选)」一节切换。
+3. **Authentication → Users → Add user** 创建主办方账号（勾选 Auto Confirm User）。
+4. 建议关闭公开注册：Authentication → Providers → Email → Allow new users to sign up 关掉。
+5. 复制 `.env.example` 为 `.env` 填入项目信息（anon key 为公开值，可放心放在前端）。
 
 > 云端首次写入会在主办方登录后自动触发；本地已有数据会同步到云端。
 > 已经建过表的老项目，请重新执行一次 `supabase/schema.sql`（幂等）以补上 `revision` /
-> `updated_at` / `updated_by` 三列与两个触发器（写入时盖章版本号与时间，首次插入也有），
-> 同时会创建头像用的 Storage bucket `avatars`（公开读、登录可写，单文件上限 512 KB）。
+> `updated_at` / `updated_by` 三列与两个触发器（写入时盖章版本号与时间，首次插入也有）；
+> 执行 `supabase/rpc-v2.sql`（幂等）则用于升级多表模式的事务函数（例如归档只读、删除赛季）。
 
 ### 头像存储
 
@@ -94,14 +106,29 @@ Supabase Dashboard → Storage → `avatars` 里对照赛事数据手动删除�
 实时更新（断线自动重连并做一次全量补偿）。多表读取失败会自动回退单文档模式并在右下角
 提示；删除 `VITE_DATA_MODEL`（或改为 `doc`）即可完全回退。
 
+多表模式下的赛季规则：
+
+- **归档 = 只读锁定**：归档赛季的所有写入会被事务函数拒绝（提示需先取消归档），后台顶部会
+  常驻只读横幅，编辑类按钮置灰；改名、设为当前、取消归档本身不受限制。
+- **删除赛季**：仅允许删除「非当前、非归档」的赛季（例如建错的空赛季），会级联删除该赛季的
+  名单 / 赛程 / 赛果 / 证据 / 日志且不可恢复，删除前有二次确认。
+- 旧文档备份仍然写入 `tournament_state`，所以 `schema.sql` 在多表模式下也不要删。
+
 ## 数据与重置
 
 - 全新环境从**空白**开始：没有内置示例选手与赛程，名单由主办方在「选手与分组」里添加
   （16 名选手、按历史最佳分 4 档、未抽签）；只有 DDL 轮次结构是预置的，日期需主办方设置。
 - 主办方后台「选手与分组 → 重置赛事」可清空分组与赛程（保留选手名单）。
-- 数据以 Supabase 为唯一真相，任意设备打开为同一份数据（打开页面时拉取最新）。
+- 单文档模式：数据存于 `public.tournament_state` 的一行 JSON（默认）。
+- 多表模式：数据存于 `seasons` / `players` / `matches` 等表，并按赛季隔离；旧单文档表仍会
+  异步补写一份快照作为回滚备份。
+- 两种模式都以 Supabase 为唯一真相，任意设备打开为同一份数据（打开页面时拉取最新；
+  多表模式另有 Realtime 实时更新）。
 
 ### 同步状态（右下角提示条）
+
+> 以下为**单文档模式**的行为；多表模式下写入走事务函数（同一行被两台设备同时修改才会提示
+> 冲突），旧文档仅作备份、失败不影响编辑。
 
 - **正在同步 / 已同步**：改动防抖合并后写入云端，成功会给出回执。
 - **同步失败**：改动已保存在本机，系统按 1s → 2s → … → 30s 自动重试，也可手动「立即重试」；
@@ -130,13 +157,17 @@ src/
 ├── components/     # 通用组件（对阵树、积分榜、弹窗、头像等）
 ├── layouts/        # 公开端 / 管理端布局
 ├── stores/         # Pinia：赛事数据、登录、深色模式
-├── lib/            # Supabase 客户端、同步、统计与结果文案
+├── lib/            # Supabase 客户端、同步 / 多表 / 实时、统计与结果文案
 ├── views/          # 页面（公开端 + 管理端）
 ├── utils/          # 格式化与下载工具
 ├── config.js       # 站点配置与环境变量读取
 └── router/         # 路由与权限守卫
 supabase/
-└── schema.sql      # 建表与权限脚本
+├── schema.sql      # 单文档表 + 头像 Storage（始终需要）
+├── schema-v2.sql   # 多表结构 + RLS + Realtime 发布（多表模式）
+└── rpc-v2.sql      # 事务函数：赛季 / 赛果 / 分组 / 证据等写入（多表模式）
+scripts/
+└── migrate-to-tables.mjs   # 旧文档 → 多表迁移、对账（--dry-run / --apply / --verify）
 ```
 
 ## 比赛规则
